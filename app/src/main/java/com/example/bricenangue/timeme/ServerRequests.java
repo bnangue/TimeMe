@@ -15,6 +15,7 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -186,10 +187,15 @@ public class ServerRequests {
                     String email=null;
                     if(jsonObject.has("email")){
                         String regId=jsonObject.getString("gcmregid");
+                        String firstname=jsonObject.getString("firstname");
+                        String lastname=jsonObject.getString("lastname");
                         email=jsonObject.getString("email");
+                        String imgString=jsonObject.getString("picture");
+                        Bitmap bitmap=decodeBase64(imgString);
                         String friendlist=jsonObject.getString("friendlist");
                         int stat=jsonObject.getInt("onlinestatus");
-                        returneduser=new User(email,user.password,null,null,stat,regId,null,friendlist);
+
+                        returneduser=new User(email,user.password,firstname,lastname,stat,regId,bitmap,friendlist);
                     }
 
                 }
@@ -271,9 +277,17 @@ public class ServerRequests {
         protected String doInBackground(Void... params) {
 
             String line="";
+            String uploadimage;
             URL url;
             HttpURLConnection urlConnection = null;
             try {
+                if(newuser.picture!=null){
+                    uploadimage=getStringImage(newuser.picture);
+                }else {
+                    uploadimage="";
+                }
+
+
                 url=new URL(SERVER_ADDRESS + "UpdateEmailAndPassword.php");
                 urlConnection=(HttpURLConnection)url.openConnection();
                 urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
@@ -289,7 +303,13 @@ public class ServerRequests {
                         +"&"+
                         URLEncoder.encode("currentEmail","UTF-8")+"="+URLEncoder.encode(currentuser.email,"UTF-8")
                         +"&"+
-                        URLEncoder.encode("currentPassword","UTF-8")+"="+URLEncoder.encode(currentuser.password,"UTF-8");
+                        URLEncoder.encode("currentPassword","UTF-8")+"="+URLEncoder.encode(currentuser.password,"UTF-8")
+                        +"&"+
+                        URLEncoder.encode("picture","UTF-8")+"="+URLEncoder.encode(uploadimage,"UTF-8")
+                        +"&"+
+                        URLEncoder.encode("firstname","UTF-8")+"="+URLEncoder.encode(newuser.firstname,"UTF-8")
+                        +"&"+
+                        URLEncoder.encode("lastname","UTF-8")+"="+URLEncoder.encode(newuser.lastname,"UTF-8");
                 buff.write(data);
                 buff.flush();
                 buff.close();
@@ -323,6 +343,19 @@ public class ServerRequests {
     }
 
 
+    public String getStringImage(Bitmap bmp){
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+            byte[] imageBytes = baos.toByteArray();
+            String temp=Base64.encodeToString(imageBytes, Base64.DEFAULT);
+            return temp;
+        }catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+
+    }
 
     public static Bitmap decodeBase64(String input)
     {

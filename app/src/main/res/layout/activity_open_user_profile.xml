@@ -12,20 +12,55 @@
     android:paddingBottom="@dimen/activity_horizontal_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin">
 
-    <ImageView
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="150dp"
-        android:id="@+id/imageViewUserprofilepicture"
-        android:src="@mipmap/ic_launcher"
+        android:layout_height="wrap_content"
+        android:id="@+id/profileCard"
         android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:background="@color/colorPrimary"/>
+        android:background="@drawable/layout_custom_background">
+        <ImageView
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:id="@+id/imageViewUserprofilepicture"
+            android:src="@mipmap/ic_launcher"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:clickable="true"
+            android:onClick="OnProfilePictureClicked"
+            />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Large Text"
+            android:id="@+id/textViewfullname"
+            android:layout_alignParentTop="true"
+            android:layout_toRightOf="@+id/imageViewUserprofilepicture"
+            android:layout_toEndOf="@+id/imageViewUserprofilepicture"
+            android:layout_marginLeft="20dp"
+            android:layout_marginTop="43dp" />
+
+        <ImageButton
+            android:layout_width="40dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/imageButtoneditprofile"
+            android:src="@mipmap/ic_edit"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:clickable="true"
+            android:onClick="OnEditProfileClicked"
+            android:layout_alignBottom="@+id/imageViewUserprofilepicture"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true" />
+
+    </RelativeLayout>
+
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_below="@+id/imageViewUserprofilepicture"
+        android:layout_below="@+id/profileCard"
         android:layout_marginTop="20dp"
         android:id="@+id/linearLayout">
 

@@ -79,6 +79,10 @@ public class User implements Parcelable {
         return list;
     }
 
+    public String getfullname(){
+        String fullname=this.firstname+" "+this.lastname;
+        return fullname;
+    }
 
     private User(Parcel in){
 

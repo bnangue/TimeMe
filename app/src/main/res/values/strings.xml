@@ -8,4 +8,6 @@
     <string name="enter_newpassword">Enter new password</string>
     <string name="enter_odlpassword">Enter your password</string>
     <string name="enter_newEmail">Enter your email address</string>
+    <string name="firstnamestring">Firstname</string>
+    <string name="lastnamestring">Lastname</string>
 </resources>

@@ -1,7 +1,12 @@
 package com.example.bricenangue.timeme;
 
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Matrix;
+import android.net.Uri;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.DialogFragment;
@@ -16,12 +21,18 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 
-public class OpenUserProfileActivity extends AppCompatActivity implements AlertDailogChangePassword.OnPasswordChanged,AlertDialogChangeEmail.OnEmailChanged {
+public class OpenUserProfileActivity extends AppCompatActivity implements AlertDailogChangePassword.OnPasswordChanged,AlertDialogChangeEmail.OnEmailChanged
+        ,AlertDialogChangeNotSaved.OnChangesCancel,EditFullNameFragment.OnFullNameChanged {
+
+    private int PICK_IMAGE_REQUEST = 1;
 
     private User currentuser;
-    private TextView changepass;
+    private TextView changepass,fullnametv;
+
     private EditText emailed;
     private String emailstr,firstnamestr,lastnamestr,passwordhashstr;
     public static boolean arechangesSaved;
@@ -29,7 +40,10 @@ public class OpenUserProfileActivity extends AppCompatActivity implements AlertD
     private CoordinatorLayout coordinatorLayout;
     private ImageView profilepic;
    private Bitmap bitmap;
-    UserLocalStore userLocalStore;
+    private Bitmap userbitmap=null;
+
+    private Uri filePath;
+    private UserLocalStore userLocalStore;
     Menu menu;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,16 +59,55 @@ public class OpenUserProfileActivity extends AppCompatActivity implements AlertD
         }
         profilepic=(ImageView)findViewById(R.id.imageViewUserprofilepicture);
         emailed=(EditText)findViewById(R.id.editTextemailprofileview);
+        fullnametv=(TextView)findViewById(R.id.textViewfullname);
+        if(currentuser.getfullname().isEmpty()){
+            fullnametv.setTextSize(12);
+            fullnametv.setText("You have not save your name yet");
+        }else {
+            fullnametv.setText(currentuser.getfullname());
+        }
+
         emailed.setText(currentuser.email);
 
         emailstr=currentuser.email;
         passwordhashstr=currentuser.password;
-        Toast.makeText(this,currentuser.email,Toast.LENGTH_SHORT).show();
+        firstnamestr=" ";
+        lastnamestr=" ";
+        if(userLocalStore.loadImageFromStorage(userLocalStore.getUserPicturePath())!=null){
+            userbitmap=userLocalStore.loadImageFromStorage(userLocalStore.getUserPicturePath());
+            if(currentuser.picture!=null){
+                profilepic.setImageBitmap(currentuser.picture);
+            }else {
+                profilepic.setImageBitmap(userbitmap);
+            }
+
+
+        }        Toast.makeText(this,currentuser.email,Toast.LENGTH_SHORT).show();
     }
 
+    public void OnEditProfileClicked(View view){
+        arechangesSaved=false;
+        showOption(R.id.action_menu_save);
+        savefullname();
+    }
+
+    private void savefullname() {
+
+        DialogFragment fragment=new EditFullNameFragment();
+        fragment.setCancelable(false);
+        fragment.show(getSupportFragmentManager(),"CHANGE FULLNAME");
+    }
+
+    public void OnProfilePictureClicked(View view){
+        arechangesSaved=false;
+
+        showOption(R.id.action_menu_save);
+        showFileChooser();
+    }
     public void OnEditEmailInProfile(View view){
         editEmail();
     }
+
 
     private void editEmail() {
 
@@ -130,10 +183,14 @@ public class OpenUserProfileActivity extends AppCompatActivity implements AlertD
 
             @Override
             public void serverReponse(String reponse) {
-                if(reponse.contains("User data successfully updated")){
-                    arechangesSaved=true;
+                if (reponse.contains("User data successfully updated")) {
+                    arechangesSaved = true;
                     userLocalStore.storeUserData(newu);
-                }else {
+                    userLocalStore.setUserPicturePath(userLocalStore.saveToInternalStorage(newu.picture));
+                    String fullname= firstnamestr+" "+lastnamestr;
+                    userLocalStore.setUserUserfullname(fullname);
+
+                } else {
                     showSnackBar();
                 }
             }
@@ -146,7 +203,15 @@ public class OpenUserProfileActivity extends AppCompatActivity implements AlertD
     }
     private void saveChangestoServer() {
         User newuser=new User(emailstr,passwordhashstr);
-            save(newuser);
+        if(userbitmap!=null){
+            newuser.picture=userbitmap;
+
+        }
+        if(!firstnamestr.isEmpty()&& !lastnamestr.isEmpty()){
+            newuser.firstname=firstnamestr;
+            newuser.lastname=lastnamestr;
+        }
+        save(newuser);
     }
 
     public void showSnackBar(){
@@ -197,9 +262,89 @@ public class OpenUserProfileActivity extends AppCompatActivity implements AlertD
     @Override
     public void onBackPressed() {
         if(arechangesSaved){
-             onBackPressed();
+             finish();
         }else{
-
+            DialogFragment fragment=new AlertDialogChangeNotSaved();
+            fragment.setCancelable(false);
+            fragment.show(getSupportFragmentManager(), "CHANGE NOT SAVED");
         }
+    }
+
+    private void showFileChooser() {
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
+
+            filePath = data.getData();
+            try {
+                bitmap = decodeBitmap(filePath,getApplicationContext());
+
+                int degree= ImageOrientationUtil.getExifRotation(ImageOrientationUtil.getFromMediaUri(getApplicationContext()
+                        ,getContentResolver(),filePath));
+                Bitmap  bittmap=rotateImage(bitmap,degree);
+
+                profilepic.setImageBitmap(bittmap);
+                userbitmap=bittmap;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+
+    private static Bitmap rotateImage(Bitmap img, int degree) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(degree);
+        Bitmap rotatedImg = Bitmap.createBitmap(img, 0, 0, img.getWidth(), img.getHeight(), matrix, true);
+        return rotatedImg;
+    }
+    public static Bitmap decodeBitmap(Uri selectedImage, Context context)
+            throws FileNotFoundException {
+        BitmapFactory.Options o = new BitmapFactory.Options();
+        o.inJustDecodeBounds = true;
+        BitmapFactory.decodeStream(context.getContentResolver()
+                .openInputStream(selectedImage), null, o);
+
+        final int REQUIRED_SIZE = 100;
+
+        int width_tmp = o.outWidth, height_tmp = o.outHeight;
+        int scale = 1;
+        while (true) {
+            if (width_tmp / 2 < REQUIRED_SIZE || height_tmp / 2 < REQUIRED_SIZE) {
+                break;
+            }
+            width_tmp /= 2;
+            height_tmp /= 2;
+            scale *= 2;
+        }
+
+        BitmapFactory.Options o2 = new BitmapFactory.Options();
+        o2.inSampleSize = scale;
+        return BitmapFactory.decodeStream(context.getContentResolver()
+                .openInputStream(selectedImage), null, o2);
+    }
+
+    @Override
+    public void changescanceled(boolean canceled) {
+        if(canceled){
+            finish();
+        }else {
+            Toast.makeText(getApplicationContext(),"Make sure you save your changes before exiting",Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void fulnamechanged(String firstname, String lastname) {
+        firstnamestr=firstname;
+        lastnamestr=lastname;
     }
 }
