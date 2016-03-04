@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">TimeMe</string>
+    <string name="emailloggin">E-Mail Address</string>
+    <string name="passwordlogin">Password</string>
+    <string name="registerbtn">Register</string>
+    <string name="menu_save">save</string>
+    <string name="confirm_newpassword">Confirm password</string>
+    <string name="enter_newpassword">Enter new password</string>
+    <string name="enter_odlpassword">Enter your password</string>
+    <string name="enter_newEmail">Enter your email address</string>
 </resources>
