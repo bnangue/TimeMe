@@ -4,4 +4,16 @@
     <color name="colorPrimaryDark">#0e8773</color>
     <color name="colorAccent">#0a5135</color>
     <color name="colorSnackbar">#f2069471</color>
+
+    <color name="warning_color">#f4511e</color>
+    <color name="hint_color">#42000000</color>
+    <color name="success_color">#009688</color>
+
+    <color name="calender">#f1e7e7</color>
+    <color name="white">#FFFFFF</color>
+    <color name="colorcalenderEvent">#190ad299</color>
+    <color name="tabsScrollColor">#cff5f6f7</color>
+
+
+
 </resources>

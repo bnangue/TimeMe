@@ -31,14 +31,18 @@ public class UserLocalStore {
         SharedPreferences.Editor spEditor=userLocalDataBase.edit();
         spEditor.putString("email",user.email);
         spEditor.putString("password",user.password);
+        spEditor.putString("firstname",user.firstname);
+        spEditor.putString("lastname",user.lastname);
         spEditor.apply();
     }
 
     public User getLoggedInUser(){
         String email=userLocalDataBase.getString("email", "");
         String password=userLocalDataBase.getString("password","");
+        String firstname=userLocalDataBase.getString("firstname", "");
+        String lastname=userLocalDataBase.getString("lastname","");
 
-        return new User(email,password);
+        return new User(email,password,firstname,lastname,1,null,null,null);
     }
     //call with true if logged in
     public void setUserLoggedIn(boolean loggedIn){

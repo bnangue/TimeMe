@@ -62,6 +62,26 @@ public class ServerRequests {
         progressDialog.show();
         new UpdateUserPasswordAndEmailListAsynckTacks(currentuser,newuser,callbacks).execute();
     }
+
+    public void saveCalenderEventInBackgroung(CalendarCollection calendarCollection,GetEventsCallbacks callbacks){
+        progressDialog.setTitle("Storing event...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+        new StoreCalenderEventsAsynckTacks(calendarCollection,callbacks).execute();
+    }
+
+    public void getCalenderEventInBackgroung(GetEventsCallbacks callbacks){
+
+        new FetchAllEventsAsynckTacks(callbacks).execute();
+    }
+
+
+
+
+
+
+
+
     public class RegisterUserAsyncTask extends AsyncTask<Void,Void,String> {
 
         User user;
@@ -95,7 +115,11 @@ public class ServerRequests {
                 OutputStream out=urlConnection.getOutputStream();
                 BufferedWriter buff=new BufferedWriter(new OutputStreamWriter(out,"UTF-8"));
                 String data =URLEncoder.encode("email","UTF-8")+"="+URLEncoder.encode(user.email,"UTF-8")+"&"+
-                        URLEncoder.encode("password","UTF-8")+"="+URLEncoder.encode(String.valueOf(user.password),"UTF-8");
+                        URLEncoder.encode("password","UTF-8")+"="+URLEncoder.encode(String.valueOf(user.password),"UTF-8")
+                        +"&"+
+                        URLEncoder.encode("firstname","UTF-8")+"="+URLEncoder.encode(String.valueOf(user.firstname),"UTF-8")
+                        +"&"+
+                        URLEncoder.encode("lastname","UTF-8")+"="+URLEncoder.encode(String.valueOf(user.lastname),"UTF-8");
                 buff.write(data);
                 buff.flush();
                 buff.close();
@@ -107,7 +131,7 @@ public class ServerRequests {
                 BufferedReader reader=new BufferedReader(new InputStreamReader(in));
                 String line;
                 while((line=reader.readLine())!=null){
-                    bi.append(line).append("\n");
+                    bi.append(line);
                 }
                 reader.close();
                 in.close();
@@ -149,8 +173,8 @@ public class ServerRequests {
             try {
                 url=new URL(SERVER_ADDRESS + "LogUserIn.php");
                 urlConnection=(HttpURLConnection)url.openConnection();
-//                urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
-//                urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
                 urlConnection.setRequestMethod("POST");
                 urlConnection.setDoOutput(true);
                 urlConnection.setDoInput(true);
@@ -340,6 +364,177 @@ public class ServerRequests {
             }
             return line;
         }
+    }
+
+
+
+    public class StoreCalenderEventsAsynckTacks extends AsyncTask<Void,Void,String>{
+
+        CalendarCollection eventObject;
+        GetEventsCallbacks eventsCallbacks;
+
+        public StoreCalenderEventsAsynckTacks(CalendarCollection eventObject, GetEventsCallbacks callbacks){
+            this.eventsCallbacks=callbacks;
+            this.eventObject=eventObject;
+        }
+        @Override
+        protected void onPostExecute(String aVoid) {
+            progressDialog.dismiss();
+            eventsCallbacks.updated(aVoid);
+            super.onPostExecute(aVoid);
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+
+            String reponse=null;
+            ArrayList<Pair<String,String>> data=new ArrayList<>();
+            String d=eventObject.title;
+            data.add(new Pair<String, String>("title", d));
+            data.add(new Pair<String, String>("description",eventObject.description));
+            data.add(new Pair<String, String>("datetime", eventObject.datetime));
+            data.add(new Pair<String, String>("creator", eventObject.creator));
+            data.add(new Pair<String, String>("category", eventObject.category));
+            data.add(new Pair<String, String>("startingtime",eventObject.startingtime));
+            data.add(new Pair<String, String>("endingtime",eventObject.endingtime));
+            data.add(new Pair<String, String>("hashid",eventObject.hashid));
+            data.add(new Pair<String, String>("alldayevent",eventObject.alldayevent));
+
+
+            URL url;
+            HttpURLConnection urlConnection=null;
+            try {
+
+                byte[] postData= getData(data).getBytes("UTF-8");
+                url=new URL(SERVER_ADDRESS + "CreateCalenderEvents.php");
+                urlConnection=(HttpURLConnection)url.openConnection();
+                urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                urlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
+                urlConnection.setDoOutput(true);
+                urlConnection.getOutputStream().write(postData);
+
+                BufferedReader in = new BufferedReader(
+                        new InputStreamReader(urlConnection.getInputStream()));
+                String inputLine;
+                StringBuffer response = new StringBuffer();
+
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                reponse=response.toString();
+
+                in.close();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            return reponse;
+        }
+    }
+
+
+
+
+    public class FetchAllEventsAsynckTacks extends AsyncTask<Void,Void,ArrayList<CalendarCollection>> {
+
+        GetEventsCallbacks eventsCallbacks;
+
+
+        public FetchAllEventsAsynckTacks( GetEventsCallbacks callbacks) {
+            this.eventsCallbacks = callbacks;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<CalendarCollection> returnedevents) {
+            progressDialog.dismiss();
+            eventsCallbacks.done(returnedevents);
+            super.onPostExecute(returnedevents);
+        }
+
+        @Override
+        protected ArrayList<CalendarCollection> doInBackground(Void... params) {
+
+            ArrayList<CalendarCollection> returnedEvents=new ArrayList<>();
+            URL url;
+            HttpURLConnection urlConnection=null;
+            try {
+                url=new URL(SERVER_ADDRESS + "FetchAllCalenderEvents.php");
+                urlConnection=(HttpURLConnection)url.openConnection();
+                urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setDoOutput(true);
+                urlConnection.setDoInput(true);
+
+
+                InputStream in =urlConnection.getInputStream();
+                String respons="";
+                StringBuilder bi=new StringBuilder();
+                BufferedReader reader=new BufferedReader(new InputStreamReader(in));
+                String line;
+                while((line=reader.readLine())!=null){
+                    bi.append(line).append("\n");
+                }
+                reader.close();
+                in.close();
+
+                respons =bi.toString();
+                JSONArray jsonArray= new JSONArray(respons);
+                returnedEvents= getDetailsEvents(jsonArray);
+
+
+                // fetch data to a jason object
+            }catch (Exception e){
+                e.printStackTrace();
+            }finally {
+                assert urlConnection != null;
+                urlConnection.disconnect();
+            }
+
+            return returnedEvents;
+        }
+
+
+    }
+
+    public ArrayList<CalendarCollection> getDetailsEvents(JSONArray jsonArray){
+        ArrayList<CalendarCollection> events=new ArrayList<>();
+
+        try {
+
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject jo_inside = jsonArray.getJSONObject(i);
+
+                String titel = jo_inside.getString("title");
+                String infotext = jo_inside.getString("description");
+                String creator = jo_inside.getString("creator");
+                String creationTime = jo_inside.getString("datetime");
+                String category = jo_inside.getString("category");
+                String startingtime = jo_inside.getString("startingtime");
+                String endingtime = jo_inside.getString("endingtime");
+                String alldayevent = jo_inside.getString("alldayevent");
+                String eventHash = jo_inside.getString("hashid");
+
+
+                String[] creationtime=creationTime.split(" ");
+
+                CalendarCollection  object =new CalendarCollection(titel,infotext,creator,creationTime,startingtime,endingtime,eventHash,category,alldayevent);
+
+                events.add(object);
+
+
+            }
+
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return events;
+
     }
 
 

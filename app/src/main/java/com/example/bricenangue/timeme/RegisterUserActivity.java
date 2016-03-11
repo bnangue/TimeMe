@@ -18,8 +18,8 @@ import android.widget.Toast;
 import java.util.ArrayList;
 
 public class RegisterUserActivity extends AppCompatActivity implements TextView.OnEditorActionListener {
-    private String emailstr,passwordstr,confirmpasswordstr;
-    private EditText emailed,passworded,confirmpassworded;
+    private String emailstr,passwordstr,confirmpasswordstr,firstnamestr,lastnamestr;
+    private EditText emailed,passworded,confirmpassworded,firstnameed,lastnameed;
     private Button registerbtn;
     private TextView gotologgintv;
     UserLocalStore userLocalStore;
@@ -36,6 +36,8 @@ public class RegisterUserActivity extends AppCompatActivity implements TextView.
         registerbtn=(Button)findViewById(R.id.buttonregisterReg);
         emailed=(EditText)findViewById(R.id.editTextregemail);
         passworded=(EditText)findViewById(R.id.editTextregpassword);
+        firstnameed=(EditText)findViewById(R.id.editTextregisterfirstname);
+        lastnameed=(EditText)findViewById(R.id.editTextregisterlastname);
 
         confirmpassworded=(EditText)findViewById(R.id.editTextregconfirmpassword);
         confirmpassworded.setOnEditorActionListener(this);
@@ -47,6 +49,10 @@ public class RegisterUserActivity extends AppCompatActivity implements TextView.
     public void Onregisterclicked(View view){
         emailstr = emailed.getText().toString();
         passwordstr = passworded.getText().toString();
+        confirmpasswordstr = confirmpassworded.getText().toString();
+        firstnamestr = firstnameed.getText().toString();
+        lastnamestr = lastnameed.getText().toString();
+
         if(TextUtils.isEmpty(emailstr)){
             emailed.setError("this field cannot be empty");
         }else if(TextUtils.isEmpty(passwordstr)){
@@ -58,6 +64,8 @@ public class RegisterUserActivity extends AppCompatActivity implements TextView.
             if(passwordstr.equals(confirmpasswordstr)){
                 int passHash=passwordstr.hashCode();
                 User usertoRegister=new User(emailstr,String.valueOf(passHash));
+                usertoRegister.firstname=firstnamestr;
+                usertoRegister.lastname=lastnamestr;
                 registerUser(usertoRegister);
             }else {
                 Toast.makeText(getApplicationContext(),"password doesn't match. Please check your entry",Toast.LENGTH_SHORT).show();
@@ -118,6 +126,8 @@ public class RegisterUserActivity extends AppCompatActivity implements TextView.
             emailstr = emailed.getText().toString();
             passwordstr = passworded.getText().toString();
             confirmpasswordstr = confirmpassworded.getText().toString();
+            firstnamestr = firstnameed.getText().toString();
+            lastnamestr = lastnameed.getText().toString();
 
             if(TextUtils.isEmpty(emailstr)){
                 emailed.setError("this field cannot be empty");
@@ -130,6 +140,8 @@ public class RegisterUserActivity extends AppCompatActivity implements TextView.
                 if(passwordstr.equals(confirmpasswordstr)){
                     int passHash=passwordstr.hashCode();
                     User usertoRegister=new User(emailstr,String.valueOf(passHash));
+                    usertoRegister.firstname=firstnamestr;
+                    usertoRegister.lastname=lastnamestr;
                     registerUser(usertoRegister);
                 }else {
                     Toast.makeText(getApplicationContext(),"password doesn't match. Please check your entry",Toast.LENGTH_SHORT).show();

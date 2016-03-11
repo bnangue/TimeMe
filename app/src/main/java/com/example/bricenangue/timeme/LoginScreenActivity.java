@@ -45,7 +45,11 @@ public class LoginScreenActivity extends AppCompatActivity implements View.OnCli
     public void onClick(View v) {
         switch (v.getId()){
             case R.id.buttonlogin:
-                logCurrentuserIn();
+                if(internetConnection()){
+                    logCurrentuserIn();
+                }else {
+                    showErrordialog("No internet connection detected");
+                }
                 break;
             case R.id.buttonregisterReg:
                 startActivity(new Intent(LoginScreenActivity.this,RegisterUserActivity.class));
@@ -58,7 +62,7 @@ public class LoginScreenActivity extends AppCompatActivity implements View.OnCli
         userLocalStore.setUserLoggedIn(true);
         userLocalStore.storeUserData(returneduser);
 
-        Intent intent=new Intent(LoginScreenActivity.this,OpenUserProfileActivity.class);
+        Intent intent=new Intent(LoginScreenActivity.this,NewCalendarActivty.class);
         intent.putExtra("loggedInUser",returneduser);
         startActivity(intent);
     }
@@ -104,7 +108,12 @@ public class LoginScreenActivity extends AppCompatActivity implements View.OnCli
     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 
         if ((event != null && (event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) || (actionId == EditorInfo.IME_ACTION_DONE)) {
-           logCurrentuserIn();
+            if(internetConnection()){
+                logCurrentuserIn();
+            }else {
+                showErrordialog("No internet connection detected");
+            }
+
         }
 
         return false;
@@ -128,6 +137,9 @@ public class LoginScreenActivity extends AppCompatActivity implements View.OnCli
 
     }
 
+    private  boolean internetConnection(){
+        return new ServerRequests(this).haveNetworkConnection();
+    }
     private void displayUserdetails() {
         User user = userLocalStore.getLoggedInUser();
         emailed.setText(user.email);

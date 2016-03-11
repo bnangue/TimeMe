@@ -346,5 +346,11 @@ public class OpenUserProfileActivity extends AppCompatActivity implements AlertD
     public void fulnamechanged(String firstname, String lastname) {
         firstnamestr=firstname;
         lastnamestr=lastname;
+
+        if(!firstname.isEmpty()){
+            fullnametv.setText(firstnamestr+" "+lastnamestr);
+            fullnametv.setTextColor(getResources().getColor(R.color.colorAccent));
+
+        }
     }
 }

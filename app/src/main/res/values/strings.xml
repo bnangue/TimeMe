@@ -8,6 +8,24 @@
     <string name="enter_newpassword">Enter new password</string>
     <string name="enter_odlpassword">Enter your password</string>
     <string name="enter_newEmail">Enter your email address</string>
-    <string name="firstnamestring">Firstname</string>
-    <string name="lastnamestring">Lastname</string>
+    <string name="firstnamestring">First Name</string>
+    <string name="lastnamestring">Last Name</string>
+
+
+    <string name="title_section1">Section 1</string>
+    <string name="title_section2">Section 2</string>
+    <string name="title_section3">Section 3</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_example">Example action</string>
+    <string name="action_settings">Settings</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="dateformat">YYYY-MM-D</string>
+    <string name="eventDescription">Description</string>
+    <string name="buttonsave">Save</string>
+    <string name="title">Title</string>
 </resources>
