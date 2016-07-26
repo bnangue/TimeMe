@@ -33,13 +33,15 @@ public class ServerRequests {
 
     private ProgressDialog progressDialog;
     public static final int CONNECTION_TIMEOUT=1000*15;
-    public static final String SERVER_ADDRESS="http://timeme.comlu.com/";
+    public static final String SERVER_ADDRESS="http://time-tracker.comlu.com/";
     private Context context;
+    private MySQLiteHelper mySQLiteHelper;
 
     public ServerRequests(Context context) {
         this.context=context;
         progressDialog = new ProgressDialog(context);
         progressDialog.setCancelable(false);
+        mySQLiteHelper=new MySQLiteHelper(context);
     }
 
     public void registerUserinBackground(User user, GetUserCallbacks callbacks){
@@ -70,9 +72,40 @@ public class ServerRequests {
         new StoreCalenderEventsAsynckTacks(calendarCollection,callbacks).execute();
     }
 
+    public void saveItemInBackgroung(ShoppingItem item,GetEventsCallbacks callbacks){
+        progressDialog.setTitle("creating item...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+        new StoreItemsAsynckTacks(item,callbacks).execute();
+    }
+
     public void getCalenderEventInBackgroung(GetEventsCallbacks callbacks){
 
         new FetchAllEventsAsynckTacks(callbacks).execute();
+    }
+
+    public void getItemsInBackgroung(GetEventsCallbacks callbacks){
+
+        new FetchAllShoppingItemsAsynckTacks(callbacks).execute();
+    }
+    public void getCalenderEventAndUserInBackgroung(GetEventsCallbacks callbacks){
+        progressDialog.setTitle("Logging...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+        new FetchAllEventsAsynckTacks(callbacks).execute();
+    }
+    public void deleteCalenderEventInBackgroung(CalendarCollection calendarCollection,GetEventsCallbacks callbacks){
+        progressDialog.setTitle("Deleting event...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+        new DeleteEventsAsynckTasks(calendarCollection,callbacks).execute();
+    }
+
+    public void logginguserOutInBackgroung(User user,GetUserCallbacks callbacks){
+        progressDialog.setTitle("Logging out...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+        new UpdateUserStatusAsynckTacks(user,callbacks).execute();
     }
 
 
@@ -159,9 +192,12 @@ public class ServerRequests {
 
         @Override
         protected void onPostExecute(User returneduser) {
-            progressDialog.dismiss();
-            userCallbacks.done(returneduser);
-            super.onPostExecute(returneduser);
+            if(MainActivity.eventsareloaded=true){
+                progressDialog.dismiss();
+
+                userCallbacks.done(returneduser);
+                super.onPostExecute(returneduser);
+            }
         }
 
         @Override
@@ -202,6 +238,7 @@ public class ServerRequests {
                 in.close();
 
                 respons =bi.toString();
+
                 JSONArray jsonArray= new JSONArray(respons);
 
                 JSONObject jsonObject= jsonArray.getJSONObject(0);
@@ -237,6 +274,9 @@ public class ServerRequests {
 
 
     }
+
+
+
 
 
     public ArrayList<User> getDetails(JSONArray jsonArray){
@@ -399,6 +439,8 @@ public class ServerRequests {
             data.add(new Pair<String, String>("endingtime",eventObject.endingtime));
             data.add(new Pair<String, String>("hashid",eventObject.hashid));
             data.add(new Pair<String, String>("alldayevent",eventObject.alldayevent));
+            data.add(new Pair<String, String>("everymonth",eventObject.everymonth));
+            data.add(new Pair<String, String>("defaulttime",eventObject.creationdatetime));
 
 
             URL url;
@@ -435,6 +477,68 @@ public class ServerRequests {
     }
 
 
+
+    public class StoreItemsAsynckTacks extends AsyncTask<Void,Void,String>{
+
+        ShoppingItem item;
+        GetEventsCallbacks eventsCallbacks;
+
+        public StoreItemsAsynckTacks(ShoppingItem item, GetEventsCallbacks callbacks){
+            this.eventsCallbacks=callbacks;
+            this.item=item;
+        }
+        @Override
+        protected void onPostExecute(String aVoid) {
+            progressDialog.dismiss();
+            eventsCallbacks.updated(aVoid);
+            super.onPostExecute(aVoid);
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+
+            String reponse=null;
+            ArrayList<Pair<String,String>> data=new ArrayList<>();
+
+            data.add(new Pair<String, String>("description",item.getDetailstoItem()));
+            data.add(new Pair<String, String>("name", item.getItemName()));
+            data.add(new Pair<String, String>("price", item.getPrice()));
+            data.add(new Pair<String, String>("specification", item.getItemSpecification()));
+            data.add(new Pair<String, String>("unique_id", item.getUnique_item_id()));
+
+
+            URL url;
+            HttpURLConnection urlConnection=null;
+            try {
+
+                byte[] postData= getData(data).getBytes("UTF-8");
+                url=new URL(SERVER_ADDRESS + "CreateShoppingItem.php");
+                urlConnection=(HttpURLConnection)url.openConnection();
+                urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                urlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
+                urlConnection.setDoOutput(true);
+                urlConnection.getOutputStream().write(postData);
+
+                BufferedReader in = new BufferedReader(
+                        new InputStreamReader(urlConnection.getInputStream()));
+                String inputLine;
+                StringBuffer response = new StringBuffer();
+
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                reponse=response.toString();
+
+                in.close();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            return reponse;
+        }
+    }
 
 
     public class FetchAllEventsAsynckTacks extends AsyncTask<Void,Void,ArrayList<CalendarCollection>> {
@@ -482,7 +586,7 @@ public class ServerRequests {
 
                 respons =bi.toString();
                 JSONArray jsonArray= new JSONArray(respons);
-                returnedEvents= getDetailsEvents(jsonArray);
+                returnedEvents= getDetailsEvents(  jsonArray);
 
 
                 // fetch data to a jason object
@@ -499,6 +603,68 @@ public class ServerRequests {
 
     }
 
+
+    public class FetchAllShoppingItemsAsynckTacks extends AsyncTask<Void,Void,ArrayList<ShoppingItem>> {
+
+        GetEventsCallbacks eventsCallbacks;
+
+
+        public FetchAllShoppingItemsAsynckTacks(GetEventsCallbacks callbacks) {
+            this.eventsCallbacks = callbacks;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<ShoppingItem> returnedevents) {
+            progressDialog.dismiss();
+            eventsCallbacks.itemslis(returnedevents);
+            super.onPostExecute(returnedevents);
+        }
+
+        @Override
+        protected ArrayList<ShoppingItem> doInBackground(Void... params) {
+
+            ArrayList<ShoppingItem> returnedItems=new ArrayList<>();
+            URL url;
+            HttpURLConnection urlConnection=null;
+            try {
+                url=new URL(SERVER_ADDRESS + "FetchAllCalenderEvents.php");
+                urlConnection=(HttpURLConnection)url.openConnection();
+                urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setDoOutput(true);
+                urlConnection.setDoInput(true);
+
+
+                InputStream in =urlConnection.getInputStream();
+                String respons="";
+                StringBuilder bi=new StringBuilder();
+                BufferedReader reader=new BufferedReader(new InputStreamReader(in));
+                String line;
+                while((line=reader.readLine())!=null){
+                    bi.append(line).append("\n");
+                }
+                reader.close();
+                in.close();
+
+                respons =bi.toString();
+                JSONArray jsonArray= new JSONArray(respons);
+                returnedItems= getDetailsItems(jsonArray);
+
+
+                // fetch data to a jason object
+            }catch (Exception e){
+                e.printStackTrace();
+            }finally {
+                assert urlConnection != null;
+                urlConnection.disconnect();
+            }
+
+            return returnedItems;
+        }
+
+
+    }
     public ArrayList<CalendarCollection> getDetailsEvents(JSONArray jsonArray){
         ArrayList<CalendarCollection> events=new ArrayList<>();
 
@@ -517,11 +683,13 @@ public class ServerRequests {
                 String endingtime = jo_inside.getString("endingtime");
                 String alldayevent = jo_inside.getString("alldayevent");
                 String eventHash = jo_inside.getString("hashid");
+                String everymonth = jo_inside.getString("everymonth");
+                String creationdatetime = jo_inside.getString("defaulttime");
 
 
                 String[] creationtime=creationTime.split(" ");
 
-                CalendarCollection  object =new CalendarCollection(titel,infotext,creator,creationTime,startingtime,endingtime,eventHash,category,alldayevent);
+                CalendarCollection  object =new CalendarCollection(titel,infotext,creator,creationTime,startingtime,endingtime,eventHash,category,alldayevent,everymonth,creationdatetime);
 
                 events.add(object);
 
@@ -536,6 +704,193 @@ public class ServerRequests {
         return events;
 
     }
+
+
+
+
+    public ArrayList<ShoppingItem> getDetailsItems(JSONArray jsonArray){
+        ArrayList<ShoppingItem> items=new ArrayList<>();
+
+        try {
+
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject jo_inside = jsonArray.getJSONObject(i);
+
+                String name = jo_inside.getString("name");
+                String description = jo_inside.getString("description");
+                String price = jo_inside.getString("price");
+                String specification = jo_inside.getString("specification");
+                String unique_id = jo_inside.getString("unique_id");
+
+
+
+
+                ShoppingItem  object =new ShoppingItem();
+                object.setUnique_item_id(unique_id);
+                object.setItemName(name);
+                object.setPrice(price);
+                object.setDetailstoItem(description);
+                object.setItemSpecification(specification);
+
+
+                items.add(object);
+
+
+            }
+
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return items;
+
+    }
+
+
+
+    public class DeleteEventsAsynckTasks extends AsyncTask<Void,Void,String>{
+
+        CalendarCollection eventObject;
+        GetEventsCallbacks eventsCallbacks;
+
+        public DeleteEventsAsynckTasks(CalendarCollection eventObject, GetEventsCallbacks callbacks){
+            this.eventsCallbacks=callbacks;
+            this.eventObject=eventObject;
+
+        }
+        @Override
+        protected void onPostExecute(String aVoid) {
+            progressDialog.dismiss();
+            eventsCallbacks.updated(aVoid);
+            super.onPostExecute(aVoid);
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+
+            ArrayList<Pair<String,String>> data=new ArrayList<>();
+
+            data.add(new Pair<String, String>("creator", eventObject.creator));
+            data.add(new Pair<String, String>("hashid",eventObject.hashid));
+
+
+
+            URL url;
+            String line=null;
+            HttpURLConnection urlConnection=null;
+            try {
+
+                byte[] postData= getData(data).getBytes("UTF-8");
+                url=new URL(SERVER_ADDRESS + "DeleteCalenderEvent.php");
+                urlConnection=(HttpURLConnection)url.openConnection();
+                urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                urlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
+                urlConnection.setDoOutput(true);
+                urlConnection.getOutputStream().write(postData);
+
+                urlConnection.getOutputStream().close();
+                int responsecode=urlConnection.getResponseCode();
+                if(responsecode==HttpURLConnection.HTTP_OK){
+                    InputStream in =urlConnection.getInputStream();
+
+                    BufferedReader reader= new BufferedReader(new InputStreamReader(in));
+                    StringBuilder bld =new StringBuilder();
+                    String il;
+                    while((il=reader.readLine())!=null){
+                        bld.append(il);
+                    }
+                    line=bld.toString();
+                }else{
+                    line="Error";
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            return line;
+        }
+    }
+
+
+    public class UpdateUserStatusAsynckTacks extends AsyncTask<Void,Void,String>
+    {
+
+        User user;
+        GetUserCallbacks getUserCallbacks;
+
+        public UpdateUserStatusAsynckTacks(User user, GetUserCallbacks callbacks){
+            this.getUserCallbacks=callbacks;
+            this.user=user;
+        }
+        @Override
+        protected void onPostExecute(String reponse) {
+            progressDialog.dismiss();
+            getUserCallbacks.serverReponse(reponse);
+            super.onPostExecute(reponse);
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+
+            String line="";
+            URL url;
+            HttpURLConnection urlConnection = null;
+            try {
+                url=new URL(SERVER_ADDRESS + "UpdateUserOnlineStatus.php");
+                urlConnection=(HttpURLConnection)url.openConnection();
+                urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setDoOutput(true);
+                urlConnection.setDoInput(true);
+
+                OutputStream out=urlConnection.getOutputStream();
+                BufferedWriter buff=new BufferedWriter(new OutputStreamWriter(out,"UTF-8"));
+                String data =URLEncoder.encode("email","UTF-8")+"="+URLEncoder.encode(user.email,"UTF-8")+"&"+
+                        URLEncoder.encode("password","UTF-8")+"="+URLEncoder.encode(String.valueOf(user.password.hashCode()),"UTF-8")
+                        +"&"+
+                        URLEncoder.encode("onlinestatus","UTF-8")+"="+URLEncoder.encode(String.valueOf(user.status),"UTF-8");
+                buff.write(data);
+                buff.flush();
+                buff.close();
+                out.close();
+
+                int responsecode=urlConnection.getResponseCode();
+                if(responsecode==HttpURLConnection.HTTP_OK){
+                    InputStream in =urlConnection.getInputStream();
+
+                    BufferedReader reader= new BufferedReader(new InputStreamReader(in));
+                    StringBuilder bld =new StringBuilder();
+                    String il;
+                    while((il=reader.readLine())!=null){
+                        bld.append(il);
+                    }
+                    line=bld.toString();
+                    if(line.contains("Status successfully updated")){
+                       // mySQLiteHelper.reInitializeSqliteTable();
+                    }
+
+                }else{
+                    line="Error";
+                }
+
+
+
+
+            }catch (Exception e){
+                e.printStackTrace();
+            }finally {
+                assert urlConnection != null;
+                urlConnection.disconnect();
+            }
+            return line;
+        }
+    }
+
 
 
     public String getStringImage(Bitmap bmp){

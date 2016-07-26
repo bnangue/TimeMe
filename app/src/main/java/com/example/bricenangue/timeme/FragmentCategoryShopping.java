@@ -1,13 +1,20 @@
 package com.example.bricenangue.timeme;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,7 +33,7 @@ import java.util.ArrayList;
  * Use the {@link FragmentCategoryShopping#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class FragmentCategoryShopping extends Fragment implements AdapterView.OnItemClickListener {
+public class FragmentCategoryShopping extends Fragment implements FragmentCommunicator,FragmentLife, View.OnClickListener {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -35,11 +42,22 @@ public class FragmentCategoryShopping extends Fragment implements AdapterView.On
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+    private TextView textBalance;
+    private Button add_List;
 
-    private ListView lv_android;
-    private AndroidListAdapter list_adapter;
+
+
+    private ListView listRecentlyAdded,listDone;
     private MySQLiteHelper mySQLiteHelper;
     private OnFragmentInteractionListener mListener;
+    private static String LOG_TAG = "RecyclerViewActivity";
+    private Fragment fragment=this;
+    private ArrayList<CalendarCollection> newItems = new ArrayList<>();
+    private ArrayList<CalendarCollection> collectionArrayList = new ArrayList<>();
+
+    private boolean isShown=false;
+    private OnCalendarEventsChanged calendarEventsChanged;
+
 
     public FragmentCategoryShopping() {
         // Required empty public constructor
@@ -69,27 +87,35 @@ public class FragmentCategoryShopping extends Fragment implements AdapterView.On
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
+
         }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
-
-        CalendarCollection.date_collection_arr=new ArrayList<>();
-        mySQLiteHelper=new MySQLiteHelper(getContext());
-
-        getEvents(mySQLiteHelper.getAllIncomingNotification());
+      //  getEvents(mySQLiteHelper.getAllIncomingNotification());
         // Inflate the layout for this fragment
-        View rootView = inflater.inflate(R.layout.fragment_fragment_category_shopping, container, false);
-        TextView tv=(TextView)rootView.findViewById(R.id.section_label);
-        lv_android = (ListView) rootView.findViewById(R.id.shoppingeventslistview);
-        list_adapter=new AndroidListAdapter(getContext(),R.layout.list_item, CalendarCollection.date_collection_arr);
-        lv_android.setAdapter(list_adapter);
-        lv_android.setOnItemClickListener(this);
+        View v = inflater.inflate(R.layout.fragment_grocery_list, container, false);
+        textBalance = (TextView) v.findViewById(R.id.grocery_fragment_balance_amount);
+        add_List = (Button) v.findViewById(R.id.grocery_fragment_add_recently_button);
+        listDone = (ListView) v.findViewById(R.id.groceryfargment_done_list);
+        listRecentlyAdded = (ListView) v.findViewById(R.id.groceryfargment_recentlyadded_list);
+        add_List.setOnClickListener(this);
 
-        return rootView;
+        return v;
+    }
+
+    private void setViews(View v, int position){
+
+
+    }
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        mySQLiteHelper=new MySQLiteHelper(getContext());
+        //prepareListview
+
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -117,10 +143,27 @@ public class FragmentCategoryShopping extends Fragment implements AdapterView.On
     }
 
     @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Toast.makeText(getContext(), "You have event on this date: " + CalendarCollection.date_collection_arr.get(position).datetime +
-                CalendarCollection.date_collection_arr.get(position).title, Toast.LENGTH_LONG).show();
+    public void passDataToFragment(ArrayList<CalendarCollection> someValue) {
+        collectionArrayList=someValue;
     }
+
+    @Override
+    public void onUpdateUi(ArrayList<CalendarCollection> arrayList,String uName) {
+        updateUi(arrayList);
+    }
+
+    @Override
+    public void onClick(View v) {
+
+        int id=v.getId();
+        switch (id){
+            case R.id.grocery_fragment_add_recently_button:
+                //Create new shopping list
+                startActivity(new Intent(getActivity(),CreateNewShoppingListActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                break;
+        }
+    }
+
 
     /**
      * This interface must be implemented by activities that contain this
@@ -136,34 +179,46 @@ public class FragmentCategoryShopping extends Fragment implements AdapterView.On
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
     }
-    private void getEvents(ArrayList<IncomingNotification> incomingNotifications){
 
-        for (int i=0;i<incomingNotifications.size();i++){
-            JSONObject jo_inside = null;
-            try {
-                jo_inside = new JSONObject(incomingNotifications.get(i).body);
 
-                String titel = jo_inside.getString("title");
-                String infotext = jo_inside.getString("description");
-                String creator = jo_inside.getString("creator");
-                String creationTime = jo_inside.getString("datetime");
-                String category = jo_inside.getString("category");
-                String startingtime = jo_inside.getString("startingtime");
-                String endingtime = jo_inside.getString("endingtime");
-                String alldayevent = jo_inside.getString("alldayevent");
-                String eventHash = jo_inside.getString("hashid");
 
-                CalendarCollection  object =new CalendarCollection(titel,infotext,creator,creationTime,startingtime,endingtime,eventHash,category,alldayevent);
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        calendarEventsChanged =(OnCalendarEventsChanged)getActivity();
+        ((NewCalendarActivty)getActivity()).fragmentCommunicator = this;
 
-                if(object.category.contains("Grocery")){
-                    CalendarCollection.date_collection_arr.add(object);
-                }
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
+    }
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (getView() != null) {
+            isShown = true;
+            // fetchdata() contains logic to show data when page is selected mostly asynctask to fill the data
+        } else {
+            isShown = false;
 
         }
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        //bing listener
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+    }
+
+    public void updateUi(ArrayList<CalendarCollection> arrayList){
+        ArrayList<CalendarCollection> a=new ArrayList<>();
+        for(int i=0;i<arrayList.size();i++){
+            if(arrayList.get(i).category.contains("Grocery")){
+                a.add(arrayList.get(i));
+            }
+        }
+    }
+
 }

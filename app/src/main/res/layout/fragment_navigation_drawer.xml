@@ -19,26 +19,23 @@
         android:clickable="true">
 
         <RelativeLayout
-            android:layout_width="280dp"
+            android:layout_width="300dp"
             android:layout_height="120dp"
             android:id="@+id/profilebox"
-            android:background="@color/colorPrimary"
+            android:background="@color/primary"
             android:padding="2dp"
             >
 
             <com.mikhaellopez.circularimageview.CircularImageView
-                android:layout_width="35dp"
-                android:layout_height="35dp"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
                 app:civ_border="true"
                 app:civ_border_width="4dp"
                 app:civ_border_color="#ffff"
                 android:id="@+id/avatarfriend"
                 android:src="@mipmap/ic_launcher"
-                android:layout_toLeftOf="@+id/linearLayout"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentStart="true"
-                android:layout_alignParentTop="true"
-                android:layout_alignParentBottom="true"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="20dp"
                 android:onClick="openProfileOverviewClick"/>
 
             <LinearLayout
@@ -65,7 +62,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/desc"
-                    android:text="View Profile "
+                    android:text=" "
                     android:gravity="bottom"
                     android:layout_marginTop="4dp"
                     android:textColor="#fff"
@@ -77,15 +74,16 @@
 
         </RelativeLayout>
 
-        <ListView
+        <ExpandableListView
             android:id="@+id/navlist"
-            android:layout_width="280dp"
+            android:layout_width="300dp"
             android:layout_height="match_parent"
             android:layout_below="@+id/profilebox"
             android:choiceMode="singleChoice"
-            android:background="#ffffffff">
+            android:background="#ffffffff"
+            android:groupIndicator="@null">
 
-        </ListView>
+        </ExpandableListView>
 
     </RelativeLayout>
 

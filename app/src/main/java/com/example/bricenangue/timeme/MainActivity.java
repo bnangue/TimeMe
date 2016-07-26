@@ -21,15 +21,14 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MainActivity extends AppCompatActivity {
     private Snackbar snackbar;
     private CoordinatorLayout coordinatorLayout;
     private IncomingNotification incomingNotification;
     private MySQLiteHelper mySQLiteHelper;
-    private ArrayList<CalendarCollection> currentlist;
     private ProgressBar loadprogressBar;
+    public static boolean eventsareloaded=false;
 
     private boolean haveNetworkConnection() {
         boolean haveConnectedWifi = false;
@@ -52,11 +51,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         loadprogressBar=(ProgressBar)findViewById(R.id.prbar);
         loadprogressBar.setVisibility(View.VISIBLE);
+
         mySQLiteHelper=new MySQLiteHelper(this);
-        currentlist=new ArrayList<>();
-        getEvents(mySQLiteHelper.getAllIncomingNotification());
         coordinatorLayout=(CoordinatorLayout)findViewById(R.id.coordinateLayoutmainactivity);
         startapp();
 
@@ -65,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
     }
     void startapp(){
         if (haveNetworkConnection()){
+            mySQLiteHelper.reInitializeSqliteTable();
             getEventsfromMySQL();
 
         }else{
@@ -74,41 +74,83 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getEventsfromMySQL() {
-        ServerRequests serverRequests=new ServerRequests(this);
+        final ServerRequests serverRequests=new ServerRequests(this);
         serverRequests.getCalenderEventInBackgroung(new GetEventsCallbacks() {
             @Override
             public void done(ArrayList<CalendarCollection> returnedeventobject) {
                 if(returnedeventobject.size()!=0){
 
-                    if(currentlist.size()!=0){
-                        ArrayList<CalendarCollection> list=new ArrayList<CalendarCollection>();
+                        saveeventtoSQl(returnedeventobject);
+                    serverRequests.getItemsInBackgroung(new GetEventsCallbacks() {
+                        @Override
+                        public void done(ArrayList<CalendarCollection> returnedeventobject) {
 
-                        for(int i=0;i<returnedeventobject.size();i++) {
-                                for (int j = 0; j < currentlist.size(); j++) {
-                                    if (currentlist.get(j).hashid.equals(returnedeventobject.get(i).hashid)) {
-                                        returnedeventobject.remove(i);
-                                    }
-                                }
                         }
 
-                        saveeventtoSQl(returnedeventobject);
-                            loadprogressBar.setIndeterminate(false);
-                            loadprogressBar.setVisibility(View.INVISIBLE);
-                            startActivity(new Intent(MainActivity.this,LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+                        @Override
+                        public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
 
+                            if(returnedShoppingItem.size()!=0){
+                                saveItemtoSQl(returnedShoppingItem);
+                                loadprogressBar.setIndeterminate(false);
+                                loadprogressBar.setVisibility(View.INVISIBLE);
+                                startActivity(new Intent(MainActivity.this,LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+                                eventsareloaded=true;
+                            }else{
+                                showSnackBar();
+                                eventsareloaded=false;
+                                loadprogressBar.setIndeterminate(false);
+                                loadprogressBar.setVisibility(View.INVISIBLE);
+                                startActivity(new Intent(MainActivity.this, LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
 
-                    }else {
+                            }
+                        }
 
-                        saveeventtoSQl(returnedeventobject);
-                            loadprogressBar.setIndeterminate(false);
-                            loadprogressBar.setVisibility(View.INVISIBLE);
-                            startActivity(new Intent(MainActivity.this,LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+                        @Override
+                        public void updated(String reponse) {
 
-                    }
+                        }
+                    });
+
 
                 }else {
-                    showSnackBar();
+                    serverRequests.getItemsInBackgroung(new GetEventsCallbacks() {
+                        @Override
+                        public void done(ArrayList<CalendarCollection> returnedeventobject) {
+
+                        }
+
+                        @Override
+                        public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
+
+                            if(returnedShoppingItem.size()!=0){
+                                saveItemtoSQl(returnedShoppingItem);
+                                loadprogressBar.setIndeterminate(false);
+                                loadprogressBar.setVisibility(View.INVISIBLE);
+                                startActivity(new Intent(MainActivity.this,LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+                                eventsareloaded=true;
+                            }else{
+                                showSnackBar();
+                                eventsareloaded=false;
+                                loadprogressBar.setIndeterminate(false);
+                                loadprogressBar.setVisibility(View.INVISIBLE);
+                                startActivity(new Intent(MainActivity.this, LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+
+                            }
+                        }
+
+                        @Override
+                        public void updated(String reponse) {
+
+                        }
+                    });
+
                 }
+            }
+
+            @Override
+            public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
+
             }
 
             @Override
@@ -135,6 +177,9 @@ public class MainActivity extends AppCompatActivity {
                 jsonObject.put("endingtime",calendarCollections.get(i).endingtime);
                 jsonObject.put("hashid",calendarCollections.get(i).hashid);
                 jsonObject.put("alldayevent",calendarCollections.get(i).alldayevent);
+                jsonObject.put("everymonth",calendarCollections.get(i).everymonth);
+                jsonObject.put("defaulttime",calendarCollections.get(i).creationdatetime);
+
                 Calendar c=new GregorianCalendar();
                 Date dat=c.getTime();
                 //String day= String.valueOf(dat.getDay());
@@ -155,6 +200,39 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    private void saveItemtoSQl(ArrayList<ShoppingItem> items) {
+
+        if(items.size()!=0){
+
+        }
+        for(int i=0;i<items.size();i++){
+            try {
+                JSONObject jsonObject=new JSONObject();
+                jsonObject.put("name",items.get(i).getItemName());
+                jsonObject.put("description",items.get(i).getDetailstoItem());
+                jsonObject.put("price",items.get(i).getPrice());
+                jsonObject.put("specification",items.get(i).getItemSpecification());
+                jsonObject.put("unique_id",items.get(i).getUnique_item_id());
+
+                Calendar c=new GregorianCalendar();
+                Date dat=c.getTime();
+                //String day= String.valueOf(dat.getDay());
+                SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+
+                String date = (String) android.text.format.DateFormat.format("dd-MM-yyyy", dat);
+                incomingNotification=new IncomingNotification(6,0,jsonObject.toString(),date);
+                int incomingNotifiId =  mySQLiteHelper.addIncomingNotification(incomingNotification);
+
+            }catch (Exception e){
+                e.printStackTrace();
+
+            }
+
+
+        }
+
+    }
+
     private void getEvents(ArrayList<IncomingNotification> incomingNotifications){
 
         for (int i=0;i<incomingNotifications.size();i++){
@@ -171,10 +249,11 @@ public class MainActivity extends AppCompatActivity {
                 String endingtime = jo_inside.getString("endingtime");
                 String alldayevent = jo_inside.getString("alldayevent");
                 String eventHash = jo_inside.getString("hashid");
+                String everymonth = jo_inside.getString("everymonth");
+                String creationdatetime = jo_inside.getString("defaulttime");
 
-                CalendarCollection  object =new CalendarCollection(titel,infotext,creator,creationTime,startingtime,endingtime,eventHash,category,alldayevent);
+                CalendarCollection  object =new CalendarCollection(titel,infotext,creator,creationTime,startingtime,endingtime,eventHash,category,alldayevent,everymonth,creationdatetime);
 
-                currentlist.add(object);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -185,7 +264,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void showSnackBar(){
         snackbar = Snackbar
-                .make(coordinatorLayout, "No connection internet detected", Snackbar.LENGTH_SHORT);
+                .make(coordinatorLayout, "No connection internet detected.", Snackbar.LENGTH_SHORT);
         View snackbarView = snackbar.getView();
         snackbarView.setBackgroundColor(getResources().getColor(R.color.colorSnackbar));
         TextView textView = (TextView) snackbarView.findViewById(android.support.design.R.id.snackbar_text);

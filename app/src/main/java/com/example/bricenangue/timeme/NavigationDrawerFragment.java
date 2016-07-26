@@ -1,8 +1,10 @@
 package com.example.bricenangue.timeme;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -19,9 +21,17 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.RotateAnimation;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
+import android.widget.ExpandableListView;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.mikhaellopez.circularimageview.CircularImageView;
+
+import java.util.ArrayList;
 
 /**
  * Created by bricenangue on 27/02/16.
@@ -48,14 +58,22 @@ public class NavigationDrawerFragment extends Fragment {
      * Helper component that ties the action bar to the navigation drawer.
      */
     private ActionBarDrawerToggle mDrawerToggle;
+    private boolean isExpanded = false;
+    private float mCurrentRotation = 360.0f;
 
     private DrawerLayout mDrawerLayout;
-    private ListView mDrawerListView;
+    private ExpandableListView mDrawerListView;
     private View mFragmentContainerView;
 
     private int mCurrentSelectedPosition = 0;
     private boolean mFromSavedInstanceState;
     private boolean mUserLearnedDrawer;
+    private UserLocalStore userLocalStore;
+    int previousGroup;
+    private ArrayList<Category> category_name=new ArrayList<>();
+
+    private ArrayList<ArrayList<SubCategory>> subcategory_name=new ArrayList<>();
+    private ArrayList<Integer> subCatCount = new ArrayList<Integer>();
 
     public NavigationDrawerFragment() {
     }
@@ -64,10 +82,11 @@ public class NavigationDrawerFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        getCatData();
         // Read in the flag indicating whether or not the user has demonstrated awareness of the
         // drawer. See PREF_USER_LEARNED_DRAWER for details.
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        mUserLearnedDrawer = sp.getBoolean(PREF_USER_LEARNED_DRAWER, false);
+        mUserLearnedDrawer = sp.getBoolean(PREF_USER_LEARNED_DRAWER, true);
 
         if (savedInstanceState != null) {
             mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
@@ -88,20 +107,86 @@ public class NavigationDrawerFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        userLocalStore=new UserLocalStore(getContext());
+
+        String path=userLocalStore.getUserPicturePath();
+        String uName =userLocalStore.getLoggedInUser().getfullname();
         View view =  inflater.inflate(
                 R.layout.fragment_navigation_drawer, container, false);
-        mDrawerListView = (ListView)view.findViewById(R.id.navlist);
-        mDrawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+        TextView userName = (TextView) view.findViewById(R.id.username);
+        userName.setText(uName);
+        CircularImageView profilePicture = (CircularImageView) view.findViewById(R.id.avatarfriend);
+        if(path!=null){
+            Bitmap bitmap=userLocalStore.loadImageFromStorage(path);
+            if(bitmap!=null){
+
+                profilePicture.setImageBitmap(bitmap);
+            }
+        }
+        profilePicture.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                selectItem(position);
+            public void onClick(View v) {
+                startActivity(new Intent(getActivity(), OpenUserProfileActivity.class).putExtra("loggedInUser",userLocalStore.getLoggedInUser()));
             }
         });
-        mDrawerListView.setAdapter(new ArrayAdapter<String>(
-                getActivity(),
-                android.R.layout.simple_list_item_activated_1,
-                android.R.id.text1,
-                new  String[]{"My Friends 1","All Users 2","My Friends 3","All Users 4","My Friends 5","All Users 6","My Friends 7"}));
+        mDrawerListView = (ExpandableListView)view.findViewById(R.id.navlist);
+        mDrawerListView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
+            @Override
+            public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
+                ImageView img=(ImageView)parent.getChildAt(groupPosition).findViewById(R.id.collapse_arrow);
+
+                if (parent.isGroupExpanded(groupPosition)) {
+                    parent.collapseGroup(groupPosition);
+
+                } else {
+                    if (groupPosition != previousGroup) {
+                        parent.collapseGroup(previousGroup);
+                    }
+                    previousGroup = groupPosition;
+                    parent.expandGroup(groupPosition);
+                }
+
+                parent.smoothScrollToPosition(groupPosition);
+
+                if(groupPosition==0){
+                    if (isExpanded) {
+                        RotateAnimation anim = new RotateAnimation(mCurrentRotation, mCurrentRotation + 180.0f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+                        mCurrentRotation = (mCurrentRotation + 180.0f) % 360.0f;
+                        anim.setInterpolator(new LinearInterpolator());
+                        anim.setFillAfter(true);
+                        anim.setFillEnabled(true);
+                        anim.setDuration(300);
+                        img.startAnimation(anim);
+                        isExpanded = false;
+                    } else {
+                        RotateAnimation anim = new RotateAnimation(mCurrentRotation, mCurrentRotation - 180.0f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+                        mCurrentRotation = (mCurrentRotation - 180.0f) % 360.0f;
+                        anim.setInterpolator(new LinearInterpolator());
+                        anim.setFillAfter(true);
+                        anim.setFillEnabled(true);
+                        anim.setDuration(300);
+                        img.startAnimation(anim);
+                        isExpanded = true;
+                    }
+                }
+
+
+                selectItem(groupPosition);
+                return true;
+            }
+        });
+        mDrawerListView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
+            @Override
+            public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
+                selectSubItem(childPosition);
+                return false;
+            }
+        });
+
+        mDrawerListView.setAdapter(new ExpandableAdapter(getActivity(),category_name,subcategory_name,subCatCount));
+
+      //  mDrawerListView.setAdapter(new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_activated_1, android.R.id.text1, new  String[]{"Overview","All Events","MY Events","Business meetings","Birthdays","Shopping","Work Plans"}));
         mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
         mDrawerListView.setFitsSystemWindows(true);
         return view;
@@ -128,7 +213,7 @@ public class NavigationDrawerFragment extends Fragment {
         // Set the status bar color.
         // This only takes effect on Lollipop, or when using translucentStatusBar
         // on KitKat.
-        mDrawerLayout.setStatusBarBackgroundColor(ContextCompat.getColor(getActivity(), R.color.colorPrimaryDark));
+        mDrawerLayout.setStatusBarBackgroundColor(ContextCompat.getColor(getActivity(), R.color.primary_dark));
 
         ActionBar actionBar = getActionBar();
         if (actionBar != null) {
@@ -197,14 +282,24 @@ public class NavigationDrawerFragment extends Fragment {
         if (mDrawerListView != null) {
             mDrawerListView.setItemChecked(position, true);
         }
-        if (mDrawerLayout != null) {
-            mDrawerLayout.closeDrawer(mFragmentContainerView);
+        if (mDrawerLayout != null && position!=0) {
+
+                mDrawerLayout.closeDrawer(mFragmentContainerView);
         }
         if (mCallbacks != null) {
             mCallbacks.onNavigationDrawerItemSelected(position);
         }
     }
 
+    private void selectSubItem(int position) {
+        mCurrentSelectedPosition = position;
+        if (mDrawerLayout != null) {
+            mDrawerLayout.closeDrawer(mFragmentContainerView);
+        }
+        if (mCallbacks != null) {
+            mCallbacks.onNavigationDrawersubItemSelected(position);
+        }
+    }
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
@@ -278,5 +373,70 @@ public class NavigationDrawerFragment extends Fragment {
          * Called when an item in the navigation drawer is selected.
          */
         void onNavigationDrawerItemSelected(int position);
+
+        //call when a subintem is selected
+        void onNavigationDrawersubItemSelected(int position);
     }
+
+
+
+    public void getCatData()
+    {
+        category_name.clear();
+        Category categoryDetails = new Category();
+
+        categoryDetails.setCatCode(10);
+        categoryDetails.setCatName("CATEGORIES");
+
+        category_name.add(categoryDetails);
+
+        categoryDetails = new Category();
+        categoryDetails.setCatCode(20);
+        categoryDetails.setCatName("OVERVIEW");
+        category_name.add(categoryDetails);
+
+        categoryDetails = new Category();
+        categoryDetails.setCatCode(30);
+        categoryDetails.setCatName("PREFERENCES");
+        category_name.add(categoryDetails);
+
+        categoryDetails = new Category();
+        categoryDetails.setCatCode(40);
+        categoryDetails.setCatName("ABOUT");
+        category_name.add(categoryDetails);
+
+
+
+        //----Populate Sub Category Codes
+        subcategory_name.clear();
+
+        ArrayList<SubCategory> subCategoryMatches = new ArrayList<SubCategory>();
+
+        SubCategory subCategoryMatch = new SubCategory();
+
+        subCategoryMatch.setSubCatName("Overview");
+        subCategoryMatches.add(subCategoryMatch);
+
+        subCategoryMatch = new SubCategory();
+        subCategoryMatch.setSubCatName("My Events");
+        subCategoryMatches.add(subCategoryMatch);
+
+        subCategoryMatch = new SubCategory();
+        subCategoryMatch.setSubCatName("My Finance");
+        subCategoryMatches.add(subCategoryMatch);
+
+        subCategoryMatch = new SubCategory();
+        subCategoryMatch.setSubCatName("My Grocery");
+        subCategoryMatches.add(subCategoryMatch);
+
+        subcategory_name.add(subCategoryMatches);
+        subCatCount.add(subCategoryMatches.size());
+        //---
+
+
+
+
+    }
+
+
 }

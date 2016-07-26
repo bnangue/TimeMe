@@ -53,7 +53,7 @@ public class DialogFragmentDatePicker extends DialogFragment implements DatePick
             int year = c.get(Calendar.YEAR);
             int month = c.get(Calendar.MONTH);
             int day = c.get(Calendar.DAY_OF_MONTH);
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
        ddte=formatter.format(c.getTimeInMillis());
 
 
@@ -67,7 +67,7 @@ public class DialogFragmentDatePicker extends DialogFragment implements DatePick
             cal.set(Calendar.YEAR,year);
             cal.set(Calendar.MONTH,month);
             cal.set(Calendar.DAY_OF_MONTH,day);
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+            SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
             ddte=formatter.format(cal.getTimeInMillis());
             dateGet.dateSet(ddte,boli);
            // dateGet.dateSet(year,month,day);

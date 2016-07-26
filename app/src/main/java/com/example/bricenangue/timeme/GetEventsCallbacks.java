@@ -7,6 +7,7 @@ import java.util.ArrayList;
  */
 interface GetEventsCallbacks {
     public abstract void done(ArrayList<CalendarCollection> returnedeventobject);
+    public abstract void itemslis(ArrayList<ShoppingItem> returnedShoppingItem);
     void updated(String reponse);
 
 }

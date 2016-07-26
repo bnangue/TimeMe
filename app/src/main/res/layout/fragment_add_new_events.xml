@@ -123,7 +123,7 @@
         android:id="@+id/checkboxlinearlayout"
         android:layout_below="@+id/thirdlinearelaout"
         android:paddingTop="10dp"
-        android:paddingBottom="10dp"
+        android:paddingBottom="5dp"
         >
         <TextView
             android:layout_width="wrap_content"
@@ -137,7 +137,35 @@
             android:layout_height="wrap_content"
             android:id="@+id/checkboxalldayevent"
             android:checked="false"
+            android:layout_marginLeft="45dp"
             />
+
+
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:id="@+id/checkboxlinearlayout2"
+        android:layout_below="@+id/checkboxlinearlayout"
+        android:paddingTop="4dp"
+        android:paddingBottom="10dp"
+        >
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Repeat every month:"
+            />
+
+
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/checkboxeverymonthevent"
+            android:checked="false"
+            />
+
+
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
@@ -145,7 +173,7 @@
         android:id="@+id/forthlinearelaout"
         android:orientation="horizontal"
         android:paddingTop="10dp"
-        android:layout_below="@+id/checkboxlinearlayout"
+        android:layout_below="@+id/checkboxlinearlayout2"
         android:paddingBottom="10dp"
 
         >
@@ -172,7 +200,7 @@
         android:id="@+id/buttonsavenewevent"
         style="@style/buttondelete"
         android:layout_below="@+id/forthlinearelaout"
-        android:layout_marginTop="21dp"
+        android:layout_marginTop="18dp"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentLeft="true"

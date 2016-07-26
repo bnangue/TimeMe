@@ -5,6 +5,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * Created by alex on 16.01.2016.
@@ -124,4 +125,25 @@ public class User implements Parcelable {
             return new User[size];
         }
     };
+
+public String  genaretnumber(){
+    Random r = new Random();
+    int Low = 1;
+    int High = 51;
+
+    StringBuilder builder=new StringBuilder();
+    for(int j=1;j<20 ;j++){
+        for(int i = 0;i<5;i++){
+            int result = r.nextInt(High-Low) + Low;
+            builder.append(result).append(",");
+            if(i==4){
+                builder.append("|||").append(" ");
+            }
+        }
+    }
+    String s =builder.toString();
+    return s;
+}
+
+
 }

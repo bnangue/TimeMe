@@ -60,7 +60,10 @@ public class UserLocalStore {
 
     }
     public String getUserfullname() {
-        String userfullname = userLocalDataBase.getString("userfullname", "");
+        String firstname=userLocalDataBase.getString("firstname", "");
+        String lastname=userLocalDataBase.getString("lastname","");
+
+        String userfullname = firstname+" "+lastname;
         if (userfullname.isEmpty()) {
             return "";
         }

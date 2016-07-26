@@ -16,19 +16,20 @@
         android:layout_height="wrap_content"
         android:text="New Button"
         android:id="@+id/buttoncountaddedEventactivity"
-        android:textColor="@color/colorPrimary"
+        android:textColor="@color/primary"
         android:layout_alignParentTop="true"
         android:layout_alignRight="@+id/separator"
         android:layout_alignEnd="@+id/separator"
         android:layout_alignLeft="@+id/separator"
         android:layout_alignStart="@+id/separator"
-        android:clickable="false"/>
+        android:clickable="true"
+        style="@style/Widget.AppCompat.Button.Borderless"/>
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/textcategories"
         android:text="Categories"
-        android:textColor="@color/colorPrimaryDark"
+        android:textColor="@color/primary_dark"
         android:layout_centerHorizontal="true"
         android:layout_below="@+id/separator"/>
 
@@ -37,7 +38,7 @@
         android:layout_height="1dp"
         android:id="@+id/separator"
         android:orientation="horizontal"
-        android:background="@color/colorAccent"
+        android:background="@color/accent"
         android:layout_below="@+id/buttoncountaddedEventactivity"
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"

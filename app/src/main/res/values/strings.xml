@@ -28,4 +28,75 @@
     <string name="eventDescription">Description</string>
     <string name="buttonsave">Save</string>
     <string name="title">Title</string>
+
+    //test
+    <string name="action_today">Today</string>
+    <string name="action_day_view">Day view</string>
+    <string name="action_three_day_view">3 day view</string>
+    <string name="action_week_view">Week view</string>
+    <string name="title_activity_basic">Basic Example</string>
+    <string name="title_activity_asynchronous">Asynchronous Events</string>
+    <string name="async_error">Could not download events from the internet</string>
+
+    //description
+    <string name="createdbyheader">Created by: </string>
+    <string name="creationwhenheader">Date of creation: </string>
+    <string name="creatorname">Cretor full Name</string>
+    <string name="creationtime">2016-27-06 at 23:15</string>
+    <string name="periodeheader">2016-27-06  -  2016-28-06 </string>
+    <string name="periodde">Asynchronous Events</string>
+    <string name="descriptionheader">Description: </string>
+    <string name="descriptiontext">This is a sample text of description which might be quite long and sometimes very short</string>
+    <string name="noteexpandheader">Note: </string>
+    <string name="noteexpand">This is a sample text note</string>
+    <string name="grocery_fragment_recently_created">recently created</string>
+    <string name="grocery_fragment_balance">Balance :</string>
+    <string name="grocery_fragment_list_done">done</string>
+    <string name="text_grocery_fragment_add_recently_button">create a new shopping List</string>
+    <string name="text_create_list_add_items_button">Add shopping itmes to the list</string>
+    <string name="text_create_list_use_on_date">Use this grocery list on :</string>
+    <string name="text_create_list_List_empty">The list is currently empty</string>
+    <string name="text_create_list_List_not_empty">Your shopping list</string>
+    <string name="text_create_list_List_not_empty_more_than_one">Your shopping lists</string>
+    <string name="text_add_item_to_list_add_items_button">Create a new item</string>
+    <string name="text_add_item_to_list_createnewItem_button">Create a new shopping item</string>
+    <string name="text_add_itme_to_list_DataBase_empty">No item in the database</string>
+    <string name="text_add_itme_to_list_DataBase_not_empty">Add some item to the list</string>
+    <string name="editText_create_new_item_name">Item Name</string>
+    <string name="editText_create_new_item_price">Item Price</string>
+    <string name="editText_create_new_item_description">Item Description</string>
+    <string name="text_new_item_activity_specification">specification</string>
+    <string name="text_radiobtn_create_new_item_none">None</string>
+    <string name="text_radiobtn_create_new_item_by_number">Buy by number</string>
+    <string name="text_radiobtn_create_new_item_by_kg">Buy by Kg</string>
+    <string name="btn_grocery_create_new_item_cancle">Cancel</string>
+    <string name="btn_grocery_fragment_create_new_item_create">Create</string>
+    <string name="error_field_required_price">The price is missing</string>
+    <string name="error_field_required_name">The name is missing</string>
+    <string name="null_item_total_price">0,00€</string>
+    <string name="null_item_selected">0</string>
+    <string name="grocery_add_item_to_list_to_pay_text">To spend :</string>
+
+    <string name="grocery_list_status__not_done_text">not done</string>
+    <string name="grocery_list_status_done_text">done</string>
+    <string name="grocery_list_subtext_name_text">Grocery list from </string>
+    <string name="activity_details_shopping_list_text_sort_by">Sort by :</string>
+    <string name="action_shared_shopping_List">Share</string>
+    <string name="action_delete_shopping_List">Delete</string>
+    <string name="grocery_add_item_to_list_already_spent_text">already spent :</string>
+
+
+    //months
+    <string name="january">January</string>
+    <string name="february">February</string>
+    <string name="march">March</string>
+    <string name="april">April</string>
+    <string name="may">May</string>
+    <string name="june">June</string>
+    <string name="july">July</string>
+    <string name="august">August</string>
+    <string name="septmeber">September</string>
+    <string name="october">October</string>
+    <string name="november">November</string>
+    <string name="december">December</string>
 </resources>

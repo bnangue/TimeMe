@@ -27,7 +27,23 @@ public class ViewPagerAdapter extends FragmentStatePagerAdapter {
     @Override
     public Fragment getItem(int position) {
 
-         return  fragmentList.get(position);
+        Fragment frag=null;
+        switch (position){
+            case 0:
+                frag=new FragmentOverview();
+                break;
+            case 1:
+                frag=new FragmentMyEvent();
+                break;
+            case 2:
+                frag=new FragmentCategoryFinance();
+                break;
+            case 3:
+                frag=new FragmentCategoryShopping();
+                break;
+        }
+        return frag;
+       // return  fragmentList.get(position);
 
     }
 
@@ -35,14 +51,33 @@ public class ViewPagerAdapter extends FragmentStatePagerAdapter {
 
     @Override
     public CharSequence getPageTitle(int position) {
-        return fragmentTitleList.get(position);
+        String title=" ";
+        switch (position){
+            case 0:
+                title=NewCalendarActivty.FRAGMENTOVERVIEW;
+                break;
+            case 1:
+                title=NewCalendarActivty.FRAGMENTEVENTS;
+                break;
+            case 2:
+                title=NewCalendarActivty.FRAGMENTFINANCE;
+                break;
+            case 3:
+                title=NewCalendarActivty.FRAGMENTSHOPPING;
+                break;
+        }
+
+        return title;
+
+        //return fragmentTitleList.get(position);
     }
 
     // This method return the Number of tabs for the tabs Strip
 
     @Override
     public int getCount() {
-        return fragmentList.size();
+        return 4;
+        //return fragmentList.size();
     }
 
     public void addFragment(Fragment fragment, String title) {
@@ -50,5 +85,9 @@ public class ViewPagerAdapter extends FragmentStatePagerAdapter {
         fragmentTitleList.add(title);
     }
 
+    @Override
+    public int getItemPosition(Object object) {
+        return super.getItemPosition(object);
+    }
 }
 

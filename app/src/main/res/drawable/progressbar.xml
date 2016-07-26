@@ -9,10 +9,10 @@
         <size android:height="50dp"
             android:width="50dp"/>
         <gradient
-            android:centerColor="@color/colorPrimaryDark"
+            android:centerColor="@color/primary_dark"
             android:centerY="0.50"
             android:endColor="@color/white"
-            android:startColor="@color/colorPrimaryDark"
+            android:startColor="@color/primary_dark"
             android:type="sweep"
             android:useLevel="false" />
     </shape>

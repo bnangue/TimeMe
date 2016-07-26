@@ -27,60 +27,114 @@
             android:src="@mipmap/ic_launcherclock"
             />
 
-        <EditText
+        <android.support.design.widget.TextInputLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:inputType="textEmailAddress"
-            android:ems="10"
-            android:hint="@string/firstnamestring"
-            android:id="@+id/editTextregisterfirstname"
+            android:id="@+id/editTextregisterfirstnamelayout"
             android:layout_marginTop="10dp"
-            android:layout_weight="1"
             android:layout_below="@+id/imageViewloginlogo"
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
             android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true" />
+            android:layout_alignParentStart="true" >
+            <EditText
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName"
+                android:ems="10"
+                android:hint="@string/firstnamestring"
+                android:id="@+id/editTextregisterfirstname"
+                />
+        </android.support.design.widget.TextInputLayout>
 
-        <EditText
+        <android.support.design.widget.TextInputLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:inputType="textPassword"
-            android:ems="10"
-            android:id="@+id/editTextregisterlastname"
-            android:hint="@string/lastnamestring"
-            android:layout_weight="1"
-            android:layout_below="@+id/editTextregisterfirstname"
+            android:layout_below="@+id/editTextregisterfirstnamelayout"
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
             android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true" />
-        <EditText
+            android:layout_alignParentStart="true"
+            android:id="@+id/editTextregisterlastnamelayout">
+            <EditText
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName"
+                android:ems="10"
+                android:id="@+id/editTextregisterlastname"
+                android:hint="@string/lastnamestring"
+                android:layout_weight="1"
+                />
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:inputType="textEmailAddress"
-            android:ems="10"
-            android:hint="@string/emailloggin"
-            android:id="@+id/editTextregemail"
-            android:layout_below="@+id/editTextregisterlastname"
+            android:layout_below="@+id/editTextregisterlastnamelayout"
             android:layout_marginTop="10dp"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
             android:layout_alignParentRight="true"
-            android:layout_alignParentEnd="true" />
+            android:layout_alignParentEnd="true"
+            android:id="@+id/editTextregemaillayout"
+            >
 
-        <EditText
+            <EditText
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:inputType="textEmailAddress"
+                android:ems="10"
+                android:hint="@string/emailloggin"
+                android:id="@+id/editTextregemail"
+                />
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:inputType="textPassword"
-            android:ems="10"
-            android:id="@+id/editTextregpassword"
-            android:hint="@string/passwordlogin"
-            android:layout_below="@+id/editTextregemail"
+            android:layout_below="@+id/editTextregemaillayout"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
-            android:layout_alignRight="@+id/editTextregemail"
-            android:layout_alignEnd="@+id/editTextregemail" />
+            android:layout_alignRight="@+id/editTextregemaillayout"
+            android:layout_alignEnd="@+id/editTextregemaillayout"
+            android:id="@+id/editTextregpasswordlayout"
+            >
+
+
+            <EditText
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword"
+                android:ems="10"
+                android:id="@+id/editTextregpassword"
+                android:hint="@string/passwordlogin"
+                />
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/editTextregconfirmpasswordlayout"
+            android:layout_below="@+id/editTextregpasswordlayout"
+            android:layout_alignRight="@+id/editTextregpasswordlayout"
+            android:layout_alignEnd="@+id/editTextregpasswordlayout"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true">
+            <EditText
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword"
+                android:ems="10"
+                android:hint="Confirm Password"
+                android:id="@+id/editTextregconfirmpassword"
+
+                />
+        </android.support.design.widget.TextInputLayout>
+
+
+
+
+
 
         <Button
             android:layout_width="wrap_content"
@@ -90,18 +144,18 @@
             style="@style/buttondelete"
             android:layout_marginTop="80dp"
             android:onClick="Onregisterclicked"
-            android:layout_below="@+id/editTextregpassword"
+            android:layout_below="@+id/editTextregpasswordlayout"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
-            android:layout_alignRight="@+id/editTextregconfirmpassword"
-            android:layout_alignEnd="@+id/editTextregconfirmpassword" />
+            android:layout_alignRight="@+id/editTextregconfirmpasswordlayout"
+            android:layout_alignEnd="@+id/editTextregconfirmpasswordlayout" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:text="or sign in"
-            android:textColor="@color/colorPrimaryDark"
+            android:textColor="@color/primary_dark"
             android:id="@+id/textViewgotologgin"
             android:layout_marginBottom="37dp"
             android:layout_alignParentBottom="true"
@@ -110,18 +164,7 @@
             android:layout_toRightOf="@+id/imageViewloginlogo"
             android:layout_toEndOf="@+id/imageViewloginlogo" />
 
-        <EditText
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:inputType="textPassword"
-            android:ems="10"
-            android:hint="Confirm Password"
-            android:id="@+id/editTextregconfirmpassword"
-            android:layout_below="@+id/editTextregpassword"
-            android:layout_alignRight="@+id/editTextregpassword"
-            android:layout_alignEnd="@+id/editTextregpassword"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true" />
+
 
     </RelativeLayout>
 

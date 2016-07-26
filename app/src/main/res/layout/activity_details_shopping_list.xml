@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+
+    tools:context="com.example.bricenangue.timeme.DetailsShoppingListActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+       android:id="@+id/linearLayout_activity_details_shopping_list"
+        android:paddingRight="16dp"
+        android:paddingLeft="@dimen/activity_horizontal_margin">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/activity_details_shopping_list_text_sort_by"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="1"
+            android:gravity="end"/>
+
+        <Spinner
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/spinner"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="3"
+           />
+    </LinearLayout>
+
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/listView_activity_details_shoppping_list"
+        android:layout_below="@+id/linearLayout_activity_details_shopping_list"
+        android:layout_above="@+id/linearLayout_separator_activity_details_shopping_list"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:orientation="horizontal"
+        android:background="@color/primary_light"
+        android:id="@+id/linearLayout_separator_activity_details_shopping_list"
+        android:layout_above="@+id/relative_already_spent_activity_details_shopping_list"/>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:id="@+id/relative_already_spent_activity_details_shopping_list"
+
+        >
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_margin="10dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/grocery_add_item_to_list_already_spent_text"
+                android:layout_weight="1"/>
+            <TextView
+                android:id="@+id/grocery_fragment_balance_amount_activity_details_shopping_list"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/null_item_total_price"
+                android:textColor="@color/grey"
+                android:gravity="end"
+                android:layout_weight="8"/>
+        </LinearLayout>
+       </RelativeLayout>
+</RelativeLayout>

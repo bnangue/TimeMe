@@ -93,7 +93,7 @@
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="Change password"
-        android:textColor="@color/colorPrimaryDark"
+        android:textColor="@color/primary_dark"
         android:textStyle="italic"
         android:id="@+id/textViewchanpassword"
         android:layout_below="@+id/linearLayout"

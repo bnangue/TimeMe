@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#6c078964</color>
-    <color name="colorPrimaryDark">#0e8773</color>
-    <color name="colorAccent">#0a5135</color>
+
     <color name="colorSnackbar">#f2069471</color>
+
+    <color name="primary">#4CAF50</color>
+    <color name="primary_dark">#388E3C</color>
+    <color name="primary_light">#C8E6C9</color>
+    <color name="accent">#8BC34A</color>
+    <color name="primary_text">#212121</color>
+    <color name="secondary_text">#727272</color>
+    <color name="icons">#FFFFFF</color>
+    <color name="divider">#B6B6B6</color>
 
     <color name="warning_color">#f4511e</color>
     <color name="hint_color">#42000000</color>
@@ -14,6 +21,22 @@
     <color name="colorcalenderEvent">#190ad299</color>
     <color name="tabsScrollColor">#cff5f6f7</color>
 
+    <color name="normal">#de7a7a</color>
+    <color name="business">#716f6f</color>
+    <color name="grocery">#a8eda406</color>
+    <color name="birthdays">#cf589de2</color>
+    <color name="workPlans">#87410d5b</color>
+
+    <color name="event_color_01">#59dbe0</color>
+    <color name="event_color_02">#f57f68</color>
+    <color name="event_color_03">#87d288</color>
+    <color name="event_color_04">#f8b552</color>
+    <color name="event_color_05">#52f858</color>
+    <color name="toolbar">#efefef</color>
+    <color name="toolbar_text">#8f000000</color>
+    <color name="create_new_ShoppingList">#86b6ea</color>
+    <color name="black">#000</color>
+    <color name="grey">#b1afaf</color>
 
 
 </resources>

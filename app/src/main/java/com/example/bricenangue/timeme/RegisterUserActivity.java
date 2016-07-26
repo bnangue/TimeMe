@@ -60,7 +60,7 @@ public class RegisterUserActivity extends AppCompatActivity implements TextView.
 
         }else if(TextUtils.isEmpty(confirmpasswordstr)){
             confirmpassworded.setError("this field cannot be empty");
-        }else if(!TextUtils.isEmpty(emailstr) && !TextUtils.isEmpty(emailstr) && !TextUtils.isEmpty(emailstr)){
+        }else if(!TextUtils.isEmpty(emailstr) && !TextUtils.isEmpty(passwordstr) && !TextUtils.isEmpty(confirmpasswordstr)){
             if(passwordstr.equals(confirmpasswordstr)){
                 int passHash=passwordstr.hashCode();
                 User usertoRegister=new User(emailstr,String.valueOf(passHash));

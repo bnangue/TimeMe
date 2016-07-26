@@ -2,7 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.bricenangue.timeme">
 
-    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -28,6 +27,7 @@
         android:protectionLevel="signature" />
 
     <uses-permission android:name="com.bricefamily.alex.time_tracker.permission.C2D_MESSAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -52,9 +52,21 @@
         <activity
             android:name=".NewCalendarActivty"
             android:theme="@style/MYAppTheme" />
-        <activity android:name=".AddNewEventActivity"></activity>
-
-        <activity android:name=".AddNewEventFragment"></activity>
+        <activity android:name=".AddNewEventActivity" />
+        <activity android:name=".AddNewEventFragment" />
+        <activity
+            android:name=".BaseActivity"
+            android:parentActivityName=".NewCalendarActivty">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".NewCalendarActivty" />
+        </activity>
+        <activity android:name=".BasicActivity" />
+        <activity android:name=".AsynchronousActivity" />
+        <activity android:name=".CreateNewShoppingListActivity" />
+        <activity android:name=".AddItemToListActivity" />
+        <activity android:name=".CreatANewItemActivity" />
+        <activity android:name=".DetailsShoppingListActivity"></activity>
     </application>
 
 </manifest>

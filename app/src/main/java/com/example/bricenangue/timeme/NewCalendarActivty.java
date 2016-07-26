@@ -1,32 +1,23 @@
 package com.example.bricenangue.timeme;
 
-import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.view.PagerAdapter;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
-import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
@@ -39,25 +30,31 @@ import com.github.sundeepk.compactcalendarview.domain.CalendarDayEvent;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
 /**
  * Created by bricenangue on 27/02/16.
  */
-public class NewCalendarActivty extends ActionBarActivity implements NavigationDrawerFragment.NavigationDrawerCallbacks, View.OnClickListener,FragmentCategoryShopping.OnFragmentInteractionListener {
+public class NewCalendarActivty extends ActionBarActivity implements NavigationDrawerFragment.NavigationDrawerCallbacks, View.OnClickListener,
+        FragmentCategoryShopping.OnFragmentInteractionListener,DialogLogoutFragment.YesNoListenerDeleteAccount,OnCalendarEventsChanged{
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
 
+
+
+
     ViewPager viewPager;
     private NavigationDrawerFragment mNavigationDrawerFragment;
+    public final static String FRAGMENTOVERVIEW="Overview";
+    public final static String FRAGMENTEVENTS="My Events";
+    public final static String FRAGMENTFINANCE="My Finance";
+    public final static String FRAGMENTSHOPPING="My Grocery";
 
     private AppBarLayout mAppBarLayout;
 
@@ -66,14 +63,19 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
     private CompactCalendarView mCompactCalendarView;
 
     private boolean isExpanded = false;
+    public static boolean eventHaschanged=false;
     private float mCurrentRotation = 360.0f;
     private String datestr;
     private FloatingActionButton fab;
     private ListView lv_android;
     private AndroidListAdapter list_adapter;
     String d;
-    ArrayList<CalendarCollection> allnewEvents=new ArrayList<>();
+   private ArrayList<CalendarCollection> allnewEvents=new ArrayList<>();
+    ArrayList<CalendarCollection> arrayListcollections=new ArrayList<>();
     private MySQLiteHelper mySQLiteHelper;
+    private UserLocalStore userLocalStore;
+    public static ArrayList<CalendarCollection> calendarCollectionArrayList;
+    public FragmentCommunicator fragmentCommunicator;
 
 
 
@@ -81,6 +83,7 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
      */
     private CharSequence mTitle;
+    private int pagePosition;
 
 
     @Override
@@ -89,7 +92,10 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
         setContentView(R.layout.time_sheet_act_test);
 
         mySQLiteHelper=new MySQLiteHelper(this);
-        CalendarCollection.date_collection_arr=new ArrayList<>();
+        userLocalStore=new UserLocalStore(this);
+
+
+
         Bundle extras=getIntent().getExtras();
         if(extras!=null){
             if(extras.containsKey("events")){
@@ -98,7 +104,15 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
 
             }
         }
-       getEvents(mySQLiteHelper.getAllIncomingNotification());
+
+
+
+        calendarCollectionArrayList=new ArrayList<>();
+        ArrayList<IncomingNotification> arrayList=new ArrayList<>();
+        arrayList=mySQLiteHelper.getAllIncomingNotification();
+
+        getEvents(arrayList);
+
 
         mNavigationDrawerFragment = (NavigationDrawerFragment)
                 getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
@@ -106,7 +120,6 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.ttoolbar);
         setSupportActionBar(toolbar);
-        initViewPagerAndTabs();
 
         fab=(FloatingActionButton)findViewById(R.id.fab);
         fab.setOnClickListener(this);
@@ -148,18 +161,18 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
 
             }
         }
-       if(CalendarCollection.date_collection_arr.size()!=0){
-            for (int i=0; i<CalendarCollection.date_collection_arr.size();i++){
+        if(arrayListcollections.size()!=0){
+            for (int i=0; i<arrayListcollections.size();i++){
 
-        setEventinCalendar(CalendarCollection.date_collection_arr.get(i));
+                setEventinCalendar(arrayListcollections.get(i));
 
 
-           }
+            }
 
         }
 
 
-
+        initViewPagerAndTabs();
         // Set current date to today
         datestr=setCurrentDate(new Date());
         d =setCurrentDate(new Date());
@@ -194,37 +207,100 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
                 }
             }
         });
+
+
     }
+
 
 
     private void initViewPagerAndTabs() {
 
         viewPager = (ViewPager) findViewById(R.id.viewPager);
+        viewPager.setOffscreenPageLimit(1);
+        SlidingTabLayout tabLayout = (SlidingTabLayout) findViewById(R.id.tabLayout);
 
-        ViewPagerAdapter pagerAdapter=new ViewPagerAdapter(getSupportFragmentManager());
+        final ViewPagerAdapter pagerAdapter=new ViewPagerAdapter(getSupportFragmentManager());
 
-        pagerAdapter.addFragment(new FragmentAllEvents(),"All Events");
-        pagerAdapter.addFragment(new FragmentMyEvent(),"MY Events");
-        pagerAdapter.addFragment(new FragmentCategoryBusiness(),"Business meetings");
-        pagerAdapter.addFragment(new FragmentCategoryBirthdays(),"Birthdays");
-        pagerAdapter.addFragment(new FragmentCategoryShopping(),"Shopping");
-        pagerAdapter.addFragment(new FragmentCategoryWorkPlan(),"Work Plans");
+        pagerAdapter.addFragment(new FragmentOverview(),FRAGMENTOVERVIEW);
+        pagerAdapter.addFragment(new FragmentMyEvent(),FRAGMENTEVENTS);
+        pagerAdapter.addFragment(new FragmentCategoryFinance(),FRAGMENTFINANCE);
+        pagerAdapter.addFragment(new FragmentCategoryShopping(),FRAGMENTSHOPPING);
 
         viewPager.setAdapter(pagerAdapter);
 
-        SlidingTabLayout tabLayout = (SlidingTabLayout) findViewById(R.id.tabLayout);
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            int currentposition =0;
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+
+
+                if(position==3){
+                    fab.setVisibility(View.GONE);
+                }else {
+                    fab.setVisibility(View.VISIBLE);
+                }
+
+
+
+
+                ArrayList<IncomingNotification> arrayList=new ArrayList<>();
+                arrayList=mySQLiteHelper.getAllIncomingNotification();
+
+                if(fragmentCommunicator != null)
+                    fragmentCommunicator.passDataToFragment(getCalendarEvents(arrayList));
+
+                //Toast.makeText(getApplicationContext(),"this "+ String.valueOf(getCalendarEvents(arrayList).size()),Toast.LENGTH_SHORT).show();
+               currentposition=position;
+
+
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
+
+
         tabLayout.setDistributeEvenly(true); // To make the Tabs Fixed set this true, This makes the tabs Space Evenly in Available width
 
         // Setting Custom Color for the Scroll bar indicator of the Tab View
         tabLayout.setCustomTabColorizer(new SlidingTabLayout.TabColorizer() {
             @Override
             public int getIndicatorColor(int position) {
-                return getResources().getColor(R.color.tabsScrollColor);
+                switch (position){
+
+                    case 0:
+                        return getResources().getColor(R.color.normal);
+                    case 1:
+                        return getResources().getColor(R.color.event_color_01);
+
+                    case 2:
+                        return getResources().getColor(R.color.business);
+
+                    case 3:
+                        return getResources().getColor(R.color.grocery);
+                    default:return getResources().getColor(R.color.tabsScrollColor);
+
+                }
+
             }
         });
         tabLayout.setViewPager(viewPager);
     }
 
+    @Override
+    public void eventsCahnged(boolean haschanged) {
+    }
+
+    public interface YourFragmentInterface {
+        void fragmentBecameVisible();
+    }
 
     public String setCurrentDate(Date date) {
         setSubtitle(dateFormat.format(date));
@@ -256,12 +332,52 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
         // update the main content by replacing fragments
 
 
-       // viewPager.setCurrentItem(2,true);
+        switch (position){
+            case 0:
+
+                break;
+            case 1:
+                startActivity(new Intent(NewCalendarActivty.this, BaseActivity.class));
+                break;
+            case 2:
+                startActivity(new Intent(NewCalendarActivty.this, SettingsActivity.class));
+                break;
+            case 3:
+                break;
+
+        }
 
 
     }
+
+    @Override
+    public void onNavigationDrawersubItemSelected(int position) {
+        switch (position){
+            case 0:
+                viewPager.setCurrentItem(0,true);
+                break;
+            case 1:
+                viewPager.setCurrentItem(1,true);
+                break;
+            case 2:
+                viewPager.setCurrentItem(2,true);
+                break;
+            case 3:
+                viewPager.setCurrentItem(3, true);
+                break;
+
+            default:viewPager.setCurrentItem(0,true);
+
+        }
+
+    }
+
+
+
+
     private void getEvents(ArrayList<IncomingNotification> incomingNotifications){
 
+        CalendarCollection.date_collection_arr=new ArrayList<>();
         for (int i=0;i<incomingNotifications.size();i++){
             JSONObject jo_inside = null;
             try {
@@ -276,9 +392,11 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
                 String endingtime = jo_inside.getString("endingtime");
                 String alldayevent = jo_inside.getString("alldayevent");
                 String eventHash = jo_inside.getString("hashid");
+                String everymonth = jo_inside.getString("everymonth");
+                String creationdatetime = jo_inside.getString("defaulttime");
 
-                CalendarCollection  object =new CalendarCollection(titel,infotext,creator,creationTime,startingtime,endingtime,eventHash,category,alldayevent);
-
+                CalendarCollection  object =new CalendarCollection(titel,infotext,creator,creationTime,startingtime,endingtime,eventHash,category,alldayevent,everymonth,creationdatetime);
+                object.incomingnotifictionid = incomingNotifications.get(i).id;
                 CalendarCollection.date_collection_arr.add(object);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -288,6 +406,37 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
         }
     }
 
+    private ArrayList<CalendarCollection> getCalendarEvents(ArrayList<IncomingNotification> incomingNotifications){
+
+        ArrayList<CalendarCollection> a =new ArrayList<>();
+        for (int i=0;i<incomingNotifications.size();i++){
+            JSONObject jo_inside = null;
+            try {
+                jo_inside = new JSONObject(incomingNotifications.get(i).body);
+
+                String titel = jo_inside.getString("title");
+                String infotext = jo_inside.getString("description");
+                String creator = jo_inside.getString("creator");
+                String creationTime = jo_inside.getString("datetime");
+                String category = jo_inside.getString("category");
+                String startingtime = jo_inside.getString("startingtime");
+                String endingtime = jo_inside.getString("endingtime");
+                String alldayevent = jo_inside.getString("alldayevent");
+                String eventHash = jo_inside.getString("hashid");
+                String everymonth = jo_inside.getString("everymonth");
+                String creationdatetime = jo_inside.getString("defaulttime");
+
+                CalendarCollection  object =new CalendarCollection(titel,infotext,creator,creationTime,startingtime,endingtime,eventHash,category,alldayevent,everymonth,creationdatetime);
+                object.incomingnotifictionid = incomingNotifications.get(i).id;
+                a.add(object);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+
+        }
+        return a;
+    }
 
     void setEventinCalendar(CalendarCollection calendarCollection){
 
@@ -305,7 +454,28 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
         try {
             oldDate = formatter.parse(oldTime);
             long oldMillis = oldDate.getTime();
-            mCompactCalendarView.addEvent(new CalendarDayEvent(oldMillis,getResources().getColor(R.color.warning_color)),false);
+            switch (calendarCollection.category){
+                case "Normal":
+                    mCompactCalendarView.addEvent(new CalendarDayEvent(oldMillis,getResources().getColor(R.color.normal)),false);
+
+                    break;
+                case "Business":
+                    mCompactCalendarView.addEvent(new CalendarDayEvent(oldMillis,getResources().getColor(R.color.business)),false);
+
+                    break;
+                case "Birthdays":
+                    mCompactCalendarView.addEvent(new CalendarDayEvent(oldMillis,getResources().getColor(R.color.birthdays)),false);
+
+                    break;
+                case "Grocery":
+                    mCompactCalendarView.addEvent(new CalendarDayEvent(oldMillis,getResources().getColor(R.color.grocery)),false);
+
+                    break;
+                case "Work Plans":
+                    mCompactCalendarView.addEvent(new CalendarDayEvent(oldMillis,getResources().getColor(R.color.workPlans)),false);
+
+                    break;
+            }
 
 
         } catch (ParseException e) {
@@ -372,85 +542,67 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
         //        .replace(R.id.container, new AddNewEventFragment())
         //        .commit();
 
-        startActivity(new Intent(NewCalendarActivty.this,AddNewEventActivity.class));
+        startActivity(new Intent(NewCalendarActivty.this, AddNewEventActivity.class));
     }
 
-
-    private void returnedCalenderevent(CalendarCollection calendarCollection) {
-        CalendarCollection.date_collection_arr.add(calendarCollection);
-        setEventinCalendar(calendarCollection);
-        Toast.makeText(getApplicationContext(),"new event",Toast.LENGTH_SHORT).show();
-
-
-    }
 
     @Override
     public void onFragmentInteraction(Uri uri) {
 
     }
 
+    @Override
+    public void onBackPressed() {
+        DialogFragment dialogFragment=new DialogLogoutFragment();
+        dialogFragment.setCancelable(false);
+        dialogFragment.show(getSupportFragmentManager(), "LOGOUTFRAGMENT");
 
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment implements  AdapterView.OnItemClickListener {
-        private ListView lv_android;
-        private AndroidListAdapter list_adapter;
-
-
-        @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            Toast.makeText(getContext(), "You have event on this date: "+ CalendarCollection.date_collection_arr.get(position).date+
-                    CalendarCollection.date_collection_arr.get(position).event_message , Toast.LENGTH_LONG).show();
-
-        }
-
-
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private static final String ARG_SECTION_NUMBER = "section_number";
-
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
-
-        public PlaceholderFragment() {
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-
-            CalendarCollection.date_collection_arr=new ArrayList<CalendarCollection>();
-            CalendarCollection.date_collection_arr.add(new CalendarCollection("2016-04-01","John Birthday"));
-            CalendarCollection.date_collection_arr.add(new CalendarCollection("2016-04-04","Client Meeting at 5 p.m."));
-            CalendarCollection.date_collection_arr.add(new CalendarCollection("2016-03-06","A Small Party at my office"));
-            CalendarCollection.date_collection_arr.add(new CalendarCollection("2016-05-02", "Marriage Anniversary"));
-            CalendarCollection.date_collection_arr.add(new CalendarCollection("2016-04-11", "Live Event and Concert of sonu"));
-
-
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            TextView tv=(TextView)rootView.findViewById(R.id.section_label);
-            lv_android = (ListView) rootView.findViewById(R.id.lvc_android);
-            list_adapter=new AndroidListAdapter(getContext(),R.layout.list_item, CalendarCollection.date_collection_arr);
-            lv_android.setAdapter(list_adapter);
-            lv_android.setOnItemClickListener(this);
-
-
-
-            return rootView;
-        }
-
-
-
-
-        private void returnedCalenderEvent(CalendarCollection calendarCollection) {
-            CalendarCollection.date_collection_arr.add(calendarCollection);
-            Toast.makeText(getContext(),"new event",Toast.LENGTH_SHORT).show();
-            list_adapter.notifyDataSetChanged();
-        }
     }
+
+    @Override
+    public void onYes() {
+        User us=new User(userLocalStore.getLoggedInUser().email,userLocalStore.getLoggedInUser().password,0,userLocalStore.getUserRegistrationId());
+
+        updatestatus(us);
+    }
+
+    private void updatestatus(User us) {
+
+        ServerRequests serverRequests=new ServerRequests(this);
+        serverRequests.logginguserOutInBackgroung(us, new GetUserCallbacks() {
+            @Override
+            public void done(User returneduser) {
+
+            }
+
+            @Override
+            public void serverReponse(String reponse) {
+                if (reponse.contains("Status successfully updated")) {
+                    userLocalStore.clearUserData();
+                    userLocalStore.setUserLoggedIn(false);
+                    Intent intent = new Intent(NewCalendarActivty.this, LoginScreenActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(intent);
+                    MainActivity.eventsareloaded=false;
+
+                } else {
+                    showErrordialog("Error : You cannot be logged out at the moment please try again later");
+                }
+            }
+
+            @Override
+            public void userlist(ArrayList<User> reponse) {
+
+            }
+        });
+
+
+    }
+    private void showErrordialog(String message) {
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setMessage(message);
+        alert.setPositiveButton("OK", null);
+        alert.show();
+    }
+
 }

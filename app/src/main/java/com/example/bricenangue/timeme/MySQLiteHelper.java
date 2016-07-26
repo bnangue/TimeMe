@@ -107,7 +107,7 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
 
-        Log.d("getAllBooks()", incomingNotifications.toString());
+        Log.d("getAllEvent()", incomingNotifications.toString());
 
         // return books
         return incomingNotifications;
@@ -161,7 +161,19 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
 
     }
 
-    public void deleteIncomingNotification(IncomingNotification incomingNotification) {
+    public void reInitializeSqliteTable(){
+        // 1. get reference to writable DB
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // 2. delete
+        db.delete(TABLE_BOOKS, //table name
+                null,  // selections
+                null); //selections args
+
+        // 3. close
+        db.close();
+    }
+    public void deleteIncomingNotification(int id) {
 
         // 1. get reference to writable DB
         SQLiteDatabase db = this.getWritableDatabase();
@@ -169,13 +181,13 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
         // 2. delete
         db.delete(TABLE_BOOKS, //table name
                 KEY_ID+" = ?",  // selections
-                new String[] { String.valueOf(incomingNotification.id) }); //selections args
+                new String[] { String.valueOf(id) }); //selections args
 
         // 3. close
         db.close();
 
         //log
-        Log.d("deleteBook", incomingNotification.toString());
+       // Log.d("deleteBook", incomingNotification.toString());
 
     }
 

@@ -238,7 +238,7 @@ public class OpenUserProfileActivity extends AppCompatActivity implements AlertD
             emailstr=newEmail;
             if(!emailstr.isEmpty()){
                 emailed.setText(emailstr);
-                emailed.setTextColor(getResources().getColor(R.color.colorAccent));
+                emailed.setTextColor(getResources().getColor(R.color.accent));
 
             }
         }else {
@@ -349,7 +349,7 @@ public class OpenUserProfileActivity extends AppCompatActivity implements AlertD
 
         if(!firstname.isEmpty()){
             fullnametv.setText(firstnamestr+" "+lastnamestr);
-            fullnametv.setTextColor(getResources().getColor(R.color.colorAccent));
+            fullnametv.setTextColor(getResources().getColor(R.color.accent));
 
         }
     }

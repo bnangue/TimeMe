@@ -8,6 +8,7 @@ import android.os.Parcelable;
  */
 public class IncomingNotification implements Parcelable{
    int id;
+    // type 1: calendarevnt; 2:shoppinglist; 3:shoppingItem
     int type,
             readStatus;//1 if read 0 if not
     String body;
