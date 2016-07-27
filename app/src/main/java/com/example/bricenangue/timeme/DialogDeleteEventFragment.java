@@ -31,16 +31,26 @@ public class DialogDeleteEventFragment extends DialogFragment {
         return frag;
     }
 
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        try{
+            onDeleteListener=(OnDeleteListener)getActivity();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         try {
             onDeleteListener = (OnDeleteListener) activity;
+
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString() + " must implement OnDeleteListener");
         }
     }
-
 
 
 

@@ -81,7 +81,7 @@ public class AddNewEventFragment extends AppCompatActivity implements DialogFrag
         btnendtime.setOnClickListener(this);
         checkboxadd.setOnClickListener(this);
 
-         final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd, HH:mm");
+         final SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy, HH:mm");
         formatter.setLenient(false);
 
         Date curDate = new Date();

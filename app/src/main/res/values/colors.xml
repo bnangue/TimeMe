@@ -37,6 +37,7 @@
     <color name="create_new_ShoppingList">#86b6ea</color>
     <color name="black">#000</color>
     <color name="grey">#b1afaf</color>
+    <color name="grey_light">#d7d5d5</color>
 
 
 </resources>

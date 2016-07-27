@@ -55,6 +55,7 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
     public final static String FRAGMENTEVENTS="My Events";
     public final static String FRAGMENTFINANCE="My Finance";
     public final static String FRAGMENTSHOPPING="My Grocery";
+    private SQLiteShoppingList sqLiteShoppingList;
 
     private AppBarLayout mAppBarLayout;
 
@@ -94,7 +95,7 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
         mySQLiteHelper=new MySQLiteHelper(this);
         userLocalStore=new UserLocalStore(this);
 
-
+        sqLiteShoppingList=new SQLiteShoppingList(this);
 
         Bundle extras=getIntent().getExtras();
         if(extras!=null){
@@ -298,6 +299,7 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
     public void eventsCahnged(boolean haschanged) {
     }
 
+
     public interface YourFragmentInterface {
         void fragmentBecameVisible();
     }
@@ -340,7 +342,7 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
                 startActivity(new Intent(NewCalendarActivty.this, BaseActivity.class));
                 break;
             case 2:
-                startActivity(new Intent(NewCalendarActivty.this, SettingsActivity.class));
+                startActivity(new Intent(NewCalendarActivty.this, PreferenceAppActivity.class));
                 break;
             case 3:
                 break;
@@ -597,6 +599,13 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
         });
 
 
+    }
+    public void deleteShopLisfromFragment(GroceryList groceryList){
+        if(sqLiteShoppingList.deleteShoppingList(groceryList.getList_unique_id())!=0){
+           // ((RecyclerAdapterSmallCards)new RecyclerAdapterSmallCards()).deleteItem(position);
+
+            Toast.makeText(getApplicationContext(),"List succesffully deleted",Toast.LENGTH_SHORT).show();
+        }
     }
     private void showErrordialog(String message) {
         AlertDialog.Builder alert = new AlertDialog.Builder(this);

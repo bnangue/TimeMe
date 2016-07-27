@@ -22,10 +22,10 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 
 /**
- * Created by bricenangue on 26/07/16.
+ * Created by bricenangue on 27/07/16.
  */
-public class RecyclerAdaptaterCreateShoppingList  extends RecyclerView
-        .Adapter<RecyclerAdaptaterCreateShoppingList
+public class RecyclerAdapterSmallCards  extends RecyclerView
+        .Adapter<RecyclerAdapterSmallCards
         .DataObjectHolder> {
     private static String LOG_TAG = "RecyclerAdaptaterCreateShoppingList";
     private ArrayList<GroceryList> mDataset;
@@ -34,7 +34,7 @@ public class RecyclerAdaptaterCreateShoppingList  extends RecyclerView
     private MySQLiteHelper mySQLiteHelper;
     private Context context;
     private FragmentManager manager;
-    private RecyclerAdaptaterCreateShoppingList RecyclerAdaptaterCreateShoppingList=this;
+    private RecyclerAdapterSmallCards RecyclerAdaptaterCreateShoppingList=this;
     private UserLocalStore userLocalStore;
     private boolean isListwithDoneList;
 
@@ -70,13 +70,12 @@ public class RecyclerAdaptaterCreateShoppingList  extends RecyclerView
             myClickListener=myClickListener1;
             myDoneClickListener=myDoneClickListener1;
             isListwithDoneList=isListwithDoneList1;
-            mcard=(LinearLayout)itemView.findViewById(R.id.lin_create_shopping_list_card);
+            mcard=(LinearLayout)itemView.findViewById(R.id.lin_create_shopping_list_small_card);
 
-            listname = (TextView) itemView.findViewById(R.id.textView_Grocery_listname_create_shopping_list_card);
-            listcreator = (TextView) itemView.findViewById(R.id.textView_Listcreator_create_shopping_list_card);
-            listStatus = (TextView) itemView.findViewById(R.id.textView_LisStatus_create_shopping_list_card);
-            share = (Button) itemView.findViewById(R.id.buttonsharecardview_create_shopping_list_card);
-            delete = (Button) itemView.findViewById(R.id.buttondeletecardview_create_shopping_list_card);
+            listname = (TextView) itemView.findViewById(R.id.textView_Grocery_listname_create_shopping_list_small_card);
+            listStatus = (TextView) itemView.findViewById(R.id.textView_LisStatus_create_shopping_list_small_card);
+
+            delete = (Button) itemView.findViewById(R.id.buttondeletecardview_create_shopping_list_small_card);
 
 
             Log.i(LOG_TAG, "Adding Listener");
@@ -97,12 +96,12 @@ public class RecyclerAdaptaterCreateShoppingList  extends RecyclerView
         }
     }
 
-    public void setOnshoppinglistClickListener(MyRecyclerAdaptaterCreateShoppingListClickListener myClickListener,  MyRecyclerAdaptaterCreateShoppingListDoneClickListener myDoneClickListener) {
+    public void setOnshoppinglistsmallClickListener(MyRecyclerAdaptaterCreateShoppingListClickListener myClickListener,  MyRecyclerAdaptaterCreateShoppingListDoneClickListener myDoneClickListener) {
         this.myClickListener = myClickListener;
         this.myDoneClickListener=myDoneClickListener;
     }
 
-    public RecyclerAdaptaterCreateShoppingList(Context context,ArrayList<GroceryList> myDataset, MyRecyclerAdaptaterCreateShoppingListClickListener myClickListener, MyRecyclerAdaptaterCreateShoppingListDoneClickListener myDoneClickListener, boolean isListwithDoneList) {
+    public RecyclerAdapterSmallCards(Context context,ArrayList<GroceryList> myDataset, MyRecyclerAdaptaterCreateShoppingListClickListener myClickListener, MyRecyclerAdaptaterCreateShoppingListDoneClickListener myDoneClickListener, boolean isListwithDoneList) {
         this.context=context;
         this.isListwithDoneList=isListwithDoneList;
         mDataset = myDataset;
@@ -114,11 +113,14 @@ public class RecyclerAdaptaterCreateShoppingList  extends RecyclerView
 
     }
 
+    public RecyclerAdapterSmallCards (){
+
+    }
     @Override
     public DataObjectHolder onCreateViewHolder(ViewGroup parent,
                                                int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.create_shopping_list_card, parent, false);
+                .inflate(R.layout.card_shop_list_small, parent, false);
 
         DataObjectHolder dataObjectHolder = new DataObjectHolder(view,myClickListener,myDoneClickListener,isListwithDoneList);
         return dataObjectHolder;
@@ -130,24 +132,8 @@ public class RecyclerAdaptaterCreateShoppingList  extends RecyclerView
 
 
         holder.listname.setText(groceryList.getDatum());
-        holder.listcreator.setText(groceryList.getCreatorName());
         holder.listStatus.setText(groceryList.isListdone() ? R.string.grocery_list_status_done_text : R.string.grocery_list_status__not_done_text);
-        if(groceryList.isToListshare()){
-            holder.share.setVisibility(View.GONE);
-        }
 
-
-        holder.share.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(isListwithDoneList){
-                    myDoneClickListener.onButtonClick(holder.getAdapterPosition(), v);
-                }else{
-                    myClickListener.onButtonClick(holder.getAdapterPosition(), v);
-                }
-
-            }
-        });
         holder.delete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -217,7 +203,7 @@ public class RecyclerAdaptaterCreateShoppingList  extends RecyclerView
     }
 
     public void deleteItem(int index) {
-       // deleteFromSQLITEAndSERver(index);
+        // deleteFromSQLITEAndSERver(index);
 
         mDataset.remove(index);
         notifyItemRemoved(index);
@@ -226,30 +212,30 @@ public class RecyclerAdaptaterCreateShoppingList  extends RecyclerView
 
     /**
 
-    private void deleteFromSQLITEAndSERver(final int index){
-        ServerRequests serverRequests= new ServerRequests(context);
-        serverRequests.deleteCalenderEventInBackgroung(mDataset.get(index), new GetEventsCallbacks() {
-            @Override
-            public void done(ArrayList<CalendarCollection> returnedeventobject) {
+     private void deleteFromSQLITEAndSERver(final int index){
+     ServerRequests serverRequests= new ServerRequests(context);
+     serverRequests.deleteCalenderEventInBackgroung(mDataset.get(index), new GetEventsCallbacks() {
+    @Override
+    public void done(ArrayList<CalendarCollection> returnedeventobject) {
 
-            }
-
-            @Override
-            public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
-
-            }
-
-            @Override
-            public void updated(String reponse) {
-                if (reponse.contains("Event successfully deleted")) {
-                    mySQLiteHelper.deleteIncomingNotification(mDataset.get(index).incomingnotifictionid);
-                    mDataset.remove(index);
-                    notifyItemRemoved(index);
-                    //getEvents(mySQLiteHelper.getAllIncomingNotification());
-
-                }
-            }
-        });
     }
+
+    @Override
+    public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
+
+    }
+
+    @Override
+    public void updated(String reponse) {
+    if (reponse.contains("Event successfully deleted")) {
+    mySQLiteHelper.deleteIncomingNotification(mDataset.get(index).incomingnotifictionid);
+    mDataset.remove(index);
+    notifyItemRemoved(index);
+    //getEvents(mySQLiteHelper.getAllIncomingNotification());
+
+    }
+    }
+    });
+     }
      **/
 }

@@ -25,7 +25,7 @@ public class SQLiteShoppingList extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         String CREATE_INCOMING_TABLE = "CREATE TABLE ShoppingLists ( " +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, listname VARCHAR NOT NULL , creator VARCHAR NOT NULL, contain TEXT NOT NULL, status INTEGER NOT NULL, uniqueId TEXT NOT NULL)";
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, listname VARCHAR NOT NULL , creator VARCHAR NOT NULL, contain TEXT NOT NULL, status INTEGER NOT NULL, uniqueId TEXT NOT NULL, isShareStatus INTEGER NOT NULL)";
 
         // create books table
         db.execSQL(CREATE_INCOMING_TABLE);
@@ -50,6 +50,7 @@ public class SQLiteShoppingList extends SQLiteOpenHelper {
     private static final String LIST_STATUS = "status";
     private static final String LIST_ID = "uniqueId";
     private static final String LIST_CONTAIN = "contain";
+    private static final String LIST_IS_SHARE_STATUS = "isShareStatus";
 
 
 
@@ -65,6 +66,7 @@ public class SQLiteShoppingList extends SQLiteOpenHelper {
         values.put(LIST_CONTAIN, groceryList.getListcontain());
         values.put(LIST_STATUS, groceryList.isListdone() ? 1 : 0);
         values.put(LIST_ID, groceryList.getList_unique_id());
+        values.put(LIST_IS_SHARE_STATUS, groceryList.isToListshare() ? 1 : 0);
 
         // 3. insert
         int i= (int) db.insert(SHOPPING_LIST_TABLE, // table
@@ -76,8 +78,10 @@ public class SQLiteShoppingList extends SQLiteOpenHelper {
         return i;
     }
 
-    public ArrayList<GroceryList> getAllShoppingList() {
+    public ArrayList[] getAllShoppingList() {
+        ArrayList[] arraysLists=new ArrayList[2];
         ArrayList<GroceryList> groceryLists = new ArrayList<>();
+        ArrayList<GroceryList> groceryListsdone = new ArrayList<>();
 
         // 1. build the query
         String query = "SELECT  * FROM " + SHOPPING_LIST_TABLE;
@@ -97,15 +101,24 @@ public class SQLiteShoppingList extends SQLiteOpenHelper {
                 groceryList.setListcontain(cursor.getString(3));
                 groceryList.setListdone((cursor.getInt(4) == 1));
                 groceryList.setList_unique_id(cursor.getString(5));
+                groceryList.setToListshare((cursor.getInt(6) == 1));
 
-                // Add book to books
-                groceryLists.add(groceryList);
+                // Add grocery list to arraylist
+                if(groceryList.isListdone()){
+                    groceryListsdone.add(groceryList);
+                }else{
+                    groceryLists.add(groceryList);
+                }
+
             } while (cursor.moveToNext());
         }
 
+        arraysLists[0]=groceryLists;
+        arraysLists[1]=groceryListsdone;
+
 
         // return books
-        return groceryLists;
+        return arraysLists;
     }
     public int updateShoppingList(GroceryList groceryList) {
 
@@ -115,6 +128,7 @@ public class SQLiteShoppingList extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put(LIST_CONTAIN, groceryList.getListcontain());
         values.put(LIST_STATUS, groceryList.isListdone() ? 1 : 0);
+        values.put(LIST_IS_SHARE_STATUS, groceryList.isToListshare() ? 1 : 0);
 
 
 
@@ -148,4 +162,18 @@ public class SQLiteShoppingList extends SQLiteOpenHelper {
 
         return i;
     }
+    public void reInitializeShoppingListSqliteTable(){
+        // 1. get reference to writable DB
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // 2. delete
+        db.delete(SHOPPING_LIST_TABLE, //table name
+               "1",  // selections
+                null); //selections args
+
+        // 3. close
+        db.close();
+    }
+
+
 }

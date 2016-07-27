@@ -33,7 +33,7 @@ import java.util.ArrayList;
  * Use the {@link FragmentCategoryShopping#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class FragmentCategoryShopping extends Fragment implements FragmentCommunicator,FragmentLife, View.OnClickListener {
+public class FragmentCategoryShopping extends Fragment implements DialogDeleteEventFragment.OnDeleteListener ,FragmentLife, View.OnClickListener{
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -45,19 +45,44 @@ public class FragmentCategoryShopping extends Fragment implements FragmentCommun
     private TextView textBalance;
     private Button add_List;
 
+    private RecyclerAdapterSmallCards.MyRecyclerAdaptaterCreateShoppingListClickListener myClickListener;
+    private RecyclerAdapterSmallCards.MyRecyclerAdaptaterCreateShoppingListDoneClickListener myDoneClickListener;
 
+    private RecyclerView mRecyclerView,mRecyclerViewdone;
+    private RecyclerView.Adapter mAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
 
-    private ListView listRecentlyAdded,listDone;
     private MySQLiteHelper mySQLiteHelper;
+    private SQLiteShoppingList sqLiteShoppingList;
     private OnFragmentInteractionListener mListener;
-    private static String LOG_TAG = "RecyclerViewActivity";
+    private static String LOG_TAG = "RecyclerViewActivity_Fragment_Shopping";
     private Fragment fragment=this;
-    private ArrayList<CalendarCollection> newItems = new ArrayList<>();
-    private ArrayList<CalendarCollection> collectionArrayList = new ArrayList<>();
+    private ArrayList<GroceryList> shoppingListdone = new ArrayList<>();
+    private ArrayList<GroceryList> shoppingListsrecent = new ArrayList<>();
 
     private boolean isShown=false;
     private OnCalendarEventsChanged calendarEventsChanged;
 
+    private void prepareRecyclerView(Context context,ArrayList<GroceryList> arrayList){
+        mRecyclerView.setVisibility(View.VISIBLE);
+        mAdapter = new RecyclerAdapterSmallCards(context,arrayList,myClickListener,myDoneClickListener,false);
+        mRecyclerView.setHasFixedSize(true);
+        mLayoutManager = new LinearLayoutManager(getContext());
+        mRecyclerView.setLayoutManager(mLayoutManager);
+        mRecyclerView.setAdapter(mAdapter);
+
+    }
+
+    private void prepareRecyclerViewdone(Context context,ArrayList<GroceryList> arrayList){
+
+        mRecyclerViewdone.setVisibility(View.VISIBLE);
+        mAdapter = new RecyclerAdapterSmallCards(context,arrayList,myClickListener,myDoneClickListener,true);
+        mRecyclerViewdone.setHasFixedSize(true);
+        mLayoutManager = new LinearLayoutManager(getContext());
+        mRecyclerViewdone.setLayoutManager(mLayoutManager);
+        mRecyclerViewdone.setAdapter(mAdapter);
+
+    }
 
     public FragmentCategoryShopping() {
         // Required empty public constructor
@@ -91,24 +116,83 @@ public class FragmentCategoryShopping extends Fragment implements FragmentCommun
         }
     }
 
+    private ArrayList<GroceryList> getGroceryList(){
+        return sqLiteShoppingList.getAllShoppingList()[0];
+    }
+    private ArrayList<GroceryList> getGroceryListDone(){
+        return sqLiteShoppingList.getAllShoppingList()[1];
+    }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
       //  getEvents(mySQLiteHelper.getAllIncomingNotification());
         // Inflate the layout for this fragment
+        sqLiteShoppingList=new SQLiteShoppingList(getContext());
         View v = inflater.inflate(R.layout.fragment_grocery_list, container, false);
         textBalance = (TextView) v.findViewById(R.id.grocery_fragment_balance_amount);
         add_List = (Button) v.findViewById(R.id.grocery_fragment_add_recently_button);
-        listDone = (ListView) v.findViewById(R.id.groceryfargment_done_list);
-        listRecentlyAdded = (ListView) v.findViewById(R.id.groceryfargment_recentlyadded_list);
+
+        mRecyclerViewdone = (RecyclerView) v.findViewById(R.id.shoppingrecycleViewfragment_grocery_list_done_lists);
+        mRecyclerView = (RecyclerView) v.findViewById(R.id.shoppingrecycleViewfragöment_grocery_list_recentlityl_added);
+
+
+        myClickListener=new RecyclerAdapterSmallCards.MyRecyclerAdaptaterCreateShoppingListClickListener() {
+            @Override
+            public void onItemClick(int position, View v) {
+                startGroceryListOverview(shoppingListsrecent.get(position));
+            }
+
+            @Override
+            public void onButtonClick(int position, View v) {
+                int iD = v.getId();
+                switch (iD) {
+                    case R.id.buttondeletecardview_create_shopping_list_small_card:
+                        DialogFragment dialogFragment = DialogDeleteEventFragment.newInstance(position);
+                        dialogFragment.setCancelable(false);
+                        dialogFragment.setTargetFragment(fragment, 0);
+                        dialogFragment.show(getActivity().getSupportFragmentManager(), "DELETESHOPPINGFRAGLISTFRAGMENT");
+
+                        break;
+
+                }
+            }
+        };
+
+        myDoneClickListener=new RecyclerAdapterSmallCards.MyRecyclerAdaptaterCreateShoppingListDoneClickListener() {
+            @Override
+            public void onItemClick(int position, View v) {
+                startGroceryListOverview(shoppingListdone.get(position));
+            }
+
+            @Override
+            public void onButtonClick(int position, View v) {
+                int iD = v.getId();
+                switch (iD) {
+                    case R.id.buttondeletecardview_create_shopping_list_small_card:
+                        DialogFragment dialogFragment = DialogDeleteEventFragment.newInstance(position);
+                        dialogFragment.setCancelable(false);
+                        dialogFragment.setTargetFragment(fragment, 2);
+                        dialogFragment.show(getActivity().getSupportFragmentManager(), "DELETESHOPPINGFRAGLISTDONEFRAGMENT");
+
+                        break;
+
+                }
+            }
+        };
+
+
         add_List.setOnClickListener(this);
 
         return v;
     }
 
-    private void setViews(View v, int position){
+    private void startGroceryListOverview(GroceryList item) {
+        startActivity(new Intent(getActivity(),DetailsShoppingListActivity.class).putExtra("GroceryList",item).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK));
 
+    }
 
+    private ArrayList[] getShoppingListsformDB(){
+        return sqLiteShoppingList.getAllShoppingList();
     }
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -142,10 +226,6 @@ public class FragmentCategoryShopping extends Fragment implements FragmentCommun
         mListener = null;
     }
 
-    @Override
-    public void passDataToFragment(ArrayList<CalendarCollection> someValue) {
-        collectionArrayList=someValue;
-    }
 
     @Override
     public void onUpdateUi(ArrayList<CalendarCollection> arrayList,String uName) {
@@ -162,6 +242,12 @@ public class FragmentCategoryShopping extends Fragment implements FragmentCommun
                 startActivity(new Intent(getActivity(),CreateNewShoppingListActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
                 break;
         }
+    }
+
+    @Override
+    public void delete(int position) {
+
+        Toast.makeText(getContext(),"from fragment",Toast.LENGTH_SHORT).show();
     }
 
 
@@ -186,7 +272,6 @@ public class FragmentCategoryShopping extends Fragment implements FragmentCommun
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         calendarEventsChanged =(OnCalendarEventsChanged)getActivity();
-        ((NewCalendarActivty)getActivity()).fragmentCommunicator = this;
 
     }
     @Override
@@ -205,6 +290,12 @@ public class FragmentCategoryShopping extends Fragment implements FragmentCommun
     public void onResume() {
         super.onResume();
         //bing listener
+        shoppingListdone=getGroceryListDone();
+        shoppingListsrecent=getGroceryList();
+        prepareRecyclerView(getContext(),shoppingListsrecent);
+        prepareRecyclerViewdone(getContext(),shoppingListdone);
+
+    ((RecyclerAdapterSmallCards) mAdapter).setOnshoppinglistsmallClickListener(myClickListener,myDoneClickListener);
     }
 
     @Override

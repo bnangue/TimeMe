@@ -99,4 +99,33 @@
     <string name="october">October</string>
     <string name="november">November</string>
     <string name="december">December</string>
+    <string name="app_name_main_activity" />
+    <string name="app_name_login_screen_activity">Loging</string>
+    <string name="app_name_create_user_activity">Register</string>
+    <string name="app_name_open_user_profile_activity">My Profile</string>
+    <string name="app_name_newcalendar_activity">TimeMe</string>
+    <string name="app_name_add_new_event_activity">Add New Event</string>
+    <string name="app_name_add_new_event_fragment">Add New Event</string>
+    <string name="app_name_base_activity">My Calendar</string>
+    <string name="app_name_basic_activity">basic activity</string>
+    <string name="app_name_create_new_shopping_list_activity">Create New Grocery List</string>
+    <string name="app_name_add_item_to_list_activity">Add items To List</string>
+    <string name="app_name_create_a_new_item_activity">Create New Item</string>
+    <string name="app_name_details_shopping_list_activity">My Grocery List</string>
+
+    //preferenceAppActivtity
+    <string name="pref_send_report">Send crash reports</string>
+    <string name="pref_send_report_summary">Helps to fix bugs</string>
+    <string name="pref_sync_frequency">Sync frequency</string>
+    <string name="pref_sync_frequency_summary">Set the sync frequency</string>
+    <string name="pref_user_name">Set username</string>
+    <string name="pref_user_name_summary">Set your username</string>
+
+    <string name="pref_user_profile">User Profile</string>
+    <string name="pref_update_setting">Private Settings</string>
+    <string name="pref_general_setting">General Settings</string>
+    <string name="title_intent_preference">android</string>
+    <string name="summary_intent_preference">go to android webpage</string>
+    <string name="title_activity_time_sheet">TimeSheetActivity</string>
+    <string name="app_name_preference_app_activity">Settings</string>
 </resources>

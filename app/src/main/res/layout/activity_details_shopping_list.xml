@@ -24,7 +24,7 @@
         <Spinner
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:id="@+id/spinner"
+            android:id="@+id/spinner_activity_details_shopping_list"
             android:layout_gravity="center_vertical"
             android:layout_weight="3"
            />

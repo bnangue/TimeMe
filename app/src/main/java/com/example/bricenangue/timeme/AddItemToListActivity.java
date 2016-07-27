@@ -2,6 +2,7 @@ package com.example.bricenangue.timeme;
 
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -13,12 +14,18 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -39,6 +46,8 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -62,6 +71,13 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
     private boolean areItemsAdded=false;
     private UserLocalStore userLocalStore;
     private SQLiteShoppingList sqLiteShoppingList;
+    private int[] status ;
+
+
+    //This arraylist will have data as pulled from server. This will keep cumulating.
+   private ArrayList<ShoppingItem> productResults = new ArrayList<ShoppingItem>();
+    //Based on the search string, only filtered products will be moved here from productResults
+    private ArrayList<ShoppingItem> filteredProductResults = new ArrayList<ShoppingItem>();
 
 
 
@@ -75,6 +91,8 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         addItemtolistListview=(ListView)findViewById(R.id.shoppinglistViewaddItemToListactivity);
         textViewNoDatainDB=(TextView) findViewById(R.id.textView_add_item_to_list_List_empty);
         textViewAmontToPay=(TextView)findViewById(R.id.grocery_fragment_balance_amount_activity_add_item_to_list);
+
+
 
         Bundle extras=getIntent().getExtras();
         if(extras.containsKey("listName")){
@@ -91,19 +109,39 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
        new LoadItemDBAsyncTask().execute();
 
 
+
+
     }
 
     void populateListview(){
-        itemsDB=getItemFromDB(itemNamee,itemPrice);
+
+
         if(itemsDB.size()==0){
             textViewNoDatainDB.setText(R.string.text_add_itme_to_list_DataBase_empty);
         }else{
 
             textViewNoDatainDB.setText(R.string.text_add_itme_to_list_DataBase_not_empty);
         }
+        if(productResults.size()!=0){
+            merge();
+        }
         ListViewAdapter listViewAdapter=new ListViewAdapter(this,itemsDB,this);
         addItemtolistListview.setVisibility(View.VISIBLE);
         addItemtolistListview.setAdapter(listViewAdapter);
+    }
+
+    private void merge() {
+        for (int i=0;i<productResults.size();i++){
+            for(int j=0;j<itemsDB.size();j++){
+                if(productResults.get(i).getUnique_item_id().equals(itemsDB.get(j).getUnique_item_id())&&
+                        productResults.get(i).getNumberofItemsetForList()!=itemsDB.get(j).getNumberofItemsetForList()){
+
+                    itemsDB.set(j,productResults.get(i));
+                }
+            }
+
+        }
+
     }
 
     private ArrayList<ShoppingItem> getItems(ShoppingItem[] itemstoShoparray) {
@@ -203,6 +241,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
             item.setDetailstoItem("");
             item.setItemSpecification("");
             item.setNumberofItemsetForList(0);
+            item.setNumberofItemsetForList(0);
             itemsdb.add(item);
 
         }
@@ -224,9 +263,9 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
     public boolean onQueryTextChange(String newText) {
         if (newText.length() > 1) {
 
-            Toast.makeText(getApplicationContext(),"isSeraching",Toast.LENGTH_SHORT).show();
+            SearchAsyncTask m = (SearchAsyncTask) new SearchAsyncTask().execute(newText);
         } else {
-            Toast.makeText(getApplicationContext(),"nothing on search",Toast.LENGTH_SHORT).show();                }
+           populateListview();              }
 
 
         return false;
@@ -346,7 +385,11 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
     @Override
     public void onShoppingOtemSet(ShoppingItem item,int position) {
 
-       itemstoShoparray[position]=item;
+        itemstoShoparray[position]=item;
+
+
+
+
          double totalPrice=0;
         for (int i=0;i<itemstoShoparray.length;i++){
             if(itemstoShoparray[i]!=null){
@@ -363,6 +406,130 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         }else {
             textViewAmontToPay.setText("- "+priceStr+"€");
             textViewAmontToPay.setTextColor(getResources().getColor(R.color.warning_color));
+        }
+
+
+
+
+    }
+
+    //in this myAsyncTask, we are fetching data from server for the search string entered by user.
+    class SearchAsyncTask extends AsyncTask<String, Void, String> {
+        ArrayList<ShoppingItem>  productList;
+        String textSearch;
+
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            productList =new ArrayList<>();
+        }
+
+        @Override
+        protected String doInBackground(String... sText) {
+
+            // url="http://lawgo.in/lawgo/products/user/1/search/"+sText[0];
+            String returnResult = getProductList();
+            this.textSearch = sText[0];
+            return returnResult;
+
+        }
+
+        public String getProductList() {
+
+            ShoppingItem object;
+            String matchFound = "N";
+
+
+            try {
+
+                productList=itemsDB;
+                //parse date for dateList
+                for (int i = 0; i < productList.size(); i++) {
+
+
+
+
+
+                    object=productList.get(i);
+
+
+                    //check if this product is already there in productResults, if yes, then don't add it again.
+                    matchFound = "N";
+
+                    for (int j = 0; j < productResults.size(); j++) {
+
+                        if (productResults.get(j).getItemName().equals(object.getItemName())) {
+                            matchFound = "Y";
+                        }
+                    }
+
+                    if (matchFound == "N") {
+                        productResults.add(object);
+                    }
+
+                }
+
+
+                return ("OK");
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                return ("Exception Caught");
+            }
+
+
+
+
+        }
+
+        @Override
+        protected void onPostExecute (String result){
+
+            super.onPostExecute(result);
+
+            if (result.equalsIgnoreCase("Exception Caught")) {
+                Toast.makeText(getApplicationContext(), "Unable to connect to server,please try later", Toast.LENGTH_LONG).show();
+
+            } else {
+                //calling this method to filter the search results from productResults and move them to
+                //filteredProductResults
+                filterProductArray(textSearch);
+
+                prepareListviewall(filteredProductResults);
+
+            }
+        }
+
+
+    }
+
+    void prepareListviewall(ArrayList<ShoppingItem> shoppingItems){
+
+        if(shoppingItems.size()==0){
+            textViewNoDatainDB.setText(R.string.text_add_itme_to_list_DataBase_empty);
+        }else{
+
+            textViewNoDatainDB.setText(R.string.text_add_itme_to_list_DataBase_not_empty);
+        }
+        ListViewAdapter listViewAdapter=new ListViewAdapter(this,shoppingItems,this);
+        addItemtolistListview.setVisibility(View.VISIBLE);
+        addItemtolistListview.setAdapter(listViewAdapter);
+    }
+
+    public void filterProductArray(String newText) {
+
+        String pName;
+
+        filteredProductResults.clear();
+        for (int i = 0; i < productResults.size(); i++) {
+            pName = productResults.get(i).getItemName().toLowerCase();
+            if (pName.contains(newText.toLowerCase())) {
+                filteredProductResults.add(productResults.get(i));
+
+
+
+            }
         }
 
     }
@@ -389,6 +556,9 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         protected void onPostExecute(Void params) {
             //end progressBar
 
+            if(itemsDB.size()==0 || itemsDB==null ){
+                itemsDB=getItemFromDB(itemNamee,itemPrice);
+            }
             populateListview();
         }
     }

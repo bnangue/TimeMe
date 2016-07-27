@@ -4,12 +4,17 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 public class DetailsShoppingListActivity extends AppCompatActivity implements ListAdapterCreateShopList.ShoppingItemBoughtListener, AdapterView.OnItemClickListener {
 
@@ -20,8 +25,12 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements Li
     private ListView shoppinglistview;
     private TextView textViewAlreadySpent;
     double totalpriceTopay;
+    private Spinner spinner;
+    String [] userAccArray={"standard","most used","price ascending","price descending","selected first","selected last"};
+
 
     private SQLiteShoppingList sqLiteShoppingList;
+    private int vlsort=1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +41,12 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements Li
 
         shoppinglistview=(ListView)findViewById(R.id.listView_activity_details_shoppping_list);
         textViewAlreadySpent=(TextView)findViewById(R.id.grocery_fragment_balance_amount_activity_details_shopping_list);
+
+        spinner=(Spinner)findViewById(R.id.spinner_activity_details_shopping_list);
+        SpinnerAdapter adap = new ArrayAdapter<>(this, R.layout.spinnerlayout, userAccArray);
+        spinner.setAdapter(adap);
+
+        spinner.setSelection(0);
 
         Bundle extras=getIntent().getExtras();
         if(extras!=null && extras.containsKey("GroceryList")){
@@ -67,6 +82,22 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements Li
 
 
         }
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if(itemsDB.size()!=0){
+                    sort(spinner.getSelectedItem().toString());
+                }
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+        sort(spinner.getSelectedItem().toString());
+
 
     }
 
@@ -110,12 +141,42 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements Li
 
         totalpriceTopay= Double.parseDouble(priceStr);
         groceryList.setItemsOftheList(itemsDB);
+        sort(spinner.getSelectedItem().toString());
         if(groceryList.allItemsbought()){
             //signalize user and save list
         }
     }
 
 
+    void sort(String sortname){
+        switch (sortname){
+            case "standard":
+                Collections.sort(itemsDB, new ComparatorCreatorName());
+                break;
+            case "price ascending":
+                Collections.sort(itemsDB, new ComparatorValueDown());
+                break;
+            case "price descending":
+                Comparator<ShoppingItem> comparator_type = Collections.reverseOrder(new ComparatorValueDown());
+                Collections.sort(itemsDB, comparator_type);
+                break;
+            case "most used":
+                break;
+            case "selected first":
+                Comparator<ShoppingItem> comparator_type1 = Collections.reverseOrder(new ComparatorItemSelected());
+                Collections.sort(itemsDB, comparator_type1);
+                break;
+            case "selected last":
+                Collections.sort(itemsDB, new ComparatorItemSelected());
+                break;
+
+
+        }
+
+      populateListview();
+
+
+    }
      void populateListview(){
 
         listViewAdapter=new ListAdapterCreateShopList(this,itemsDB,this);

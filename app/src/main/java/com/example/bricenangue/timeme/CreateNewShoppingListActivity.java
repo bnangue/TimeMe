@@ -114,7 +114,7 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
 
 
         mRecyclerView.setVisibility(View.VISIBLE);
-        mAdapter = new RecyclerAdaptaterCreateShoppingList(this, grocerylistSqlDB, myClickListener);
+        mAdapter = new RecyclerAdaptaterCreateShoppingList(this, grocerylistSqlDB, myClickListener,null,false);
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -136,7 +136,7 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
     }
 
     private ArrayList<GroceryList> getGroceryList(){
-        return sqLiteShoppingList.getAllShoppingList();
+        return sqLiteShoppingList.getAllShoppingList()[0];
     }
 
     private void initializeDatePicker(){
@@ -179,7 +179,7 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
         super.onResume();
         grocerylistSqlDB=getGroceryList();
         populateRecyclerView();
-        ((RecyclerAdaptaterCreateShoppingList) mAdapter).setOnshoppinglistClickListener(myClickListener);
+        ((RecyclerAdaptaterCreateShoppingList) mAdapter).setOnshoppinglistClickListener(myClickListener,null);
 
     }
     @Override
