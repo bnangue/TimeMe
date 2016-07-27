@@ -6,6 +6,8 @@ import android.os.Parcelable;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.DecimalFormat;
+
 /**
  * Created by bricenangue on 21/07/16.
  */
@@ -14,9 +16,11 @@ public class ShoppingItem implements Parcelable{
     private String price;
     private String detailstoItem;
     private int numberofItemsetForList;
+    private int numberoftimeAddedAnyToList;
     private String unique_item_id;
     private String itemSpecification;
     private boolean itemIsBought=false;
+
 
     protected ShoppingItem(Parcel in) {
         itemName = in.readString();
@@ -72,6 +76,12 @@ public class ShoppingItem implements Parcelable{
         return item;
     }
 
+    public String getTotalPriceofItemstoBuy(){
+        DecimalFormat df = new DecimalFormat("0.00");
+        df.setMaximumFractionDigits(2);
+        String priceStr = df.format(Double.parseDouble(price)*numberofItemsetForList);
+        return priceStr;
+    }
     public String getUnique_item_id() {
         return unique_item_id;
     }
