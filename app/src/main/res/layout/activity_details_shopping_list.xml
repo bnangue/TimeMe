@@ -8,11 +8,19 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="30dp"
         android:orientation="horizontal"
        android:id="@+id/linearLayout_activity_details_shopping_list"
         android:paddingRight="16dp"
         android:paddingLeft="@dimen/activity_horizontal_margin">
+        <TextView
+            android:id="@+id/textView_grocery_list_item_title_activity_details_shopping"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/grocery_list_item_title_text"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="3"
+            android:gravity="start"/>
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -26,21 +34,30 @@
             android:layout_height="wrap_content"
             android:id="@+id/spinner_activity_details_shopping_list"
             android:layout_gravity="center_vertical"
-            android:layout_weight="3"
+            android:layout_weight="2"
            />
     </LinearLayout>
+    <LinearLayout
+        android:layout_marginTop="5dp"
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:orientation="horizontal"
+        android:background="@color/primary"
+        android:id="@+id/linearLayout_separator_activity_details_shopping_list1"
+        android:layout_below="@+id/linearLayout_activity_details_shopping_list"
+       />
 
     <ListView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/listView_activity_details_shoppping_list"
-        android:layout_below="@+id/linearLayout_activity_details_shopping_list"
+        android:layout_below="@+id/linearLayout_separator_activity_details_shopping_list1"
         android:layout_above="@+id/linearLayout_separator_activity_details_shopping_list"/>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="2dp"
         android:orientation="horizontal"
-        android:background="@color/primary_light"
+        android:background="@color/primary"
         android:id="@+id/linearLayout_separator_activity_details_shopping_list"
         android:layout_above="@+id/relative_already_spent_activity_details_shopping_list"/>
     <RelativeLayout

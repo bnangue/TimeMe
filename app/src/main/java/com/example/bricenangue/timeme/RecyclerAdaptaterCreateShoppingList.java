@@ -128,8 +128,9 @@ public class RecyclerAdaptaterCreateShoppingList  extends RecyclerView
     public void onBindViewHolder(final DataObjectHolder holder, final int position) {
         GroceryList groceryList=mDataset.get(position);
 
+        String name=context.getResources().getString(R.string.grocery_list_item_title_text ).toLowerCase()  +" " + groceryList.getDatum();
 
-        holder.listname.setText(groceryList.getDatum());
+        holder.listname.setText(name);
         holder.listcreator.setText(groceryList.getCreatorName());
         holder.listStatus.setText(groceryList.isListdone() ? R.string.grocery_list_status_done_text : R.string.grocery_list_status__not_done_text);
         if(groceryList.isToListshare()){

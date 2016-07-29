@@ -49,12 +49,13 @@
     <string name="descriptiontext">This is a sample text of description which might be quite long and sometimes very short</string>
     <string name="noteexpandheader">Note: </string>
     <string name="noteexpand">This is a sample text note</string>
+    <string name="PressSecondTimeToCloseApp">Click a second time to exit the application</string>
     <string name="grocery_fragment_recently_created">recently created</string>
     <string name="grocery_fragment_balance">Balance :</string>
     <string name="grocery_fragment_list_done">done</string>
     <string name="text_grocery_fragment_add_recently_button">create a new shopping List</string>
     <string name="text_create_list_add_items_button">Add shopping itmes to the list</string>
-    <string name="text_create_list_use_on_date">Use this grocery list on :</string>
+    <string name="text_create_list_use_on_date">Date :</string>
     <string name="text_create_list_List_empty">The list is currently empty</string>
     <string name="text_create_list_List_not_empty">Your shopping list</string>
     <string name="text_create_list_List_not_empty_more_than_one">Your shopping lists</string>
@@ -73,9 +74,10 @@
     <string name="btn_grocery_fragment_create_new_item_create">Create</string>
     <string name="error_field_required_price">The price is missing</string>
     <string name="error_field_required_name">The name is missing</string>
-    <string name="null_item_total_price">0,00€</string>
+    <string name="null_item_total_price">0.00€</string>
     <string name="null_item_selected">0</string>
     <string name="grocery_add_item_to_list_to_pay_text">To spend :</string>
+    <string name="grocery_list_item_title_text">From :</string>
 
     <string name="grocery_list_status__not_done_text">not done</string>
     <string name="grocery_list_status_done_text">done</string>
@@ -99,6 +101,8 @@
     <string name="october">October</string>
     <string name="november">November</string>
     <string name="december">December</string>
+
+    //
     <string name="app_name_main_activity" />
     <string name="app_name_login_screen_activity">Loging</string>
     <string name="app_name_create_user_activity">Register</string>
@@ -128,4 +132,19 @@
     <string name="summary_intent_preference">go to android webpage</string>
     <string name="title_activity_time_sheet">TimeSheetActivity</string>
     <string name="app_name_preference_app_activity">Settings</string>
+    //alert dialog changed not save
+
+    <string name="alert_dialog_changed_not_saved_title_text">You have unsaved changes</string>
+    <string name="alert_dialog_changed_not_saved_message">If you choose to continue any changes will not be saved.</string>
+    <string name="alert_dialog_changed_not_saved_buttonok">Continue</string>
+    <string name="alert_dialog_changed_not_saved_buttoncancel">Cancel</string>
+
+
+    <string name="alert_dialog_changed_not_saved_shopping_list_done_title_text">Congratulations!</string>
+    <string name="alert_dialog_changed_not_saved_shopping_list_done_message">You just bought all items on your list. Click continue to save the list</string>
+    <string name="alert_dialog_changed_not_saved_shopping_list_done_buttonok">Continue</string>
+    <string name="alert_dialog_changed_not_saved_shopping_list_done_buttoncancel">Edit</string>
+    <string name="text_search_itme_to_list_DataBase_empty">No such item found</string>
+    <string name="text_search_itme_to_list_DataBase_not_empty">add to list</string>
+
 </resources>

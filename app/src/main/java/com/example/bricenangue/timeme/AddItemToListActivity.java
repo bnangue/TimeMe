@@ -2,34 +2,34 @@ package com.example.bricenangue.timeme;
 
 import android.content.Intent;
 import android.content.res.AssetManager;
-import android.graphics.Bitmap;
 import android.os.AsyncTask;
+import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.SearchView;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.SimpleAdapter;
 import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
@@ -39,30 +39,35 @@ import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
-import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import java.io.File;
 
-import java.io.FileOutputStream;
-import java.io.InputStream;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.util.HSSFColor;
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 
-import jxl.Cell;
-import jxl.Sheet;
-import jxl.Workbook;
+import android.content.Context;
+import android.util.Log;
 
-public class AddItemToListActivity extends AppCompatActivity implements View.OnFocusChangeListener, SearchView.OnQueryTextListener, View.OnClickListener,ListViewAdapter.ShoppingItemSetListener {
+
+public class AddItemToListActivity extends AppCompatActivity implements View.OnFocusChangeListener, SearchView.OnQueryTextListener,
+        View.OnClickListener,ListViewAdapter.ShoppingItemSetListener,DialogFragmentDatePicker.OnDateGet {
     private  SearchView search;
-    private Button createnewitem;
+    private Button createnewitem,setDateButtuon;
     private ListView addItemtolistListview;
     private TextView textViewNoDatainDB, textViewAmontToPay;
     private  ArrayList<String> itemNamee=new ArrayList<>();
     private ArrayList<String> itemPrice=new ArrayList<>();
+    private ArrayList<String> itemUsageFrequency=new ArrayList<>();
     private ArrayList<ShoppingItem> itemsDB=new ArrayList<>();
     private ArrayList<ShoppingItem> itemstoShopList=new ArrayList<>();
     private ShoppingItem []itemstoShoparray;
@@ -72,7 +77,13 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
     private UserLocalStore userLocalStore;
     private SQLiteShoppingList sqLiteShoppingList;
     private int[] status ;
+    private Spinner spinner;
+    private String [] userAccArray={"standard","most used","price ascending","price descending","selected first","selected last"};
 
+    private FileHelper fileHelper;
+
+
+    public static boolean newItem=false;
 
     //This arraylist will have data as pulled from server. This will keep cumulating.
    private ArrayList<ShoppingItem> productResults = new ArrayList<ShoppingItem>();
@@ -85,19 +96,35 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_item_to_list);
+        fileHelper=new FileHelper(this);
         userLocalStore=new UserLocalStore(this);
         sqLiteShoppingList=new SQLiteShoppingList(this);
+        setDateButtuon=(Button)findViewById(R.id.dateaddeventstart_creatList_add_item_to_list);
         createnewitem=(Button) findViewById(R.id.grocery_activity_add_itemtoList_button);
         addItemtolistListview=(ListView)findViewById(R.id.shoppinglistViewaddItemToListactivity);
         textViewNoDatainDB=(TextView) findViewById(R.id.textView_add_item_to_list_List_empty);
         textViewAmontToPay=(TextView)findViewById(R.id.grocery_fragment_balance_amount_activity_add_item_to_list);
+        setDateButtuon.setOnClickListener(this);
 
+        spinner=(Spinner)findViewById(R.id.spinner_activity_add_item_to_list);
+        SpinnerAdapter adap = new ArrayAdapter<>(this, R.layout.spinnerlayout, userAccArray);
+        spinner.setAdapter(adap);
 
+        spinner.setSelection(0);
 
         Bundle extras=getIntent().getExtras();
-        if(extras.containsKey("listName")){
-            listName=extras.getString("listName");
+
+        if(extras!=null){
+            if(extras.containsKey("itemDB")){
+                itemsDB=extras.getParcelableArrayList("itemDB");
+                assert itemsDB != null;
+                itemstoShoparray=new ShoppingItem[itemsDB.size()];
+                initArray();
+
+            }
         }
+
+
          search=(SearchView)findViewById(R.id.actionbarsearch_add_item_to_list);
         search.setQueryHint("Start typing to search...");
         if(search.hasFocus()){
@@ -106,13 +133,83 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         search.setOnQueryTextFocusChangeListener(this);
         search.setOnQueryTextListener(this);
         createnewitem.setOnClickListener(this);
-       new LoadItemDBAsyncTask().execute();
+
+        initializeDatePicker();
+        listName=setDateButtuon.getText().toString();
+        if(savedInstanceState==null){
+             if(itemsDB.size()==0 || itemsDB==null){
+                 new LoadItemDBAsyncTask().execute();
+             }else {
+                 populateListview();
+             }
+
+        }else {
+            itemsDB=savedInstanceState.getParcelableArrayList("itemDB");
+            populateListview();
+        }
 
 
+
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if(itemsDB.size()!=0){
+                    sort(spinner.getSelectedItem().toString());
+                }
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+        sort(spinner.getSelectedItem().toString());
 
 
     }
 
+    private void initArray() {
+        for (int i=0;i<itemsDB.size();i++){
+            if(itemsDB.get(i).getNumberofItemsetForList()!=0){
+                itemstoShoparray[i]=itemsDB.get(i);
+            }
+        }
+        initTotalPricetextView();
+    }
+
+    void sort(String sortname){
+        switch (sortname){
+            case "standard":
+                Collections.sort(itemsDB, new ComparatorShoppingItemName());
+                break;
+            case "price ascending":
+                Collections.sort(itemsDB, new ComparatorShoppingItemPrice());
+                break;
+            case "price descending":
+                Comparator<ShoppingItem> comparator_type = Collections.reverseOrder(new ComparatorShoppingItemPrice());
+                Collections.sort(itemsDB, comparator_type);
+                break;
+            case "most used":
+                Comparator<ShoppingItem> comparator_type2 = Collections.reverseOrder(new ComparatorShoppingItemMostUsed());
+                Collections.sort(itemsDB, comparator_type2);
+
+                break;
+            case "selected first":
+                Comparator<ShoppingItem> comparator_type1 = Collections.reverseOrder(new CompareAddItemAlreadyadded());
+                Collections.sort(itemsDB, comparator_type1);
+                break;
+            case "selected last":
+                Collections.sort(itemsDB, new CompareAddItemAlreadyadded());
+                break;
+
+
+        }
+
+        populateListview();
+
+
+    }
     void populateListview(){
 
 
@@ -204,6 +301,8 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                 int hashid=(userLocalStore.getUserfullname() + format.format(dat)).hashCode();
                 groceryList.setList_unique_id(String.valueOf(hashid));
                 groceryList.setCreatorName(userLocalStore.getUserfullname());
+                updateExcelFile(this,list);
+                listName=setDateButtuon.getText().toString();
                 if(!listName.isEmpty()){
                     groceryList.setDatum(listName);
                 }
@@ -228,26 +327,112 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         return super.onOptionsItemSelected(item);
     }
 
-    public ArrayList<ShoppingItem> getItemFromDB(ArrayList<String> itemsname, ArrayList<String> itemsprice){
+    private  boolean updateExcelFile(Context context, ArrayList<ShoppingItem> items) {
+        boolean success= false;
+
+        FileHelper fileHelper=new FileHelper(context);
+        // Creating Input Stream
+
+        // Create a path where we will place our List of objects on external storage
+        File file=null;
+        FileOutputStream os = null;
+
+        try {
+
+            // Creating Input Stream
+            file = new File(fileHelper.getExcelfile("book_shopping_item"));
+
+
+            FileInputStream myInput = new FileInputStream(file);
+
+
+            XSSFWorkbook wb = new  XSSFWorkbook(myInput);
+            XSSFSheet sheet = wb.getSheetAt(0);
+            XSSFRow row;
+            XSSFCell cell;
+
+            Iterator rows = sheet.rowIterator();
+
+            while (rows.hasNext())
+            {
+                row=(XSSFRow) rows.next();
+
+                cell=row.getCell(0);
+
+                for(int i=0;i<items.size();i++){
+                    if(cell.getStringCellValue().equals(items.get(i).getItemName())){
+
+                        row.getCell(2).setCellValue(items.get(i).getNumberoftimeAddedAnyToList());
+                        System.out.print(cell.getStringCellValue()+" "+row.getCell(2).getNumericCellValue());
+                    }
+                }
+
+                System.out.println();
+            }
+
+
+
+            os = new FileOutputStream(file);
+            wb.write(os);
+            Log.w("FileUtils", "Writing file" + file);
+            success = true;
+        } catch (IOException e) {
+            Log.w("FileUtils", "Error writing " + file, e);
+        } catch (Exception e) {
+            Log.w("FileUtils", "Failed to save file", e);
+        } finally {
+            try {
+                if (null != os)
+                    os.close();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        return success;
+    }
+
+
+
+
+    public ArrayList<ShoppingItem> getItemFromDB(ArrayList<String> itemsname, ArrayList<String> itemsprice, ArrayList<String> itemUsageFrequency){
 
         ArrayList<ShoppingItem> itemsdb=new ArrayList<>();
-        for(int i=0;i<itemsname.size()-1;i++){
+        for(int i=0;i<itemsname.size();i++){
 
             ShoppingItem item=new ShoppingItem();
-                item.setPrice(itemsprice.get(i));
-                item.setItemName(itemsname.get(i));
+            item.setPrice(itemsprice.get(i));
+            item.setItemName(itemsname.get(i));
             int hashid=(itemsname.get(i) + itemsprice.get(i)).hashCode();
             item.setUnique_item_id((String.valueOf(hashid)));
             item.setDetailstoItem("");
             item.setItemSpecification("");
             item.setNumberofItemsetForList(0);
-            item.setNumberofItemsetForList(0);
+            DecimalFormat df = new DecimalFormat("0.00");
+            df.setMaximumFractionDigits(2);
+            try {
+                Number number=df.parse(itemUsageFrequency.get(i));
+                item.setNumberoftimeAddedAnyToList(number.intValue());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             itemsdb.add(item);
 
         }
         itemstoShoparray=new ShoppingItem[itemsdb.size()];
         return itemsdb;
     }
+
+    @Override
+    protected void onSaveInstanceState(Bundle state) {
+            super.onSaveInstanceState(state);
+
+            state.putParcelableArrayList("itemDB", itemsDB);
+
+    }
+
+
     @Override
     public void onFocusChange(View v, boolean hasFocus) {
 
@@ -261,11 +446,12 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
 
     @Override
     public boolean onQueryTextChange(String newText) {
-        if (newText.length() > 1) {
+        if (newText.length() > 0) {
 
-            SearchAsyncTask m = (SearchAsyncTask) new SearchAsyncTask().execute(newText);
+            new SearchAsyncTask().execute(newText);
         } else {
-           populateListview();              }
+           populateListview();
+        }
 
 
         return false;
@@ -273,32 +459,143 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
 
     @Override
     public void onClick(View v) {
-        //start create an item activity
-        startActivity(new Intent(this,CreatANewItemActivity.class));
-    }
-
-
-    public void readXlsFile(){
-        try{
-            AssetManager manager=getAssets();
-            InputStream in=manager.open("household_sept.xlsx");
-            Workbook wb=Workbook.getWorkbook(in);
-            Sheet sheet=wb.getSheet(0);
-            int row=sheet.getRows();
-            int col=sheet.getColumns();
-            String str="";
-            for(int i=0; i<row;i++){
-                for (int j =0;j<col;j ++){
-                    Cell cell=sheet.getCell(j,i);
-                    str = str +cell.getContents();
-                }
-                str=str+"\n";
-            }
-        }catch (Exception e){
-            e.printStackTrace();
+        int id=v.getId();
+        switch (id){
+            case R.id.grocery_activity_add_itemtoList_button:
+                startActivity(new Intent(this,CreatANewItemActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        .putExtra("itemDB",itemsDB));
+                break;
+            case R.id.dateaddeventstart_creatList_add_item_to_list:
+                onDatePickercliced(true);
+                break;
         }
+
     }
 
+    @Override
+    public void dateSet(String date, boolean isstart) {
+        setDateButtuon.setText(date);
+    }
+
+    private void initializeDatePicker(){
+        final SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
+        formatter.setLenient(false);
+
+        Date curDate = new Date();
+        String curTime = formatter.format(curDate);
+        setDateButtuon.setText(curTime);
+    }
+    public void onDatePickercliced(boolean bol){
+        android.support.v4.app.FragmentManager manager=getSupportFragmentManager();
+        DialogFragment fragmentDatePicker=DialogFragmentDatePicker.newInstance(bol);
+
+        fragmentDatePicker.show(manager,"datePickerfr");
+    }
+
+
+    private  boolean saveExcelXLSXFileFirstInit(Context context) {
+        boolean success= false;
+
+        FileHelper fileHelper=new FileHelper(context);
+        XSSFWorkbook  wb = null;
+        String workbooksFolderpath= fileHelper.getWorkbooksFolder();
+        String filesDirectorypath= fileHelper.getFilesDirectory();
+        File filedirectory=new File(filesDirectorypath);
+
+        if (!filedirectory.exists()){
+            filedirectory.mkdirs();
+        }
+        File workbookfolder=new File(workbooksFolderpath);
+        if(!workbookfolder.exists()){
+            workbookfolder.mkdir();
+        }
+        // Create a path where we will place our List of objects on external storage
+        File file=null;
+        FileOutputStream os = null;
+
+        try {
+            AssetManager manager=getAssets();
+            InputStream in=manager.open("book_shopping_item.xlsx");
+            wb = new XSSFWorkbook(in);
+
+             file = new File(fileHelper.getExcelfile("book_shopping_item"));
+            if(!file.exists()){
+                file.createNewFile();
+
+            }
+
+            os = new FileOutputStream(file);
+            wb.write(os);
+            Log.w("FileUtils", "Writing file" + file);
+            success = true;
+        } catch (IOException e) {
+            Log.w("FileUtils", "Error writing " + file, e);
+        } catch (Exception e) {
+            Log.w("FileUtils", "Failed to save file", e);
+        } finally {
+            try {
+                if (null != os)
+                    os.close();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        return success;
+    }
+
+
+    private void readExcelXLSXFile(Context context) {
+
+        FileHelper fileHelper=new FileHelper(context);
+
+        File file=null;
+        try{
+            // Creating Input Stream
+            file = new File(fileHelper.getExcelfile("book_shopping_item"));
+
+
+            FileInputStream myInput = new FileInputStream(file);
+
+
+            XSSFWorkbook wb = new  XSSFWorkbook(myInput);
+            XSSFSheet sheet = wb.getSheetAt(0);
+            XSSFRow row;
+            XSSFCell cell;
+
+            Iterator rows = sheet.rowIterator();
+
+            while (rows.hasNext())
+            {
+                row=(XSSFRow) rows.next();
+
+                cell=row.getCell(0);
+
+                if (cell.getCellType() == XSSFCell.CELL_TYPE_STRING)
+                {
+                    System.out.print(cell.getStringCellValue()+" ");
+                    itemNamee.add(cell.getStringCellValue());
+                }
+                cell=row.getCell(1);
+               if(cell.getCellType() == XSSFCell.CELL_TYPE_NUMERIC)
+                {
+                    System.out.print(cell.getNumericCellValue()+" ");
+                    itemPrice.add(String.valueOf(cell.getNumericCellValue()));
+                }
+                cell=row.getCell(2);
+                if(cell.getCellType() == XSSFCell.CELL_TYPE_NUMERIC)
+                {
+                    System.out.print(cell.getNumericCellValue()+" ");
+                    itemUsageFrequency.add(String.valueOf(cell.getNumericCellValue()));
+                }
+
+                System.out.println();
+            }
+
+        }catch (Exception e){e.printStackTrace(); }
+
+
+    }
 
     public  void readXLSXFile()
     {
@@ -354,6 +651,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
 
         String excelFileName = "C:/Test.xlsx";//name of excel file
 
+
         String sheetName = "Sheet1";//name of sheet
 
         XSSFWorkbook wb = new XSSFWorkbook();
@@ -362,7 +660,9 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         //iterating r number of rows
         for (int r=0;r < 5; r++ )
         {
+
             XSSFRow row = sheet.createRow(r);
+
 
             //iterating c number of columns
             for (int c=0;c < 5; c++ )
@@ -382,15 +682,111 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
     }
 
 
+    private static boolean saveExcelFile(Context context, String fileName) {
+
+        boolean success = false;
+
+        //New Workbook
+        Workbook wb = new HSSFWorkbook();
+
+        Cell c = null;
+
+        //Cell style for header row
+        CellStyle cs = wb.createCellStyle();
+        cs.setFillForegroundColor(HSSFColor.LIME.index);
+        cs.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
+
+        //New Sheet
+        Sheet sheet1 = null;
+        sheet1 = wb.createSheet("myOrder");
+
+        // Generate column headings
+        Row row = sheet1.createRow(0);
+
+        c = row.createCell(0);
+        c.setCellValue("Item Number");
+        c.setCellStyle(cs);
+
+        c = row.createCell(1);
+        c.setCellValue("Quantity");
+        c.setCellStyle(cs);
+
+        c = row.createCell(2);
+        c.setCellValue("Price");
+        c.setCellStyle(cs);
+
+        sheet1.setColumnWidth(0, (15 * 500));
+        sheet1.setColumnWidth(1, (15 * 500));
+        sheet1.setColumnWidth(2, (15 * 500));
+
+        // Create a path where we will place our List of objects on external storage
+        File file = new File(context.getExternalFilesDir(null), fileName);
+        FileOutputStream os = null;
+
+        try {
+            os = new FileOutputStream(file);
+            wb.write(os);
+            Log.w("FileUtils", "Writing file" + file);
+            success = true;
+        } catch (IOException e) {
+            Log.w("FileUtils", "Error writing " + file, e);
+        } catch (Exception e) {
+            Log.w("FileUtils", "Failed to save file", e);
+        } finally {
+            try {
+                if (null != os)
+                    os.close();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        return success;
+    }
+
+    private static void readExcelFile(Context context, String filename) {
+
+        try{
+            // Creating Input Stream
+            File file = new File(context.getExternalFilesDir(null), filename);
+            FileInputStream myInput = new FileInputStream(file);
+
+            // Create a POIFSFileSystem object
+            POIFSFileSystem myFileSystem = new POIFSFileSystem(myInput);
+
+            // Create a workbook using the File System
+            HSSFWorkbook myWorkBook = new HSSFWorkbook(myFileSystem);
+
+            // Get the first sheet from workbook
+            HSSFSheet mySheet = myWorkBook.getSheetAt(0);
+
+            /** We now need something to iterate through the cells.**/
+            Iterator<Row> rowIter = mySheet.rowIterator();
+
+            while(rowIter.hasNext()){
+                HSSFRow myRow = (HSSFRow) rowIter.next();
+                Iterator<Cell> cellIter = myRow.cellIterator();
+                while(cellIter.hasNext()){
+                    HSSFCell myCell = (HSSFCell) cellIter.next();
+                    Log.w("FileUtils", "Cell Value: " +  myCell.toString());
+                    Toast.makeText(context, "cell Value: " + myCell.toString(), Toast.LENGTH_SHORT).show();
+                }
+            }
+        }catch (Exception e){e.printStackTrace(); }
+
+        return;
+    }
+
     @Override
     public void onShoppingOtemSet(ShoppingItem item,int position) {
 
         itemstoShoparray[position]=item;
+        initTotalPricetextView();
 
+    }
 
-
-
-         double totalPrice=0;
+    private void initTotalPricetextView(){
+        double totalPrice=0;
         for (int i=0;i<itemstoShoparray.length;i++){
             if(itemstoShoparray[i]!=null){
                 int numb=itemstoShoparray[i].getNumberofItemsetForList();
@@ -400,17 +796,26 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         DecimalFormat df = new DecimalFormat("0.00");
         df.setMaximumFractionDigits(2);
         String priceStr = df.format(totalPrice);
-        if(priceStr.equals("0.00")){
+        if((priceStr.replace(",",".")).equals("0.00")){
             textViewAmontToPay.setText(priceStr+"€");
             textViewAmontToPay.setTextColor(getResources().getColor(R.color.grey));
         }else {
             textViewAmontToPay.setText("- "+priceStr+"€");
             textViewAmontToPay.setTextColor(getResources().getColor(R.color.warning_color));
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
 
 
+    }
 
-
+    @Override
+    protected void onPause() {
+        super.onPause();
+        newItem=false;
     }
 
     //in this myAsyncTask, we are fetching data from server for the search string entered by user.
@@ -507,10 +912,10 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
     void prepareListviewall(ArrayList<ShoppingItem> shoppingItems){
 
         if(shoppingItems.size()==0){
-            textViewNoDatainDB.setText(R.string.text_add_itme_to_list_DataBase_empty);
+            textViewNoDatainDB.setText(R.string.text_search_itme_to_list_DataBase_empty);
         }else{
 
-            textViewNoDatainDB.setText(R.string.text_add_itme_to_list_DataBase_not_empty);
+            textViewNoDatainDB.setText(R.string.text_search_itme_to_list_DataBase_not_empty);
         }
         ListViewAdapter listViewAdapter=new ListViewAdapter(this,shoppingItems,this);
         addItemtolistListview.setVisibility(View.VISIBLE);
@@ -546,8 +951,9 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         @Override
         protected Void doInBackground(Void... params) {
 
-            readXLSXFile();
+            //readXLSXFile();
 
+            readExcelXLSXFile(getApplicationContext());
             return null;
 
         }
@@ -557,9 +963,21 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
             //end progressBar
 
             if(itemsDB.size()==0 || itemsDB==null ){
-                itemsDB=getItemFromDB(itemNamee,itemPrice);
+                itemsDB=getItemFromDB(itemNamee,itemPrice,itemUsageFrequency);
             }
             populateListview();
+        }
+    }
+
+    private void mergeItemsDB(ArrayList<ShoppingItem> items) {
+        for (int i=0;i<items.size();i++){
+            for(int j=0;j<itemsDB.size();j++){
+                if(!items.get(i).getUnique_item_id().equals(itemsDB.get(j).getUnique_item_id())){
+
+                    itemsDB.add(items.get(i));
+                }
+            }
+
         }
     }
 

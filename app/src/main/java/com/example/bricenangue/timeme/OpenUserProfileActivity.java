@@ -264,7 +264,8 @@ public class OpenUserProfileActivity extends AppCompatActivity implements AlertD
         if(arechangesSaved){
              finish();
         }else{
-            DialogFragment fragment=new AlertDialogChangeNotSaved();
+            DialogFragment fragment=AlertDialogChangeNotSaved.newInstance(getString(R.string.alert_dialog_changed_not_saved_title_text),getString(R.string.alert_dialog_changed_not_saved_message)
+            ,getString(R.string.alert_dialog_changed_not_saved_buttonok),getString(R.string.alert_dialog_changed_not_saved_buttoncancel));
             fragment.setCancelable(false);
             fragment.show(getSupportFragmentManager(), "CHANGE NOT SAVED");
         }

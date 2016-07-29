@@ -6,7 +6,7 @@ import java.util.Comparator;
  * Created by praktikum on 01/07/15.
  * Helper class to sort values.
  */
-public class ComparatorValueDown implements Comparator<ShoppingItem> {
+public class ComparatorShoppingItemPrice implements Comparator<ShoppingItem> {
     @Override
     public int compare(ShoppingItem lhs, ShoppingItem rhs) {
         //Remove the dots from the value

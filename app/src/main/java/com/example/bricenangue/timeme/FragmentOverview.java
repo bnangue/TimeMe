@@ -404,6 +404,8 @@ public class FragmentOverview extends Fragment implements DialogDeleteEventFragm
         prepareRecyclerView(arrayList);
     }
 
+
+
     @Override
     public void selected(int count, boolean[] events, int position) {
 

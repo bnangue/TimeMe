@@ -7,4 +7,5 @@ import java.util.ArrayList;
  */
 public interface FragmentCommunicator {
     public void passDataToFragment(ArrayList<CalendarCollection> someValue);
+
 }

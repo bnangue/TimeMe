@@ -18,6 +18,8 @@ import java.util.ArrayList;
 
 public class ListViewAdapter extends BaseAdapter {
 
+    private int numberoftiemeverused=0;
+
     public interface ShoppingItemSetListener{
         void onShoppingOtemSet(ShoppingItem item,int position);
     }
@@ -137,10 +139,14 @@ public class ListViewAdapter extends BaseAdapter {
                 }
                 if(positionmemo==position){
                     viewHolder.removeItem.setEnabled(true);
+                    numberoftiemeverused=shoppingItemsDBList.get(position).getNumberoftimeAddedAnyToList();
                     counterItemSelected=shoppingItemsDBList.get(position).getNumberofItemsetForList();
                     counterItemSelected++;
+
+                    numberoftiemeverused++;
                     numberSelectedOnrow[position]=counterItemSelected;
                     shoppingItemsDBList.get(position).setNumberofItemsetForList(counterItemSelected);
+                    shoppingItemsDBList.get(position).setNumberoftimeAddedAnyToList(numberoftiemeverused);
 
                     viewHolder.nummberitemSelected.setText(String.valueOf(counterItemSelected));
                     double price=0.00;
@@ -152,10 +158,14 @@ public class ListViewAdapter extends BaseAdapter {
 
                 }else{
                     viewHolder.removeItem.setEnabled(true);
+                    numberoftiemeverused=shoppingItemsDBList.get(position).getNumberoftimeAddedAnyToList();
                     counterItemSelected=shoppingItemsDBList.get(position).getNumberofItemsetForList();
                     counterItemSelected++;
+                    numberoftiemeverused++;
                     numberSelectedOnrow[position]=counterItemSelected;
                     shoppingItemsDBList.get(position).setNumberofItemsetForList(counterItemSelected);
+
+                    shoppingItemsDBList.get(position).setNumberoftimeAddedAnyToList(numberoftiemeverused);
 
                     viewHolder.nummberitemSelected.setText(String.valueOf(counterItemSelected));
                     double price=0.00;
@@ -180,13 +190,16 @@ public class ListViewAdapter extends BaseAdapter {
                 if(positionmemo==position){
 
                     counterItemSelected=shoppingItemsDBList.get(position).getNumberofItemsetForList();
+                    numberoftiemeverused=shoppingItemsDBList.get(position).getNumberoftimeAddedAnyToList();
                     if(counterItemSelected>0){
                         viewHolder.nummberitemSelected.setTextColor(context.getResources().getColor(R.color.warning_color));
                         viewHolder.removeItem.setEnabled(true);
                         counterItemSelected--;
+                        numberoftiemeverused--;
                         numberSelectedOnrow[position]=counterItemSelected;
                         viewHolder.nummberitemSelected.setText(String.valueOf(counterItemSelected));
                         shoppingItemsDBList.get(position).setNumberofItemsetForList(counterItemSelected);
+                        shoppingItemsDBList.get(position).setNumberoftimeAddedAnyToList(numberoftiemeverused);
 
                         double price= Double.parseDouble(shoppingItemsDBList.get(position).getPrice())*counterItemSelected;
 
@@ -218,15 +231,19 @@ public class ListViewAdapter extends BaseAdapter {
                 }else {
 
                     viewHolder.removeItem.setEnabled(true);
-                   counterItemSelected=shoppingItemsDBList.get(position).getNumberofItemsetForList();;
+                   counterItemSelected=shoppingItemsDBList.get(position).getNumberofItemsetForList();
+                    numberoftiemeverused=shoppingItemsDBList.get(position).getNumberoftimeAddedAnyToList();
+
                     if(counterItemSelected>0){
                         viewHolder.nummberitemSelected.setTextColor(context.getResources().getColor(R.color.warning_color));
                         viewHolder.removeItem.setEnabled(true);
                         counterItemSelected--;
+                        numberoftiemeverused--;
                         numberSelectedOnrow[position]=counterItemSelected;
                         viewHolder.nummberitemSelected.setText(String.valueOf(counterItemSelected));
                         shoppingItemsDBList.get(position).setNumberofItemsetForList(counterItemSelected);
 
+                        shoppingItemsDBList.get(position).setNumberoftimeAddedAnyToList(numberoftiemeverused);
                         double price= Double.parseDouble(shoppingItemsDBList.get(position).getPrice())*counterItemSelected;
 
                         DecimalFormat df = new DecimalFormat("0.00");

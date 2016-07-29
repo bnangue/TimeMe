@@ -3,6 +3,11 @@ package com.example.bricenangue.timeme;
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,6 +17,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONObject;
 
@@ -26,8 +32,9 @@ import java.util.GregorianCalendar;
  */
 public class RecyclerAdapterSmallCards  extends RecyclerView
         .Adapter<RecyclerAdapterSmallCards
-        .DataObjectHolder> {
+        .DataObjectHolder>  {
     private static String LOG_TAG = "RecyclerAdaptaterCreateShoppingList";
+    private static LayoutInflater inflater=null;
     private ArrayList<GroceryList> mDataset;
     private  MyRecyclerAdaptaterCreateShoppingListClickListener myClickListener;
     private  MyRecyclerAdaptaterCreateShoppingListDoneClickListener myDoneClickListener;
@@ -37,6 +44,7 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
     private RecyclerAdapterSmallCards RecyclerAdaptaterCreateShoppingList=this;
     private UserLocalStore userLocalStore;
     private boolean isListwithDoneList;
+    private SQLiteShoppingList sqLiteShoppingList;
 
 
     public class OnExpandDetailsClickListener implements View.OnClickListener {
@@ -55,7 +63,7 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
 
     public static class DataObjectHolder extends RecyclerView.ViewHolder
             implements View
-            .OnClickListener {
+            .OnClickListener{
         TextView listname,listcreator,listStatus;
         Button share,delete;
 
@@ -65,7 +73,8 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
         private  MyRecyclerAdaptaterCreateShoppingListDoneClickListener myDoneClickListener;
         private  boolean isListwithDoneList;
 
-        public DataObjectHolder(View itemView, MyRecyclerAdaptaterCreateShoppingListClickListener myClickListener1,  MyRecyclerAdaptaterCreateShoppingListDoneClickListener myDoneClickListener1, boolean isListwithDoneList1) {
+        public DataObjectHolder(View itemView, MyRecyclerAdaptaterCreateShoppingListClickListener myClickListener1,
+                                MyRecyclerAdaptaterCreateShoppingListDoneClickListener myDoneClickListener1, boolean isListwithDoneList1) {
             super(itemView);
             myClickListener=myClickListener1;
             myDoneClickListener=myDoneClickListener1;
@@ -94,6 +103,8 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
 
 
         }
+
+
     }
 
     public void setOnshoppinglistsmallClickListener(MyRecyclerAdaptaterCreateShoppingListClickListener myClickListener,  MyRecyclerAdaptaterCreateShoppingListDoneClickListener myDoneClickListener) {
@@ -105,6 +116,8 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
         this.context=context;
         this.isListwithDoneList=isListwithDoneList;
         mDataset = myDataset;
+        sqLiteShoppingList=new SQLiteShoppingList(context);
+       inflater= (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         this.myClickListener=myClickListener;
         this.myDoneClickListener=myDoneClickListener;
         mySQLiteHelper=new MySQLiteHelper(context);
@@ -113,8 +126,9 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
 
     }
 
-    public RecyclerAdapterSmallCards (){
+    public RecyclerAdapterSmallCards (ArrayList<GroceryList> myDataset){
 
+        mDataset = myDataset;
     }
     @Override
     public DataObjectHolder onCreateViewHolder(ViewGroup parent,
@@ -131,25 +145,60 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
         GroceryList groceryList=mDataset.get(position);
 
 
-        holder.listname.setText(groceryList.getDatum());
+        String name=context.getResources().getString(R.string.grocery_list_item_title_text ).toLowerCase() + " " + groceryList.getDatum();
+        holder.listname.setText(name);
         holder.listStatus.setText(groceryList.isListdone() ? R.string.grocery_list_status_done_text : R.string.grocery_list_status__not_done_text);
 
         holder.delete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if(isListwithDoneList){
-                    myDoneClickListener.onButtonClick(holder.getAdapterPosition(), v);
+                    alertDialogDelete(holder);
                 }else{
-                    myClickListener.onButtonClick(holder.getAdapterPosition(), v);
+                    alertDialogDelete(holder);
                 }
-
-
-
-
             }
         });
     }
 
+    public void alertDialogDelete(final DataObjectHolder holder){
+
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                context);
+        View dialoglayout = inflater.inflate(R.layout.dialog_warning_delete_event, null);
+
+        final android.support.v7.app.AlertDialog alertDialog = alertDialogBuilder.create();
+
+        alertDialog.setView(dialoglayout);
+        Button delete= (Button)dialoglayout.findViewById(R.id.buttonDeleteaccount);
+        Button cancel= (Button)dialoglayout.findViewById(R.id.buttonCancelaccount);
+        cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                alertDialog.dismiss();
+
+            }
+        });
+        delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                if(sqLiteShoppingList.deleteShoppingList(mDataset.get(holder.getAdapterPosition()).getList_unique_id())!=0){
+                    deleteItem(holder.getAdapterPosition());
+                    Toast.makeText(context,"List succesffully deleted",Toast.LENGTH_SHORT).show();
+                    alertDialog.dismiss();
+                }else {
+                    Toast.makeText(context,"Error deleting grocery list",Toast.LENGTH_SHORT).show();
+                    alertDialog.dismiss();
+                }
+
+            }
+        });
+
+        alertDialog.setCancelable(false);
+        // show it
+        alertDialog.show();
+    }
     public void addItem(GroceryList dataObj) {
 
         mDataset.add(dataObj);
@@ -165,77 +214,22 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
 
     public interface MyRecyclerAdaptaterCreateShoppingListClickListener {
         public void onItemClick(int position, View v);
-        public void onButtonClick(int position, View v);
+
     }
 
     public interface MyRecyclerAdaptaterCreateShoppingListDoneClickListener {
         public void onItemClick(int position, View v);
-        public void onButtonClick(int position, View v);
+
     }
 
 
-    private IncomingNotification getIncomingNotificationFromEvent(CalendarCollection calendarCollection){
-        IncomingNotification incomingNotification=null;
-        try {
-            JSONObject jsonObject=new JSONObject();
-            jsonObject.put("title",calendarCollection.title);
-            jsonObject.put("description",calendarCollection.description);
-            jsonObject.put("datetime",calendarCollection.datetime);
-            jsonObject.put("creator",calendarCollection.creator);
-            jsonObject.put("category",calendarCollection.category);
-            jsonObject.put("startingtime",calendarCollection.startingtime);
-            jsonObject.put("endingtime",calendarCollection.endingtime);
-            jsonObject.put("hashid",calendarCollection.hashid);
-            jsonObject.put("alldayevent",calendarCollection.alldayevent);
-            Calendar c=new GregorianCalendar();
-            Date dat=c.getTime();
-            //String day= String.valueOf(dat.getDay());
-            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-            String date = (String) android.text.format.DateFormat.format("dd-MM-yyyy", dat);
-            incomingNotification=new IncomingNotification(1,0,jsonObject.toString(),date);
-            incomingNotification.id=calendarCollection.incomingnotifictionid;
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-
-        return incomingNotification;
-    }
 
     public void deleteItem(int index) {
-        // deleteFromSQLITEAndSERver(index);
 
         mDataset.remove(index);
         notifyItemRemoved(index);
     }
 
 
-    /**
-
-     private void deleteFromSQLITEAndSERver(final int index){
-     ServerRequests serverRequests= new ServerRequests(context);
-     serverRequests.deleteCalenderEventInBackgroung(mDataset.get(index), new GetEventsCallbacks() {
-    @Override
-    public void done(ArrayList<CalendarCollection> returnedeventobject) {
-
-    }
-
-    @Override
-    public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
-
-    }
-
-    @Override
-    public void updated(String reponse) {
-    if (reponse.contains("Event successfully deleted")) {
-    mySQLiteHelper.deleteIncomingNotification(mDataset.get(index).incomingnotifictionid);
-    mDataset.remove(index);
-    notifyItemRemoved(index);
-    //getEvents(mySQLiteHelper.getAllIncomingNotification());
-
-    }
-    }
-    });
-     }
-     **/
 }

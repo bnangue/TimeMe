@@ -35,12 +35,14 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Created by bricenangue on 27/02/16.
  */
 public class NewCalendarActivty extends ActionBarActivity implements NavigationDrawerFragment.NavigationDrawerCallbacks, View.OnClickListener,
-        FragmentCategoryShopping.OnFragmentInteractionListener,DialogLogoutFragment.YesNoListenerDeleteAccount,OnCalendarEventsChanged{
+        FragmentCategoryShopping.OnFragmentCategoryShoppingInteractionListener,DialogLogoutFragment.YesNoListenerDeleteAccount,OnCalendarEventsChanged{
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -85,6 +87,10 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
      */
     private CharSequence mTitle;
     private int pagePosition;
+    private GroceryList groceryListTodelete;
+    private int positionToDelete=0;
+    private ArrayList<GroceryList> groceryListsToSend=new ArrayList<>();
+    private int countout=1;
 
 
     @Override
@@ -297,6 +303,13 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
 
     @Override
     public void eventsCahnged(boolean haschanged) {
+    }
+
+    @Override
+    public void onFragmentCategoryShoppingInteraction(GroceryList groceryList,int position,ArrayList<GroceryList> groceryLists) {
+        groceryListTodelete=groceryList;
+        positionToDelete=position;
+        groceryListsToSend=groceryLists;
     }
 
 
@@ -549,15 +562,28 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
 
 
     @Override
-    public void onFragmentInteraction(Uri uri) {
-
-    }
-
-    @Override
     public void onBackPressed() {
-        DialogFragment dialogFragment=new DialogLogoutFragment();
-        dialogFragment.setCancelable(false);
-        dialogFragment.show(getSupportFragmentManager(), "LOGOUTFRAGMENT");
+
+        if((countout%2)==0){
+            DialogFragment dialogFragment=new DialogLogoutFragment();
+            dialogFragment.setCancelable(false);
+            dialogFragment.show(getSupportFragmentManager(), "LOGOUTNewCalendarActivityFRAGMENT");
+        }else {
+            countout++;
+
+            Timer timer = new Timer();
+            timer.schedule(new TimerTask() {
+
+                public void run() {
+                    countout =1;
+
+                }
+
+            }, 3000);
+
+            Toast.makeText(getApplicationContext(), getString(R.string.PressSecondTimeToCloseApp),Toast.LENGTH_SHORT).show();
+
+        }
 
     }
 
@@ -599,13 +625,6 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
         });
 
 
-    }
-    public void deleteShopLisfromFragment(GroceryList groceryList){
-        if(sqLiteShoppingList.deleteShoppingList(groceryList.getList_unique_id())!=0){
-           // ((RecyclerAdapterSmallCards)new RecyclerAdapterSmallCards()).deleteItem(position);
-
-            Toast.makeText(getApplicationContext(),"List succesffully deleted",Toast.LENGTH_SHORT).show();
-        }
     }
     private void showErrordialog(String message) {
         AlertDialog.Builder alert = new AlertDialog.Builder(this);

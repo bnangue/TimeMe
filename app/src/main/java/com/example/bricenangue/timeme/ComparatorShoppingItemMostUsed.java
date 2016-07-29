@@ -5,15 +5,16 @@ import java.util.Comparator;
 /**
  * Created by praktikum on 01/07/15.
  */
-public class ComparatorOrderType implements Comparator<ShoppingItem> {
+public class ComparatorShoppingItemMostUsed implements Comparator<ShoppingItem> {
     @Override
     public int compare(ShoppingItem lhs, ShoppingItem rhs) {
-        //String orderType1= lhs.creationTime;
-      //  String orderType2=rhs.creationTime;
+        Integer value1 = lhs.getNumberoftimeAddedAnyToList();
+        Integer value2 = rhs.getNumberoftimeAddedAnyToList();
 
-      //  int idf = orderType1.compareTo(orderType2);
 
-        return  0;
+        int idk = value1.compareTo(value2);
+
+        return idk;
     }
     @Override
     public boolean equals(Object object) {

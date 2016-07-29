@@ -270,8 +270,12 @@ public class FragmentCategoryWorkPlan extends Fragment implements DialogDeleteEv
         collectionArrayList=someValue;
     }
 
+
+
     @Override
     public void onUpdateUi(ArrayList<CalendarCollection> arrayList, String UName) {
         updateUi(arrayList);
     }
+
+
 }

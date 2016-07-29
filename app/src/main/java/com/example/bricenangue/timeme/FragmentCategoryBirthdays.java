@@ -281,8 +281,11 @@ public class FragmentCategoryBirthdays extends Fragment implements DialogDeleteE
         collectionArrayList=someValue;
     }
 
+
+
     @Override
     public void onUpdateUi(ArrayList<CalendarCollection> arrayList,String uName) {
         updateUi(arrayList);
     }
+
 }

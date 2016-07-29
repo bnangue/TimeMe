@@ -1,7 +1,10 @@
 package com.example.bricenangue.timeme;
 
+import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -12,20 +15,22 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
-public class DetailsShoppingListActivity extends AppCompatActivity implements ListAdapterCreateShopList.ShoppingItemBoughtListener, AdapterView.OnItemClickListener {
+public class DetailsShoppingListActivity extends AppCompatActivity implements ListAdapterCreateShopList.ShoppingItemBoughtListener, AdapterView.OnItemClickListener,AlertDialogChangeNotSaved.OnChangesCancel {
 
     private ArrayList<ShoppingItem> itemsDB=new ArrayList<>();
     private ListAdapterCreateShopList listViewAdapter;
     private boolean[] itemsBought;
     private GroceryList groceryList;
     private ListView shoppinglistview;
-    private TextView textViewAlreadySpent;
+    private TextView textViewAlreadySpent,textViewgroceryListName;
     double totalpriceTopay;
     private Spinner spinner;
+    private Menu menu;
     String [] userAccArray={"standard","most used","price ascending","price descending","selected first","selected last"};
 
 
@@ -41,6 +46,7 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements Li
 
         shoppinglistview=(ListView)findViewById(R.id.listView_activity_details_shoppping_list);
         textViewAlreadySpent=(TextView)findViewById(R.id.grocery_fragment_balance_amount_activity_details_shopping_list);
+        textViewgroceryListName=(TextView)findViewById(R.id.textView_grocery_list_item_title_activity_details_shopping);
 
         spinner=(Spinner)findViewById(R.id.spinner_activity_details_shopping_list);
         SpinnerAdapter adap = new ArrayAdapter<>(this, R.layout.spinnerlayout, userAccArray);
@@ -82,6 +88,8 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements Li
 
 
         }
+        String groceryListName= getResources().getString(R.string.grocery_list_item_title_text )+ " " + groceryList.getDatum();
+        textViewgroceryListName.setText(groceryListName);
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -101,6 +109,46 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements Li
 
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        this.menu=menu;
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.add_item_to_list_done, menu);
+
+        hideOption(R.id.action_items_added_done);
+        return true;
+    }
+
+    private void hideOption(int id){
+        MenuItem item=menu.findItem(id);
+        item.setVisible(false);
+    }
+    private void showOption(int id){
+        MenuItem item=menu.findItem(id);
+        item.setVisible(true);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_items_added_done) {
+           onBackPressed();
+
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -113,6 +161,7 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements Li
 
     @Override
     public void onShoppingItemBought(ShoppingItem item, boolean[] positions) {
+        showOption(R.id.action_items_added_done);
         itemsBought=positions;
         listViewAdapter.setSelectedItems(itemsBought,0);
        double totalspent=0;
@@ -130,7 +179,7 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements Li
         DecimalFormat df = new DecimalFormat("0.00");
         df.setMaximumFractionDigits(2);
         String priceStr = df.format(totalspent);
-        if(priceStr.equals("0.00")){
+        if((priceStr.replace(",",".")).equals("0.00")){
             textViewAlreadySpent.setText(priceStr+"€");
             textViewAlreadySpent.setTextColor(getResources().getColor(R.color.grey));
         }else {
@@ -138,29 +187,49 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements Li
             textViewAlreadySpent.setTextColor(getResources().getColor(R.color.warning_color));
         }
 
+        try {
+            Number nm=df.parse(priceStr);
+            totalpriceTopay= nm.doubleValue();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
 
-        totalpriceTopay= Double.parseDouble(priceStr);
+
+
         groceryList.setItemsOftheList(itemsDB);
-        sort(spinner.getSelectedItem().toString());
+        if(!spinner.getSelectedItem().toString().equals("standard")){
+            sort(spinner.getSelectedItem().toString());
+        }
+
         if(groceryList.allItemsbought()){
             //signalize user and save list
+            DialogFragment fragment=AlertDialogChangeNotSaved.newInstance(getString(
+                    R.string.alert_dialog_changed_not_saved_shopping_list_done_title_text)
+                    ,getString(R.string.alert_dialog_changed_not_saved_shopping_list_done_message)
+                    ,getString(R.string.alert_dialog_changed_not_saved_shopping_list_done_buttonok
+                    ),getString(R.string.alert_dialog_changed_not_saved_shopping_list_done_buttoncancel));
+            fragment.setCancelable(false);
+            fragment.show(getSupportFragmentManager(), "SHOPPING LIST NOT COMPLETE");
         }
     }
+
 
 
     void sort(String sortname){
         switch (sortname){
             case "standard":
-                Collections.sort(itemsDB, new ComparatorCreatorName());
+                Collections.sort(itemsDB, new ComparatorShoppingItemName());
                 break;
             case "price ascending":
-                Collections.sort(itemsDB, new ComparatorValueDown());
+                Collections.sort(itemsDB, new ComparatorShoppingItemPrice());
                 break;
             case "price descending":
-                Comparator<ShoppingItem> comparator_type = Collections.reverseOrder(new ComparatorValueDown());
+                Comparator<ShoppingItem> comparator_type = Collections.reverseOrder(new ComparatorShoppingItemPrice());
                 Collections.sort(itemsDB, comparator_type);
                 break;
             case "most used":
+                Comparator<ShoppingItem> comparator_type2 = Collections.reverseOrder(new ComparatorShoppingItemMostUsed());
+                Collections.sort(itemsDB, comparator_type2);
                 break;
             case "selected first":
                 Comparator<ShoppingItem> comparator_type1 = Collections.reverseOrder(new ComparatorItemSelected());
@@ -183,7 +252,7 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements Li
         if(itemsBought==null){
         itemsBought=new boolean[itemsDB.size()];
          }
-         double totalspent=0;
+         double totalspent=0.00;
          for(int i=0;i<itemsDB.size();i++){
              itemsBought[i]=itemsDB.get(i).isItemIsBought();
              if(itemsDB.get(i).isItemIsBought()){
@@ -196,8 +265,9 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements Li
          listViewAdapter.setSelectedItems(itemsBought,0);
          DecimalFormat df = new DecimalFormat("0.00");
          df.setMaximumFractionDigits(2);
+
          String priceStr = df.format(totalspent);
-         if(priceStr.equals("0.00")){
+         if((priceStr.replace(",",".")).equals("0.00")){
              textViewAlreadySpent.setText(priceStr+"€");
              textViewAlreadySpent.setTextColor(getResources().getColor(R.color.grey));
          }else {
@@ -206,7 +276,13 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements Li
          }
 
 
-         totalpriceTopay= Double.parseDouble(priceStr);
+         try {
+             Number nm=df.parse(priceStr);
+             totalpriceTopay= nm.doubleValue();
+         } catch (ParseException e) {
+             e.printStackTrace();
+         }
+
          groceryList.setItemsOftheList(itemsDB);
 
          shoppinglistview.setVisibility(View.VISIBLE);
@@ -243,5 +319,14 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements Li
        }
 
 
+    }
+
+    @Override
+    public void changescanceled(boolean canceled) {
+        if(!canceled){
+
+        }else {
+            onBackPressed();
+        }
     }
 }

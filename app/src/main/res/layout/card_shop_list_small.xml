@@ -39,7 +39,7 @@
                     android:textStyle="bold"
                     android:text="@string/title"
                     android:layout_alignParentTop="true"
-                    android:textAllCaps="true"/>
+                   />
 
                 <TextView
                     android:id="@+id/textView_LisStatus_create_shopping_list_small_card"

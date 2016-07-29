@@ -26,13 +26,24 @@ public class ShoppingItem implements Parcelable{
         itemName = in.readString();
         price = in.readString();
         detailstoItem = in.readString();
+        numberofItemsetForList = in.readInt();
+        numberoftimeAddedAnyToList = in.readInt();
         unique_item_id = in.readString();
         itemSpecification = in.readString();
-        numberofItemsetForList = in.readInt();
         itemIsBought = in.readByte() != 0;
     }
 
+    public static final Creator<ShoppingItem> CREATOR = new Creator<ShoppingItem>() {
+        @Override
+        public ShoppingItem createFromParcel(Parcel in) {
+            return new ShoppingItem(in);
+        }
 
+        @Override
+        public ShoppingItem[] newArray(int size) {
+            return new ShoppingItem[size];
+        }
+    };
 
     public JSONObject getShoppingItemJSONObject() {
         JSONObject obj = new JSONObject();
@@ -48,6 +59,7 @@ public class ShoppingItem implements Parcelable{
             obj.put("unique_item_id", unique_item_id);
             obj.put("itemSpecification", itemSpecification);
             obj.put("numberofItemsetForList", numberofItemsetForList);
+            obj.put("numberoftimeAddedAnyToList", numberoftimeAddedAnyToList);
             obj.put("itemIsBought", itemIsBought);
 
 
@@ -67,6 +79,7 @@ public class ShoppingItem implements Parcelable{
             item.setItemSpecification(obj.getString("itemSpecification"));
 
             item.setNumberofItemsetForList( obj.optInt("numberofItemsetForList"));
+            item.setNumberoftimeAddedAnyToList( obj.optInt("numberoftimeAddedAnyToList"));
             item.setItemIsBought(obj.getBoolean("itemIsBought"));
 
 
@@ -81,6 +94,13 @@ public class ShoppingItem implements Parcelable{
         df.setMaximumFractionDigits(2);
         String priceStr = df.format(Double.parseDouble(price)*numberofItemsetForList);
         return priceStr;
+    }
+    public int getNumberoftimeAddedAnyToList() {
+        return numberoftimeAddedAnyToList;
+    }
+
+    public void setNumberoftimeAddedAnyToList(int numberoftimeAddedAnyToList) {
+        this.numberoftimeAddedAnyToList = numberoftimeAddedAnyToList;
     }
     public String getUnique_item_id() {
         return unique_item_id;
@@ -100,17 +120,6 @@ public class ShoppingItem implements Parcelable{
     public ShoppingItem(){
 
     }
-    public static final Creator<ShoppingItem> CREATOR = new Creator<ShoppingItem>() {
-        @Override
-        public ShoppingItem createFromParcel(Parcel in) {
-            return new ShoppingItem(in);
-        }
-
-        @Override
-        public ShoppingItem[] newArray(int size) {
-            return new ShoppingItem[size];
-        }
-    };
 
     public int getNumberofItemsetForList() {
         return numberofItemsetForList;
@@ -152,6 +161,7 @@ public class ShoppingItem implements Parcelable{
         this.itemIsBought = itemIsBought;
     }
 
+
     @Override
     public int describeContents() {
         return 0;
@@ -162,10 +172,10 @@ public class ShoppingItem implements Parcelable{
         dest.writeString(itemName);
         dest.writeString(price);
         dest.writeString(detailstoItem);
+        dest.writeInt(numberofItemsetForList);
+        dest.writeInt(numberoftimeAddedAnyToList);
         dest.writeString(unique_item_id);
         dest.writeString(itemSpecification);
-
-        dest.writeInt(numberofItemsetForList);
         dest.writeByte((byte) (itemIsBought ? 1 : 0));
     }
 }

@@ -13,45 +13,20 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         style="@style/Base.Widget.AppCompat.Button.Borderless"
-        android:drawableRight="@drawable/addprevisory"
+        android:drawableLeft="@drawable/addprevisory"
+        android:drawableStart="@drawable/addprevisory"
         android:layout_marginTop="5dp"
         android:text="@string/text_create_list_add_items_button"
         android:textSize="15sp"
         android:textColor="@color/create_new_ShoppingList"/>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/secondlinearelaoutcreatelist"
-        android:orientation="horizontal"
-        android:layout_below="@+id/grocery_create_list_add_item_button"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp"
-        >
 
-        <TextView
-            android:id="@+id/textView_grocery_create_List"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/text_create_list_use_on_date"
-            android:layout_weight="1"
-            />
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:hint="22-07-2016"
-            android:id="@+id/dateaddeventstart_creatList"
-            style="@style/Widget.AppCompat.Button.Borderless"
-            android:layout_weight="8"/>
-
-    </LinearLayout>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/text_create_list_List_empty"
-        android:layout_below="@+id/secondlinearelaoutcreatelist"
+        android:layout_below="@+id/grocery_create_list_add_item_button"
         android:layout_marginTop="20dp"
         android:layout_marginBottom="10dp"
         android:id="@+id/textView_create_list_List_empty"

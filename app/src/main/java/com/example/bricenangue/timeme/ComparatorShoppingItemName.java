@@ -6,7 +6,7 @@ import java.util.Comparator;
  * Created by praktikum on 01/07/15.
  * Helper class to sort values. Here a name
  */
-public class ComparatorCreatorName implements Comparator<ShoppingItem> {
+public class ComparatorShoppingItemName implements Comparator<ShoppingItem> {
 
     @Override
     public int compare(ShoppingItem lhs, ShoppingItem rhs) {

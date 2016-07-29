@@ -1,11 +1,14 @@
 package com.example.bricenangue.timeme;
 
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -14,6 +17,20 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -31,6 +48,8 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
     private Snackbar snackbar;
     private CoordinatorLayout coordinatorLayout;
 
+    private ArrayList<ShoppingItem> list=new ArrayList<>();
+
 
 
     @Override
@@ -39,6 +58,11 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
         setContentView(R.layout.activity_creat_anew_item);
         buttoncanclecreation=(Button)findViewById(R.id.button_create_item_cancle);
         buttoncreateItem=(Button)findViewById(R.id.button_create_item_create);
+
+        Bundle bundle=getIntent().getExtras();
+        if(bundle!=null){
+            list=bundle.getParcelableArrayList("itemDB");
+        }
 
         coordinatorLayout=(CoordinatorLayout)findViewById(R.id.coordinateLayoutcreateItem);
         editTextDescription=(EditText)findViewById(R.id.editText_create_new_item_description);
@@ -52,6 +76,7 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
         buttoncanclecreation.setOnClickListener(this);
         buttoncreateItem.setOnClickListener(this);
         radioGroup.setOnCheckedChangeListener(this);
+
 
 
     }
@@ -104,6 +129,73 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
         }
     }
 
+    void clearEditTextContain(){
+        editTextItemname.setText("");
+        editTextItemPrice.setText("");
+        editTextDescription.setText("");
+        editTextItemname.requestFocus();
+    }
+    private  boolean saveShoppingItmeInExcelXLSXFile(Context context, ShoppingItem item) {
+        boolean success= false;
+
+        FileHelper fileHelper=new FileHelper(context);
+        // Creating Input Stream
+
+        // Create a path where we will place our List of objects on external storage
+        File file=null;
+        FileOutputStream os = null;
+
+        try {
+
+            file = new File(fileHelper.getExcelfile("book_shopping_item"));
+
+
+            FileInputStream myInput = new FileInputStream(file);
+
+            XSSFWorkbook wb = new  XSSFWorkbook(myInput);
+            XSSFSheet sheet = wb.getSheetAt(0);
+            XSSFRow row;
+
+            Cell c = null;
+            int lastrow = sheet.getLastRowNum();
+
+             row = sheet.createRow(lastrow +1);
+
+            c = row.createCell(0);
+            c.setCellValue(item.getItemName());
+
+
+            c = row.createCell(1);
+            DecimalFormat df = new DecimalFormat("0.00");
+            df.setMaximumFractionDigits(2);
+            Number nm=df.parse(item.getPrice());
+
+            c.setCellValue(Double.parseDouble(item.getPrice().replace(",",".")));
+
+
+            c = row.createCell(2);
+            c.setCellValue(0);
+
+            os = new FileOutputStream(file);
+            wb.write(os);
+            Log.w("FileUtils", "Writing file" + file);
+            success = true;
+        } catch (IOException e) {
+            Log.w("FileUtils", "Error writing " + file, e);
+        } catch (Exception e) {
+            Log.w("FileUtils", "Failed to save file", e);
+        } finally {
+            try {
+                if (null != os)
+                    os.close();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        return success;
+    }
+
     private void createAndSaveItem() {
         ShoppingItem item=new ShoppingItem();
 
@@ -121,19 +213,36 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
                 break;
 
         }
-        item.setDetailstoItem(itemdescription);
-        item.setItemName(itemname);
-        item.setPrice(itemprice);
-        item.setItemSpecification(itemSpecification);
-        item.setItemIsBought(false);
-        final SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy, HH:mm");
-        formatter.setLenient(false);
 
-        Date curDate = new Date();
-        String curTime = formatter.format(curDate);
-        int itemId= (itemSpecification+itemname+itemprice+itemSpecification+curTime).hashCode();
-        item.setUnique_item_id(String.valueOf(itemId));
-        saveItem(item);
+        if((itemprice.replace(",",".").equals("0.00"))||
+                (itemprice.replace(",",".").equals("0.0"))  || (itemprice.replace(",",".").equals("0"))){
+            Toast.makeText(getApplicationContext(),"The price cannot be 0,00€",Toast.LENGTH_SHORT).show();
+        }else {
+            item.setDetailstoItem(itemdescription);
+            item.setItemName(itemname);
+            item.setPrice(itemprice);
+            item.setItemSpecification(itemSpecification);
+            item.setItemIsBought(false);
+            final SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy, HH:mm");
+            formatter.setLenient(false);
+
+            Date curDate = new Date();
+            String curTime = formatter.format(curDate);
+            int itemId= (itemSpecification+itemname+itemprice+itemSpecification+curTime).hashCode();
+            item.setUnique_item_id(String.valueOf(itemId));
+            if (saveShoppingItmeInExcelXLSXFile(this,item)){
+
+                list.add(item);
+
+
+                AddItemToListActivity.newItem=true;
+                clearEditTextContain();
+            }else{
+                Toast.makeText(getApplicationContext(),"error",Toast.LENGTH_SHORT).show();
+            }
+        }
+       // saveShoppingItmeInExcelXLSXFile(this,item);
+       // saveItem(item);
     }
 
     private void saveItem(final ShoppingItem item) {
@@ -197,5 +306,14 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
                 break;
 
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+            startActivity(new Intent(this, AddItemToListActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP).
+                    putExtra("itemDB",list));
+
+
     }
 }

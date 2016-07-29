@@ -1,12 +1,15 @@
 package com.example.bricenangue.timeme;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.provider.ContactsContract;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -14,19 +17,27 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.apache.poi.ss.formula.functions.T;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
-public class CreateNewShoppingListActivity extends AppCompatActivity implements View.OnClickListener,DialogFragmentDatePicker.OnDateGet,DialogDeleteEventFragment.OnDeleteListener {
+public class CreateNewShoppingListActivity extends AppCompatActivity implements View.OnClickListener,DialogDeleteEventFragment.OnDeleteListener {
 
-    private Button addItemToListbutton,setDateButtuon;
+    private Button addItemToListbutton;
 
     private ArrayList<GroceryList> grocerylistSqlDB=new ArrayList<>();
     private SQLiteShoppingList sqLiteShoppingList;
     private GroceryList groceryList;
 
     private TextView textViewlistIsempty;
+    private StateActivitiesPreference stateActivitiesPreference;
 
 
     private RecyclerView mRecyclerView;
@@ -38,14 +49,13 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_new_shopping_list);
-
+        stateActivitiesPreference=new StateActivitiesPreference(this);
         sqLiteShoppingList=new SQLiteShoppingList(this);
         addItemToListbutton=(Button)findViewById(R.id.grocery_create_list_add_item_button);
-        setDateButtuon=(Button)findViewById(R.id.dateaddeventstart_creatList);
         textViewlistIsempty=(TextView)findViewById(R.id.textView_create_list_List_empty);
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView = (RecyclerView)findViewById(R.id.shoppingrecycleViewCreateLisactivity);
-        setDateButtuon.setOnClickListener(this);
+
         addItemToListbutton.setOnClickListener(this);
 
         grocerylistSqlDB=getGroceryList();
@@ -55,13 +65,17 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
             groceryList= extras.getParcelable("GroceryshoppingList");
         }
 
-        initializeDatePicker();
+       // initializeDatePicker();
+        if(!stateActivitiesPreference.getCopyExcelFileFromAssetToInterneMemory()){
+            stateActivitiesPreference.setCopyExcelFileFromAssetToInterneMemory(saveExcelXLSXFileFirstInit(this));
+        }
 
         if(savedInstanceState!=null){
 
                 populateRecyclerView();
 
         }else{
+
 
                 populateRecyclerView();
 
@@ -96,6 +110,93 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
 
 
 
+    }
+
+    private  boolean saveExcelXLSXFileFirstInit(Context context) {
+        boolean success= false;
+
+        FileHelper fileHelper=new FileHelper(context);
+        XSSFWorkbook wb = null;
+        String workbooksFolderpath= fileHelper.getWorkbooksFolder();
+        String filesDirectorypath= fileHelper.getFilesDirectory();
+        File filedirectory=new File(filesDirectorypath);
+
+        if (!filedirectory.exists()){
+            filedirectory.mkdirs();
+        }
+        File workbookfolder=new File(workbooksFolderpath);
+        if(!workbookfolder.exists()){
+            workbookfolder.mkdir();
+        }
+        // Create a path where we will place our List of objects on external storage
+        File file=null;
+        FileOutputStream os = null;
+
+        try {
+            AssetManager manager=getAssets();
+            InputStream in=manager.open("book_shopping_item.xlsx");
+            wb = new XSSFWorkbook(in);
+
+            file = new File(fileHelper.getExcelfile("book_shopping_item"));
+            if(!file.exists()){
+                file.createNewFile();
+
+            }
+
+            os = new FileOutputStream(file);
+            wb.write(os);
+            Log.w("FileUtils", "Writing file" + file);
+            success = true;
+        } catch (IOException e) {
+            Log.w("FileUtils", "Error writing " + file, e);
+        } catch (Exception e) {
+            Log.w("FileUtils", "Failed to save file", e);
+        } finally {
+            try {
+                if (null != os)
+                    os.close();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        return success;
+    }
+
+    private  boolean addExcelXLSXFileToWoorkbook(Context context,String filename) {
+        boolean success= false;
+
+        FileHelper fileHelper=new FileHelper(context);
+        XSSFWorkbook wb = null;
+
+        File file=null;
+        FileOutputStream os = null;
+
+        try {
+            AssetManager manager=getAssets();
+            InputStream in=manager.open(filename+ ".xlsx");
+            wb = new XSSFWorkbook(in);
+
+            file = new File(fileHelper.getExcelfile("book_shopping_item"));
+
+            os = new FileOutputStream(file);
+            wb.write(os);
+            Log.w("FileUtils", "Writing file" + file);
+            success = true;
+        } catch (IOException e) {
+            Log.w("FileUtils", "Error writing " + file, e);
+        } catch (Exception e) {
+            Log.w("FileUtils", "Failed to save file", e);
+        } finally {
+            try {
+                if (null != os)
+                    os.close();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        return success;
     }
 
     private void startGroceryListOverview(GroceryList item) {
@@ -139,20 +240,7 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
         return sqLiteShoppingList.getAllShoppingList()[0];
     }
 
-    private void initializeDatePicker(){
-        final SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
-        formatter.setLenient(false);
 
-        Date curDate = new Date();
-        String curTime = formatter.format(curDate);
-        setDateButtuon.setText(curTime);
-    }
-    public void onDatePickercliced(boolean bol){
-        android.support.v4.app.FragmentManager manager=getSupportFragmentManager();
-        DialogFragment fragmentDatePicker=DialogFragmentDatePicker.newInstance(bol);
-
-        fragmentDatePicker.show(manager,"datePickerfr");
-    }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -166,10 +254,7 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
         switch (id){
             case R.id.grocery_create_list_add_item_button:
                 //add item return shopping list to show here
-                startActivity(new Intent(CreateNewShoppingListActivity.this,AddItemToListActivity.class).putExtra("listName",setDateButtuon.getText().toString()));
-                break;
-            case R.id.dateaddeventstart_creatList:
-                onDatePickercliced(true);
+                startActivity(new Intent(CreateNewShoppingListActivity.this,AddItemToListActivity.class));
                 break;
         }
     }
@@ -181,10 +266,6 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
         populateRecyclerView();
         ((RecyclerAdaptaterCreateShoppingList) mAdapter).setOnshoppinglistClickListener(myClickListener,null);
 
-    }
-    @Override
-    public void dateSet(String date, boolean isstart) {
-        setDateButtuon.setText(date);
     }
 
 

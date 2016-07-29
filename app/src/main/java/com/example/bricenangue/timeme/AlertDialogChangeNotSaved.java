@@ -31,11 +31,28 @@ public class AlertDialogChangeNotSaved extends DialogFragment {
         }
     }
 
+    public static AlertDialogChangeNotSaved newInstance(String title,String message,String buttonoktext,String buttoncanceltext) {
+        AlertDialogChangeNotSaved frag = new AlertDialogChangeNotSaved();
+        Bundle args = new Bundle();
+        args.putString("title", title);
+        args.putString("message", message);
+        args.putString("buttonoktext", buttonoktext);
+        args.putString("buttoncanceltext", buttoncanceltext);
+        frag.setArguments(args);
+        return frag;
+    }
 
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         final AlertDialog dialoglog = new AlertDialog.Builder(getContext()).create();
+
+
+        final String titletext =getArguments().getString("title");
+        final String messagetext =getArguments().getString("message");
+
+        final String buttonoktext =getArguments().getString("buttonoktext");
+        final String buttoncanceltext =getArguments().getString("buttoncanceltext");
 
         LayoutInflater inflater = (LayoutInflater)getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View vw = inflater.inflate(R.layout.layout_error_warning, null);
@@ -46,8 +63,10 @@ public class AlertDialogChangeNotSaved extends DialogFragment {
 
         Button btnOK=(Button)vw.findViewById(R.id.buttonchangeerrorOk);
         Button btnCancl=(Button)vw.findViewById(R.id.buttonchangeerroCancel);
-        title.setText("You have unsaved changes");
-        message.setText("Exit?  Any changes will not be saved");
+        title.setText(titletext);
+        message.setText(messagetext);
+        btnCancl.setText(buttoncanceltext);
+        btnOK.setText(buttonoktext);
 
         btnCancl.setOnClickListener(new View.OnClickListener() {
             @Override

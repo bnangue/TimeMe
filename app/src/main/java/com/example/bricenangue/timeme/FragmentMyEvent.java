@@ -285,8 +285,12 @@ public class FragmentMyEvent extends Fragment implements DialogDeleteEventFragme
         collectionArrayList=someValue;
     }
 
+
+
     @Override
     public void onUpdateUi(ArrayList<CalendarCollection> arrayList,String uName) {
         updateUi(arrayList,uName);
     }
+
+
 }

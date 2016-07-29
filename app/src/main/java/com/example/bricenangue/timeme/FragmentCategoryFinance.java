@@ -275,8 +275,12 @@ public class FragmentCategoryFinance extends Fragment implements DialogDeleteEve
         collectionArrayList=someValue;
     }
 
+
+
     @Override
     public void onUpdateUi(ArrayList<CalendarCollection> arrayList,String uname) {
         updateUi(arrayList);
     }
+
+
 }
