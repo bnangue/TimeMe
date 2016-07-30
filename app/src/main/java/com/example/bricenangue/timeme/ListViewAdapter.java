@@ -154,6 +154,15 @@ public class ListViewAdapter extends BaseAdapter {
                     DecimalFormat df = new DecimalFormat("0.00");
                     df.setMaximumFractionDigits(2);
                     String priceStr = df.format(price);
+                    if(priceStr.length()==5){
+                        viewHolder.totalPrice.setTextSize(17f);
+
+                    }else if(priceStr.length()>5){
+                        viewHolder.totalPrice.setTextSize(15f);
+
+                    }else {
+                        viewHolder.totalPrice.setTextSize(18f);
+                    }
                     viewHolder.totalPrice.setText(priceStr+"€");
 
                 }else{
@@ -173,6 +182,15 @@ public class ListViewAdapter extends BaseAdapter {
                     DecimalFormat df = new DecimalFormat("0.00");
                     df.setMaximumFractionDigits(2);
                     String priceStr = df.format(price);
+                    if(priceStr.length()==5){
+                        viewHolder.totalPrice.setTextSize(17f);
+
+                    }else if(priceStr.length()>5){
+                        viewHolder.totalPrice.setTextSize(15f);
+
+                    }else {
+                        viewHolder.totalPrice.setTextSize(18f);
+                    }
                     viewHolder.totalPrice.setText(priceStr+"€");
                     positionmemo=position;
 
@@ -206,6 +224,16 @@ public class ListViewAdapter extends BaseAdapter {
                         DecimalFormat df = new DecimalFormat("0.00");
                         df.setMaximumFractionDigits(2);
                         String priceStr = df.format(price);
+
+                        if(priceStr.length()==5){
+                            viewHolder.totalPrice.setTextSize(17f);
+
+                        }else if(priceStr.length()>5){
+                            viewHolder.totalPrice.setTextSize(15f);
+
+                        }else {
+                            viewHolder.totalPrice.setTextSize(18f);
+                        }
                         if(counterItemSelected==0){
                             viewHolder.nummberitemSelected.setTextColor(context.getResources().getColor(R.color.black));
                             viewHolder.totalPrice.setText(R.string.null_item_total_price);
@@ -249,6 +277,16 @@ public class ListViewAdapter extends BaseAdapter {
                         DecimalFormat df = new DecimalFormat("0.00");
                         df.setMaximumFractionDigits(2);
                         String priceStr = df.format(price);
+
+                        if(priceStr.length()==5){
+                            viewHolder.totalPrice.setTextSize(17f);
+
+                        }else if(priceStr.length()>5){
+                            viewHolder.totalPrice.setTextSize(15f);
+
+                        }else {
+                            viewHolder.totalPrice.setTextSize(18f);
+                        }
                         if(counterItemSelected==0){
                             viewHolder.nummberitemSelected.setTextColor(context.getResources().getColor(R.color.black));
                             viewHolder.totalPrice.setText(R.string.null_item_total_price);
@@ -259,6 +297,7 @@ public class ListViewAdapter extends BaseAdapter {
                         }else {
                             viewHolder.totalPrice.setText(priceStr+"€");
                         }
+
 
 
                     }else {
@@ -274,10 +313,36 @@ public class ListViewAdapter extends BaseAdapter {
 
                 }
 
+
                 if(shoppingItemSetListener!=null){
                     shoppingItemSetListener.onShoppingOtemSet(shoppingItemsDBList.get(position),position);
                 }
 
+            }
+        });
+
+        viewHolder.removeItem.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                counterItemSelected=shoppingItemsDBList.get(position).getNumberofItemsetForList();
+                numberoftiemeverused=shoppingItemsDBList.get(position).getNumberoftimeAddedAnyToList();
+                numberoftiemeverused=numberoftiemeverused-counterItemSelected;
+                counterItemSelected=0;
+                shoppingItemsDBList.get(position).setNumberoftimeAddedAnyToList(numberoftiemeverused);
+                shoppingItemsDBList.get(position).setNumberofItemsetForList(counterItemSelected);
+
+                viewHolder.nummberitemSelected.setTextColor(context.getResources().getColor(R.color.black));
+                viewHolder.removeItem.setEnabled(false);
+                viewHolder.nummberitemSelected.setText(R.string.null_item_selected);
+                viewHolder.totalPrice.setText(R.string.null_item_total_price);
+
+                numberSelectedOnrow[position]=counterItemSelected;
+
+                if(shoppingItemSetListener!=null){
+                    shoppingItemSetListener.onShoppingOtemSet(shoppingItemsDBList.get(position),position);
+                }
+
+                return false;
             }
         });
 

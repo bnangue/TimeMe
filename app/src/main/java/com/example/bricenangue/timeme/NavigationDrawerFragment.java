@@ -386,23 +386,23 @@ public class NavigationDrawerFragment extends Fragment {
         Category categoryDetails = new Category();
 
         categoryDetails.setCatCode(10);
-        categoryDetails.setCatName("CATEGORIES");
+        categoryDetails.setCatName(getString(R.string.Categories_text));
 
         category_name.add(categoryDetails);
 
         categoryDetails = new Category();
         categoryDetails.setCatCode(20);
-        categoryDetails.setCatName("OVERVIEW");
+        categoryDetails.setCatName(getString(R.string.Overview_text));
         category_name.add(categoryDetails);
 
         categoryDetails = new Category();
         categoryDetails.setCatCode(30);
-        categoryDetails.setCatName("PREFERENCES");
+        categoryDetails.setCatName(getString(R.string.Settings_text));
         category_name.add(categoryDetails);
 
         categoryDetails = new Category();
         categoryDetails.setCatCode(40);
-        categoryDetails.setCatName("ABOUT");
+        categoryDetails.setCatName(getString(R.string.About_text));
         category_name.add(categoryDetails);
 
 
@@ -414,19 +414,19 @@ public class NavigationDrawerFragment extends Fragment {
 
         SubCategory subCategoryMatch = new SubCategory();
 
-        subCategoryMatch.setSubCatName("Overview");
+        subCategoryMatch.setSubCatName(getString(R.string.Categories_Subtext_Overview));
         subCategoryMatches.add(subCategoryMatch);
 
         subCategoryMatch = new SubCategory();
-        subCategoryMatch.setSubCatName("My Events");
+        subCategoryMatch.setSubCatName(getString(R.string.Categories_Subtext_My_Events));
         subCategoryMatches.add(subCategoryMatch);
 
         subCategoryMatch = new SubCategory();
-        subCategoryMatch.setSubCatName("My Finance");
+        subCategoryMatch.setSubCatName(getString(R.string.Categories_Subtext_My_Finances));
         subCategoryMatches.add(subCategoryMatch);
 
         subCategoryMatch = new SubCategory();
-        subCategoryMatch.setSubCatName("My Grocery");
+        subCategoryMatch.setSubCatName(getString(R.string.Categories_Subtext_My_Grocery));
         subCategoryMatches.add(subCategoryMatch);
 
         subcategory_name.add(subCategoryMatches);

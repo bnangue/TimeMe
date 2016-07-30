@@ -3,6 +3,7 @@ package com.example.bricenangue.timeme;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.os.AsyncTask;
 import android.provider.ContactsContract;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
@@ -65,9 +66,10 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
             groceryList= extras.getParcelable("GroceryshoppingList");
         }
 
-       // initializeDatePicker();
+
+
         if(!stateActivitiesPreference.getCopyExcelFileFromAssetToInterneMemory()){
-            stateActivitiesPreference.setCopyExcelFileFromAssetToInterneMemory(saveExcelXLSXFileFirstInit(this));
+            new InitItemToDBAsyncTask(this).execute();
         }
 
         if(savedInstanceState!=null){
@@ -268,6 +270,49 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
 
     }
 
+    class InitItemToDBAsyncTask extends AsyncTask<Void ,Void, Boolean> {
+
+        private FragmentProgressBarLoading progressDialog;
+        private Context context;
+        private boolean success=false;
+        public InitItemToDBAsyncTask(Context context){
+            this.context=context;
+        }
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            //start progressBar
+            progressDialog = new FragmentProgressBarLoading();
+            progressDialog.setCancelable(false);
+            progressDialog.show(getSupportFragmentManager(), "task_progress");
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+
+
+                success=saveExcelXLSXFileFirstInit(context);
+
+
+            return success;
+
+        }
+
+        @Override
+        protected void onPostExecute(Boolean params) {
+            //end progressBar
+            progressDialog.dismiss(getSupportFragmentManager());
+            if(params){
+                // initializeDatePicker();
+
+                    stateActivitiesPreference.setCopyExcelFileFromAssetToInterneMemory(true);
+
+            }else{
+                Toast.makeText(getApplicationContext(),"Error initializing database",Toast.LENGTH_SHORT).show();
+            }
+
+        }
+    }
 
     @Override
     public void delete(int position) {

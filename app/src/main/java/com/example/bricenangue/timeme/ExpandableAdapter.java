@@ -112,23 +112,18 @@ public class ExpandableAdapter extends BaseExpandableListAdapter {
         ImageView v=(ImageView)view.findViewById(R.id.collapse_arrow);
         textView.setText(getGroup(i).toString());
 
-        switch (getGroup(i).toString()){
-            case "OVERVIEW":
-                v.setVisibility(View.GONE);
+       final String NAME= context.getString(R.string.Categories_text);
+        String neamer=getGroup(i).toString();
 
-                break;
-            case "PREFERENCES":
-                v.setVisibility(View.GONE);
+           if(neamer.equals(NAME)){
+               v.setVisibility(View.VISIBLE);
+           }else {
+               v.setVisibility(View.GONE);
+           }
 
-                break;
-            case "ABOUT":
-                v.setVisibility(View.GONE);
 
-                break;
-           default:
-                v.setVisibility(View.VISIBLE);
-                break;
-        }
+
+
 
         return view;
 

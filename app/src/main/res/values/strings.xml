@@ -3,7 +3,7 @@
     <string name="emailloggin">E-Mail Address</string>
     <string name="passwordlogin">Password</string>
     <string name="registerbtn">Register</string>
-    <string name="menu_save">save</string>
+    <string name="menu_save">Save</string>
     <string name="confirm_newpassword">Confirm password</string>
     <string name="enter_newpassword">Enter new password</string>
     <string name="enter_odlpassword">Enter your password</string>
@@ -74,7 +74,7 @@
     <string name="btn_grocery_fragment_create_new_item_create">Create</string>
     <string name="error_field_required_price">The price is missing</string>
     <string name="error_field_required_name">The name is missing</string>
-    <string name="null_item_total_price">0.00€</string>
+    <string name="null_item_total_price">0,00€</string>
     <string name="null_item_selected">0</string>
     <string name="grocery_add_item_to_list_to_pay_text">To spend :</string>
     <string name="grocery_list_item_title_text">From :</string>
@@ -101,6 +101,16 @@
     <string name="october">October</string>
     <string name="november">November</string>
     <string name="december">December</string>
+    //NavigattionDrawer
+    <string name="Categories_text">CATEGORIES</string>
+    <string name="Categories_Subtext_Overview">Overview</string>
+    <string name="Categories_Subtext_My_Events">My Events</string>
+    <string name="Categories_Subtext_My_Finances">My Finances</string>
+    <string name="Categories_Subtext_My_Grocery">My Grocery</string>
+    <string name="Overview_text">OVERVIEW</string>
+    <string name="Settings_text">SETTINGS</string>
+    <string name="About_text">ABOUT</string>
+    <string name="Chat_text">CHATROOM</string>
 
     //
     <string name="app_name_main_activity" />
@@ -140,11 +150,16 @@
     <string name="alert_dialog_changed_not_saved_buttoncancel">Cancel</string>
 
 
-    <string name="alert_dialog_changed_not_saved_shopping_list_done_title_text">Congratulations!</string>
+    <string name="alert_dialog_changed_not_saved_shopping_list_done_title_text">Well done!</string>
     <string name="alert_dialog_changed_not_saved_shopping_list_done_message">You just bought all items on your list. Click continue to save the list</string>
     <string name="alert_dialog_changed_not_saved_shopping_list_done_buttonok">Continue</string>
     <string name="alert_dialog_changed_not_saved_shopping_list_done_buttoncancel">Edit</string>
     <string name="text_search_itme_to_list_DataBase_empty">No such item found</string>
     <string name="text_search_itme_to_list_DataBase_not_empty">add to list</string>
+    <string name="menu_refresh">Refresh</string>
+    <string name="alertdialog_change_grocery_list_name_title_text">Warning!</string>
+    <string name="alertdialog_change_grocery_list_name_message_text">This grocery list has been already set for use. Do you really want to change the date of use?</string>
+    <string name="alertdialog_change_grocery_list_name_button_change_text">Change</string>
+    <string name="alertdialog_change_grocery_list_name_button_cancel_text">Cancel</string>
 
 </resources>

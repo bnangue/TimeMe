@@ -322,6 +322,10 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
             }
 
             return true;
+        }else if (id == R.id.action_item_list_refresh){
+            new LoadItemDBAsyncTask().execute();
+
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -942,10 +946,14 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
 
     class LoadItemDBAsyncTask extends AsyncTask<Void ,Void, Void> {
 
+        private FragmentProgressBarLoading progressDialog;
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
             //start progressBar
+            progressDialog = new FragmentProgressBarLoading();
+            progressDialog.setCancelable(false);
+            progressDialog.show(getSupportFragmentManager(), "task_progress");
         }
 
         @Override
@@ -961,6 +969,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         @Override
         protected void onPostExecute(Void params) {
             //end progressBar
+            progressDialog.dismiss(getSupportFragmentManager());
 
             if(itemsDB.size()==0 || itemsDB==null ){
                 itemsDB=getItemFromDB(itemNamee,itemPrice,itemUsageFrequency);
@@ -972,9 +981,10 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
     private void mergeItemsDB(ArrayList<ShoppingItem> items) {
         for (int i=0;i<items.size();i++){
             for(int j=0;j<itemsDB.size();j++){
-                if(!items.get(i).getUnique_item_id().equals(itemsDB.get(j).getUnique_item_id())){
+                if(items.get(i).getUnique_item_id().equals(itemsDB.get(j).getUnique_item_id())&&
+                        items.get(i).getNumberofItemsetForList()!=itemsDB.get(j).getNumberofItemsetForList()){
 
-                    itemsDB.add(items.get(i));
+                    itemsDB.set(j,items.get(i));
                 }
             }
 

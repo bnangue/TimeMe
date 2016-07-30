@@ -20,7 +20,9 @@
             android:text="@string/grocery_list_item_title_text"
             android:layout_gravity="center_vertical"
             android:layout_weight="3"
-            android:gravity="start"/>
+            android:gravity="start"
+            android:clickable="true"
+            android:onClick="OnDateOfListCHangeClicked"/>
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"

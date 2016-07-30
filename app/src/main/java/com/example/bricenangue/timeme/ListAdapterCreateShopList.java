@@ -112,7 +112,16 @@ public class ListAdapterCreateShopList extends BaseAdapter {
 
 
         viewHolder.nummberitemSelected.setText(String.valueOf(numb));
-        viewHolder.totalPrice.setText(priceStr+"€");
+        if(priceStr.length()==5){
+            viewHolder.totalPrice.setTextSize(17f);
+            viewHolder.totalPrice.setText(priceStr+"€");
+        }else if(priceStr.length()>5){
+            viewHolder.totalPrice.setTextSize(15f);
+            viewHolder.totalPrice.setText(priceStr+"€");
+        }else {
+            viewHolder.totalPrice.setText(priceStr+"€");
+        }
+
 
         viewHolder.buttonisbought.setOnClickListener(new View.OnClickListener() {
             @Override

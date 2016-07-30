@@ -126,6 +126,7 @@ public class SQLiteShoppingList extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
+        values.put(LIST_LISTNAME, groceryList.getDatum());
         values.put(LIST_CONTAIN, groceryList.getListcontain());
         values.put(LIST_STATUS, groceryList.isListdone() ? 1 : 0);
         values.put(LIST_IS_SHARE_STATUS, groceryList.isToListshare() ? 1 : 0);

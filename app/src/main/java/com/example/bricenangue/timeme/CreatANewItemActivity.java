@@ -3,6 +3,7 @@ package com.example.bricenangue.timeme;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -230,16 +231,7 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
             String curTime = formatter.format(curDate);
             int itemId= (itemSpecification+itemname+itemprice+itemSpecification+curTime).hashCode();
             item.setUnique_item_id(String.valueOf(itemId));
-            if (saveShoppingItmeInExcelXLSXFile(this,item)){
-
-                list.add(item);
-
-
-                AddItemToListActivity.newItem=true;
-                clearEditTextContain();
-            }else{
-                Toast.makeText(getApplicationContext(),"error",Toast.LENGTH_SHORT).show();
-            }
+            new CreateItemToDBAsyncTask(this,item).execute();
         }
        // saveShoppingItmeInExcelXLSXFile(this,item);
        // saveItem(item);
@@ -307,6 +299,57 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
 
         }
     }
+
+
+    class CreateItemToDBAsyncTask extends AsyncTask<Void ,Void, Boolean> {
+
+        private FragmentProgressBarLoading progressDialog;
+        private ShoppingItem item;
+        private Context context;
+        private boolean success=false;
+        public CreateItemToDBAsyncTask(Context context, ShoppingItem item){
+            this.item=item;
+            this.context=context;
+        }
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            //start progressBar
+            progressDialog = new FragmentProgressBarLoading();
+            progressDialog.setCancelable(false);
+            progressDialog.show(getSupportFragmentManager(), "task_progress");
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+
+            if (saveShoppingItmeInExcelXLSXFile(context,item)){
+
+                success=true;
+
+            }
+            return success;
+
+        }
+
+        @Override
+        protected void onPostExecute(Boolean params) {
+            //end progressBar
+            progressDialog.dismiss(getSupportFragmentManager());
+            if(params){
+                list.add(item);
+
+                Toast.makeText(getApplicationContext(),"Shopping item "+ item.getItemName()+ " created",Toast.LENGTH_SHORT).show();
+
+                AddItemToListActivity.newItem=true;
+                clearEditTextContain();
+            }else{
+                Toast.makeText(getApplicationContext(),"error",Toast.LENGTH_SHORT).show();
+            }
+
+        }
+    }
+
 
     @Override
     public void onBackPressed() {

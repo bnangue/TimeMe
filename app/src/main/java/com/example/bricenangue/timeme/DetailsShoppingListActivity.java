@@ -1,13 +1,16 @@
 package com.example.bricenangue.timeme;
 
 import android.support.v4.app.DialogFragment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
@@ -20,7 +23,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
-public class DetailsShoppingListActivity extends AppCompatActivity implements ListAdapterCreateShopList.ShoppingItemBoughtListener, AdapterView.OnItemClickListener,AlertDialogChangeNotSaved.OnChangesCancel {
+public class DetailsShoppingListActivity extends AppCompatActivity implements
+        ListAdapterCreateShopList.ShoppingItemBoughtListener,
+        AdapterView.OnItemClickListener,AlertDialogChangeNotSaved.OnChangesCancel,DialogFragmentDatePicker.OnDateGet {
 
     private ArrayList<ShoppingItem> itemsDB=new ArrayList<>();
     private ListAdapterCreateShopList listViewAdapter;
@@ -306,6 +311,67 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements Li
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
+    }
+
+    public void OnDateOfListCHangeClicked(View view){
+
+        alertDialogDelete();
+    }
+
+    public void alertDialogDelete(){
+
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                this);
+        LayoutInflater inflater=(LayoutInflater)getSystemService(LAYOUT_INFLATER_SERVICE);
+        View dialoglayout = inflater.inflate(R.layout.dialog_warning_delete_event, null);
+
+        final android.support.v7.app.AlertDialog alertDialog = alertDialogBuilder.create();
+
+        alertDialog.setView(dialoglayout);
+        Button change= (Button)dialoglayout.findViewById(R.id.buttonDeleteaccount);
+        Button cancel= (Button)dialoglayout.findViewById(R.id.buttonCancelaccount);
+        TextView title= (TextView)dialoglayout.findViewById(R.id.textViewTitelinfo);
+        TextView msg= (TextView)dialoglayout.findViewById(R.id.textViewMessageinfo);
+
+        title.setText(getString(R.string.alertdialog_change_grocery_list_name_title_text));
+        msg.setText(getString(R.string.alertdialog_change_grocery_list_name_message_text));
+        change.setText(getString(R.string.alertdialog_change_grocery_list_name_button_change_text));
+
+        cancel.setText(getString(R.string.alertdialog_change_grocery_list_name_button_cancel_text));
+        cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                alertDialog.dismiss();
+
+            }
+        });
+        change.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                showOption(R.id.action_items_added_done);
+                onDatePickerclicked(true);
+                    alertDialog.dismiss();
+            }
+        });
+
+        alertDialog.setCancelable(false);
+        // show it
+        alertDialog.show();
+    }
+    public void onDatePickerclicked(boolean bol){
+        android.support.v4.app.FragmentManager manager=getSupportFragmentManager();
+        DialogFragment fragmentDatePicker=DialogFragmentDatePicker.newInstance(bol);
+
+        fragmentDatePicker.show(manager,"datePickerfr");
+    }
+
+    @Override
+    public void dateSet(String date, boolean isstart) {
+        String groceryListName= getResources().getString(R.string.grocery_list_item_title_text )+ " " + date;
+
+        textViewgroceryListName.setText(groceryListName);
+        groceryList.setDatum(date);
     }
 
     @Override

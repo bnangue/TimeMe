@@ -101,6 +101,14 @@
                 android:layout_weight="2"
                 />
         </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:orientation="horizontal"
+            android:background="@color/primary"
+            android:id="@+id/linearLayout_separator_activity_details_shopping_list1"
+            android:layout_below="@+id/linearLayout_activity_add_item_to_list"/>
+
 
         <ListView
             android:paddingLeft="4dp"
@@ -109,7 +117,7 @@
             android:layout_height="wrap_content"
             android:visibility="gone"
             android:id="@+id/shoppinglistViewaddItemToListactivity"
-            android:layout_below="@+id/linearLayout_activity_add_item_to_list"/>
+            android:layout_below="@+id/linearLayout_separator_activity_details_shopping_list1"/>
     </RelativeLayout>
     <LinearLayout
         android:layout_width="match_parent"
