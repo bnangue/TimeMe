@@ -1,5 +1,8 @@
 package com.example.bricenangue.timeme;
 
+import android.graphics.Color;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -17,11 +20,17 @@ import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONObject;
+
 import java.text.DecimalFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
+import java.util.GregorianCalendar;
 
 public class DetailsShoppingListActivity extends AppCompatActivity implements
         ListAdapterCreateShopList.ShoppingItemBoughtListener,
@@ -40,7 +49,14 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
 
 
     private SQLiteShoppingList sqLiteShoppingList;
-    private int vlsort=1;
+    private Snackbar snackbar;
+    private CoordinatorLayout coordinatorLayout;
+    private static boolean somethingChanged=false;
+    private MySQLiteHelper mySQLiteHelper;
+    private SQLFinanceAccount sqlFinanceAccount;
+    private FinanceAccount financeAccount=new FinanceAccount(this);
+    private UserLocalStore userLocalStore;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +64,11 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_details_shopping_list);
 
         sqLiteShoppingList=new SQLiteShoppingList(this);
+        mySQLiteHelper= new MySQLiteHelper(this);
+        sqlFinanceAccount=new SQLFinanceAccount(this);
 
+        userLocalStore= new UserLocalStore(this);
+        coordinatorLayout=(CoordinatorLayout)findViewById(R.id.coordinateLayout_activity_details_shoppping_list);
         shoppinglistview=(ListView)findViewById(R.id.listView_activity_details_shoppping_list);
         textViewAlreadySpent=(TextView)findViewById(R.id.grocery_fragment_balance_amount_activity_details_shopping_list);
         textViewgroceryListName=(TextView)findViewById(R.id.textView_grocery_list_item_title_activity_details_shopping);
@@ -166,7 +186,9 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
 
     @Override
     public void onShoppingItemBought(ShoppingItem item, boolean[] positions) {
+
         showOption(R.id.action_items_added_done);
+        somethingChanged=true;
         itemsBought=positions;
         listViewAdapter.setSelectedItems(itemsBought,0);
        double totalspent=0;
@@ -251,9 +273,16 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
 
 
     }
+
      void populateListview(){
 
-        listViewAdapter=new ListAdapterCreateShopList(this,itemsDB,this);
+         boolean isAllBought=groceryList.isListdone();
+
+         if(isAllBought){
+             textViewgroceryListName.setEnabled(false);
+             textViewgroceryListName.setClickable(false);
+         }
+        listViewAdapter=new ListAdapterCreateShopList(this,itemsDB,this,isAllBought);
         if(itemsBought==null){
         itemsBought=new boolean[itemsDB.size()];
          }
@@ -293,6 +322,7 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
          shoppinglistview.setVisibility(View.VISIBLE);
         shoppinglistview.setAdapter(listViewAdapter);
          shoppinglistview.setOnItemClickListener(this);
+
      }
 
 
@@ -368,6 +398,7 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
 
     @Override
     public void dateSet(String date, boolean isstart) {
+        somethingChanged=true;
         String groceryListName= getResources().getString(R.string.grocery_list_item_title_text )+ " " + date;
 
         textViewgroceryListName.setText(groceryListName);
@@ -376,17 +407,243 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
 
     @Override
     public void onBackPressed() {
-        groceryList.allItemsbought();
-       if( sqLiteShoppingList.updateShoppingList(groceryList)==1){
 
-           super.onBackPressed();
-       }else {
-           Toast.makeText(getApplicationContext()," Error: List not saved",Toast.LENGTH_SHORT).show();
-       }
+        if(somethingChanged){
+            SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm");
+            formatter.setLenient(false);
+
+            Date currentDate = new Date();
+
+
+            String currentTime = formatter.format(currentDate);
+            CalendarCollection    calendarCollection=new CalendarCollection(groceryList.getDatum(),groceryList.getListcontain(),
+                    groceryList.getCreatorName(),groceryList.getDatum(), groceryList.getDatum() + " 17:00",
+                    groceryList.getDatum() +" 20:00",groceryList.getList_unique_id(),getString(R.string.Event_Category_Category_Shopping),"0","0",currentTime);
+
+            if(groceryList.allItemsbought()){
+
+                FinanceRecords financeRecords=new FinanceRecords(getString(R.string.textInitialize_create_account_grocery_note),currentTime.split(" ")[0],
+                        getString(R.string.textInitialize_create_account_grocery_note),groceryList.getGroceryListTotalPriceToPayString().replace(",",".")
+                        ,groceryList.getList_unique_id(),
+                        getString(R.string.textInitialize_create_account_grocery_category),currentTime.split(" ")[0],userLocalStore.getUserfullname(),0,true,false);
+
+
+                ArrayList<FinanceAccount> financeAccountArrayList= sqlFinanceAccount.getAllFinanceAccount();
+                if(financeAccountArrayList.size()!=0){
+                    financeAccount=financeAccountArrayList.get(0);
+
+                }
+                ArrayList<FinanceRecords> recordses=financeAccount.getRecords();
+                for(int i=0;i<recordses.size();i++){
+                    if(recordses.get(i).getRecordUniquesId().equals(financeRecords.getRecordUniquesId())){
+                        recordses.set(i,financeRecords);
+                    }
+                }
+
+                financeAccount.setAccountsRecord(recordses);
+                financeAccount.getAccountrecordsAmountUpdateBalance();
+                financeAccount.setLastchangeToAccount();
+
+
+                if(financeAccount.getAccountRecordsString().isEmpty()){
+                    updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
+                }else {
+                    updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
+                }
+            }else {
+                FinanceRecords financeRecords=new FinanceRecords(getString(R.string.textInitialize_create_account_grocery_note),currentTime.split(" ")[0],
+                        getString(R.string.textInitialize_create_account_grocery_note),groceryList.getGroceryListTotalPriceToPayString().replace(",",".")
+                        ,groceryList.getList_unique_id(),
+                        getString(R.string.textInitialize_create_account_grocery_category),groceryList.getDatum(),userLocalStore.getUserfullname(),0,false,false);
+
+
+                ArrayList<FinanceAccount> financeAccountArrayList= sqlFinanceAccount.getAllFinanceAccount();
+                if(financeAccountArrayList.size()!=0){
+                    financeAccount=financeAccountArrayList.get(0);
+
+                }
+                ArrayList<FinanceRecords> recordses=financeAccount.getRecords();
+                for(int i=0;i<recordses.size();i++){
+                    if(recordses.get(i).getRecordUniquesId().equals(financeRecords.getRecordUniquesId())){
+                        recordses.set(i,financeRecords);
+                    }
+                }
+
+                financeAccount.setAccountsRecord(recordses);
+                financeAccount.getAccountrecordsAmountUpdateBalance();
+                financeAccount.setLastchangeToAccount();
+
+
+                if(financeAccount.getAccountRecordsString().isEmpty()){
+                   // updateGroceryListOnServer(groceryList,calendarCollection,null);
+                    updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
+                }else {
+                    updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
+                   // updateGroceryListOnServer(groceryList,calendarCollection,financeAccount);
+                }
+            }
+
+        }else {
+
+            super.onBackPressed();
+        }
 
 
     }
 
+    private void updateGroceryAndFinance(final GroceryList groceryList, final FinanceAccount financeAccount, final CalendarCollection calendarCollection){
+        ServerRequests serverRequests= new ServerRequests(this);
+        serverRequests.updateGroceryAndFinanceAccountInBackgroung(groceryList, financeAccount, new FinanceAccountCallbacks() {
+            @Override
+            public void fetchDone(ArrayList<FinanceAccount> returnedAccounts) {
+
+            }
+
+            @Override
+            public void setServerResponse(String serverResponse) {
+                if(serverResponse.contains("Account and Grocery list successfully updated")){
+                    updateEvent(calendarCollection,groceryList,financeAccount);
+                }else {
+                    showSnackBar(groceryList,calendarCollection,financeAccount);
+                }
+            }
+        });
+    }
+    private void updateGroceryListOnServer(final GroceryList groceryList, final CalendarCollection calendarCollection, final FinanceAccount financeAccount){
+        ServerRequests serverRequests=new ServerRequests(this);
+        serverRequests.updateGroceryListInBackgroung(groceryList, new GroceryListCallBacks() {
+            @Override
+            public void fetchDone(ArrayList<GroceryList> returnedGroceryLists) {
+
+            }
+
+            @Override
+            public void setServerResponse(String serverResponse) {
+                if(serverResponse.contains("Grocery list successfully updated")){
+
+                    updateEvent(calendarCollection,groceryList,financeAccount);
+
+
+                }else{
+                    showSnackBar(groceryList,calendarCollection,financeAccount);
+                }
+            }
+        });
+
+    }
+    private void updateGroceryListLocally(GroceryList groceryList){
+
+        groceryList.allItemsbought();
+        if (sqLiteShoppingList.updateShoppingList(groceryList)==1){
+            somethingChanged=false;
+            super.onBackPressed();
+        }else {
+            Toast.makeText(getApplicationContext()," Error: List not saved",Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
+    void updateEvent(final CalendarCollection collection, final
+    GroceryList groceryList, final FinanceAccount financeAccount){
+        ServerRequests serverRequests=new ServerRequests(this);
+        serverRequests.saveCalenderEventInBackgroung(collection, new GetEventsCallbacks() {
+            @Override
+            public void done(ArrayList<CalendarCollection> returnedeventobject) {
+
+            }
+
+            @Override
+            public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
+
+            }
+
+            @Override
+            public void updated(String reponse) {
+                if (reponse.contains("Event added successfully")) {
+                    /**
+                    if(financeAccount!=null){
+                        updateeventtoSQl(collection);
+                        updateFinanceAccountToServer(financeAccount,groceryList);
+                    }else {
+                        updateeventtoSQl(collection);
+                        updateGroceryListLocally(groceryList);
+                    }
+
+                    **/
+                updateFinanceAccountLocally(financeAccount,groceryList);
+                updateeventtoSQl(collection);
+                  //  updateGroceryListLocally(groceryList);
+
+                }else {
+                    Toast.makeText(getApplicationContext()," Error: List not store as event",Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+    }
+
+
+    public void updateFinanceAccountToServer(final FinanceAccount financeAccount, final GroceryList groceryList){
+        ServerRequests serverRequests =new ServerRequests(this);
+        serverRequests.updateFinanceAccountInBackgroung(financeAccount, new FinanceAccountCallbacks() {
+            @Override
+            public void fetchDone(ArrayList<FinanceAccount> returnedAccounts) {
+
+            }
+
+            @Override
+            public void setServerResponse(String serverResponse) {
+
+                if(serverResponse.contains("Account successfully updated")){
+                    updateFinanceAccountLocally(financeAccount,groceryList);
+                }else {
+                    Toast.makeText(getApplicationContext(),"Error creating account "+ financeAccount.getAccountName(),Toast.LENGTH_SHORT).show();
+
+                }
+            }
+        });
+
+    }
+
+    public void updateFinanceAccountLocally(FinanceAccount financeAccount, GroceryList groceryList){
+
+        if (sqlFinanceAccount.updateFinanceAccount(financeAccount)!=0){
+            updateGroceryListLocally(groceryList);
+        }
+    }
+
+    private void updateeventtoSQl(CalendarCollection calendarCollections) {
+
+
+        try {
+            JSONObject jsonObject=new JSONObject();
+            jsonObject.put("title",calendarCollections.title);
+            jsonObject.put("description",calendarCollections.description);
+            jsonObject.put("datetime",calendarCollections.datetime);
+            jsonObject.put("creator",calendarCollections.creator);
+            jsonObject.put("category",calendarCollections.category);
+            jsonObject.put("startingtime",calendarCollections.startingtime);
+            jsonObject.put("endingtime",calendarCollections.endingtime);
+            jsonObject.put("hashid",calendarCollections.hashid);
+            jsonObject.put("alldayevent",calendarCollections.alldayevent);
+            jsonObject.put("everymonth",calendarCollections.everymonth);
+            jsonObject.put("defaulttime",calendarCollections.creationdatetime);
+            Calendar c=new GregorianCalendar();
+            Date dat=c.getTime();
+            //String day= String.valueOf(dat.getDay());
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+            String date = (String) android.text.format.DateFormat.format("yyyy-MM-dd", dat);
+            IncomingNotification incomingNotification=new IncomingNotification(1,0,jsonObject.toString(),date);
+            int incomingNotifiId =  mySQLiteHelper.updateIncomingNotification(incomingNotification);
+
+        }catch (Exception e){
+            e.printStackTrace();
+
+        }
+
+
+    }
     @Override
     public void changescanceled(boolean canceled) {
         if(!canceled){
@@ -394,5 +651,22 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
         }else {
             onBackPressed();
         }
+    }
+
+    public void showSnackBar(final GroceryList groceryList, final CalendarCollection collection, final FinanceAccount financeAccount){
+        snackbar = Snackbar
+                .make(coordinatorLayout, "An error occured during the connection to the server", Snackbar.LENGTH_INDEFINITE)
+                .setAction("RETRY", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        updateGroceryAndFinance(groceryList,financeAccount,collection);
+                    }
+                });
+        snackbar.setActionTextColor(Color.WHITE);
+        View snackbarView = snackbar.getView();
+        snackbarView.setBackgroundColor(getResources().getColor(R.color.colorSnackbar));
+        TextView textView = (TextView) snackbarView.findViewById(android.support.design.R.id.snackbar_text);
+        textView.setTextColor(Color.WHITE);
+        snackbar.show();
     }
 }

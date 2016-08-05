@@ -7,6 +7,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 /**
@@ -118,22 +119,27 @@ public class GroceryList implements Parcelable {
     public String getListcontain() {
         String listcontain="";
 
-        try {
+        if(itemsOftheList.size()!=0){
+            try {
 
-            JSONObject json = new JSONObject();
+                JSONObject json = new JSONObject();
 
-            JSONArray jsonArray = new JSONArray();
-            for (int i=0; i < itemsOftheList.size(); i++) {
+                JSONArray jsonArray = new JSONArray();
+                for (int i=0; i < itemsOftheList.size(); i++) {
 
-                jsonArray.put(itemsOftheList.get(i).getShoppingItemJSONObject());
+                    jsonArray.put(itemsOftheList.get(i).getShoppingItemJSONObject());
+                }
+                json.put("list_contain", jsonArray);
+
+                listcontain=json.toString();
+                this.listcontain=listcontain;
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            json.put("list_contain", jsonArray);
-
-            listcontain=json.toString();
-        } catch (Exception e) {
-            e.printStackTrace();
+        }else {
+            listcontain=this.listcontain;
         }
-        setListcontain(listcontain);
+
         return listcontain;
     }
 
@@ -155,9 +161,85 @@ public class GroceryList implements Parcelable {
         return items;
     }
 
+    public String getListItemsAsDescription(String listcontain){
+        ArrayList<ShoppingItem> items=new ArrayList<>();
+        String description="";
+
+        JSONObject json = null;
+        try {
+            json = new JSONObject(listcontain);
+            JSONArray array = json.getJSONArray("list_contain");
+            for(int i =0; i <array.length();i++){
+                items.add( new ShoppingItem().getShoppingItemFromJSONObject(array.getJSONObject(i)));
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        StringBuilder builder =new StringBuilder();
+
+        if(items.size()!=0){
+            for(ShoppingItem item: items){
+                double price=Double.parseDouble(item.getPrice())*item.getNumberofItemsetForList();
+                DecimalFormat df = new DecimalFormat("0.00");
+                df.setMaximumFractionDigits(2);
+                String priceStr = df.format(price);
+                builder.append(item.getNumberofItemsetForList()).append(" ")
+                        .append(item.getItemName())
+                        .append("  ")
+                        .append(priceStr).append(" €").append("\n");
+            }
+
+            description=builder.toString();
+        }
+
+
+        return description;
+    }
 
     public void setListcontain( String listcontain) {
         this.listcontain = listcontain;
+    }
+
+    public String getGroceryListTotalPriceString(){
+        if(itemsOftheList.size()!=0){
+            double totalspent=0.00;
+            for(int i=0;i<itemsOftheList.size();i++){
+                if(itemsOftheList.get(i).isItemIsBought()){
+                    int numb=itemsOftheList.get(i).getNumberofItemsetForList();
+                    double price= Double.parseDouble(itemsOftheList.get(i).getPrice())*numb;
+                    totalspent=totalspent+price;
+                }
+
+            }
+            DecimalFormat df = new DecimalFormat("0.00");
+            df.setMaximumFractionDigits(2);
+
+            String priceStr = df.format(totalspent)+ " €";
+            return priceStr;
+        }
+
+        return "";
+    }
+
+
+    public String getGroceryListTotalPriceToPayString(){
+        if(itemsOftheList.size()!=0){
+            double totalspent=0.00;
+            for(int i=0;i<itemsOftheList.size();i++){
+
+                    int numb=itemsOftheList.get(i).getNumberofItemsetForList();
+                    double price= Double.parseDouble(itemsOftheList.get(i).getPrice())*numb;
+                    totalspent=totalspent+price;
+
+            }
+            DecimalFormat df = new DecimalFormat("0.00");
+            df.setMaximumFractionDigits(2);
+
+            String priceStr = df.format(totalspent);
+            return priceStr;
+        }
+
+        return "";
     }
 
     public boolean allItemsbought(){

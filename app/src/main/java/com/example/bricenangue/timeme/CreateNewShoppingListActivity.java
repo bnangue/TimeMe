@@ -306,6 +306,7 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
                 // initializeDatePicker();
 
                     stateActivitiesPreference.setCopyExcelFileFromAssetToInterneMemory(true);
+                Toast.makeText(context,"Database loaded",Toast.LENGTH_SHORT).show();
 
             }else{
                 Toast.makeText(getApplicationContext(),"Error initializing database",Toast.LENGTH_SHORT).show();

@@ -407,9 +407,9 @@ public class BaseActivity extends AppCompatActivity  implements WeekView.EventCl
 
         String[] sdatet=startdatetime[0].split("-");
 
-        String sdday=sdatet[2];
+        String sdday=sdatet[0];
         String sdmounth=sdatet[1];
-        String sdyear=sdatet[0];
+        String sdyear=sdatet[2];
 
         if(sdmounth.startsWith("0")){
             sdmounth=sdmounth.substring(1);
@@ -451,9 +451,9 @@ public class BaseActivity extends AppCompatActivity  implements WeekView.EventCl
 
         String[] edatet=enddatetime[0].split("-");
 
-        String edday=edatet[2];
+        String edday=edatet[0];
         String edmounth=edatet[1];
-        String edyear=edatet[0];
+        String edyear=edatet[2];
 
         if(edmounth.startsWith("0")){
             edmounth=edmounth.substring(1);
@@ -581,11 +581,11 @@ public class BaseActivity extends AppCompatActivity  implements WeekView.EventCl
                         mNewEvents.remove(event);
                         mySQLiteHelper.deleteIncomingNotification((int) event.getId());
                         mWeekView.notifyDatasetChanged();
+                        Toast.makeText(getApplicationContext(), "removed", Toast.LENGTH_SHORT).show();
                         alertDialog.dismiss();
 
                     }
 
-                    Toast.makeText(getApplicationContext(), "removed", Toast.LENGTH_SHORT).show();
 
                 }
             }

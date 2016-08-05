@@ -176,10 +176,7 @@ public class AddNewEventActivity extends AppCompatActivity implements AdapterVie
                 setViews(v,position);
             }
 
-            @Override
-            public void onButtonClick(int position, View v) {
 
-            }
         });
         mRecyclerView.setAdapter(mAdapter);
 

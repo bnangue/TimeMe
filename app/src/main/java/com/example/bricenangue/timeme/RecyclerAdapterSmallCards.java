@@ -8,6 +8,7 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -39,7 +40,7 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
     private  MyRecyclerAdaptaterCreateShoppingListClickListener myClickListener;
     private  MyRecyclerAdaptaterCreateShoppingListDoneClickListener myDoneClickListener;
     private MySQLiteHelper mySQLiteHelper;
-    private Context context;
+    private AppCompatActivity context;
     private FragmentManager manager;
     private RecyclerAdapterSmallCards RecyclerAdaptaterCreateShoppingList=this;
     private UserLocalStore userLocalStore;
@@ -112,7 +113,7 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
         this.myDoneClickListener=myDoneClickListener;
     }
 
-    public RecyclerAdapterSmallCards(Context context,ArrayList<GroceryList> myDataset, MyRecyclerAdaptaterCreateShoppingListClickListener myClickListener, MyRecyclerAdaptaterCreateShoppingListDoneClickListener myDoneClickListener, boolean isListwithDoneList) {
+    public RecyclerAdapterSmallCards(AppCompatActivity context,ArrayList<GroceryList> myDataset, MyRecyclerAdaptaterCreateShoppingListClickListener myClickListener, MyRecyclerAdaptaterCreateShoppingListDoneClickListener myDoneClickListener, boolean isListwithDoneList) {
         this.context=context;
         this.isListwithDoneList=isListwithDoneList;
         mDataset = myDataset;
@@ -147,7 +148,8 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
 
         String name=context.getResources().getString(R.string.grocery_list_item_title_text ).toLowerCase() + " " + groceryList.getDatum();
         holder.listname.setText(name);
-        holder.listStatus.setText(groceryList.isListdone() ? R.string.grocery_list_status_done_text : R.string.grocery_list_status__not_done_text);
+        holder.listStatus.setText(groceryList.isListdone() ? groceryList.getGroceryListTotalPriceString() : context.getString(R.string.grocery_list_status__not_done_text));
+        holder.listStatus.setTextColor(groceryList.isListdone() ? context.getResources().getColor(R.color.warning_color) : context.getResources().getColor(R.color.grey_light));
 
         holder.delete.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -160,6 +162,8 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
             }
         });
     }
+
+
 
     public void alertDialogDelete(final DataObjectHolder holder){
 
@@ -182,16 +186,22 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
         delete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                int position=holder.getAdapterPosition();
+                GroceryList groceryList=mDataset.get(position);
+                SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd, HH:mm");
+                formatter.setLenient(false);
 
-                if(sqLiteShoppingList.deleteShoppingList(mDataset.get(holder.getAdapterPosition()).getList_unique_id())!=0){
-                    deleteItem(holder.getAdapterPosition());
-                    Toast.makeText(context,"List succesffully deleted",Toast.LENGTH_SHORT).show();
-                    alertDialog.dismiss();
-                }else {
-                    Toast.makeText(context,"Error deleting grocery list",Toast.LENGTH_SHORT).show();
-                    alertDialog.dismiss();
-                }
+                Date currentDate = new Date();
 
+
+                String currentTime = formatter.format(currentDate);
+                CalendarCollection    calendarCollection=new CalendarCollection(groceryList.getDatum(),groceryList.getListcontain(),
+                        groceryList.getCreatorName(),groceryList.getDatum(), groceryList.getDatum() + " 17:00",
+                        groceryList.getDatum() +" 20:00",groceryList.getList_unique_id(),context.getString(R.string.Event_Category_Category_Shopping),"0","0",currentTime);
+
+                deleteGroceryOnServer(groceryList,position,calendarCollection);
+
+                alertDialog.dismiss();
             }
         });
 
@@ -199,6 +209,68 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
         // show it
         alertDialog.show();
     }
+
+
+    private void deleteGroceryOnServer(final GroceryList groceryList, final int position, final CalendarCollection calendarCollection){
+        ServerRequests serverRequests=new ServerRequests(context);
+        serverRequests.deleteGroceryListInBackgroung(groceryList, new GroceryListCallBacks() {
+            @Override
+            public void fetchDone(ArrayList<GroceryList> returnedGroceryLists) {
+
+            }
+
+            @Override
+            public void setServerResponse(String serverResponse) {
+                if (serverResponse.contains("Grocery list successfully deleted")){
+
+                    deleteFromSQLITEAndSERver(calendarCollection,groceryList,position);
+
+
+                }else{
+                    Toast.makeText(context,"An error occured during the connection to the server",Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+    }
+
+    private void deleteFromSQLITEAndSERver(final CalendarCollection collection, final GroceryList groceryList,final int position){
+        ServerRequests serverRequests= new ServerRequests(context);
+        serverRequests.deleteCalenderEventInBackgroung(collection, new GetEventsCallbacks() {
+            @Override
+            public void done(ArrayList<CalendarCollection> returnedeventobject) {
+
+            }
+
+            @Override
+            public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
+
+            }
+
+            @Override
+            public void updated(String reponse) {
+                if (reponse.contains("Event successfully deleted")) {
+                    mySQLiteHelper.deleteIncomingNotification(collection.incomingnotifictionid);
+                    deleteGroceryListLocally(groceryList,position);
+
+                }else{
+                    Toast.makeText(context,"An error ont event occured during the connection to the server",Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    private void deleteGroceryListLocally(GroceryList groceryList, int position){
+
+        if(sqLiteShoppingList.deleteShoppingList(groceryList.getList_unique_id())!=0){
+            deleteItem(position);
+            Toast.makeText(context,"List succesffully deleted",Toast.LENGTH_SHORT).show();
+
+        }else {
+            Toast.makeText(context,"Error deleting grocery list",Toast.LENGTH_SHORT).show();
+        }
+    }
+
     public void addItem(GroceryList dataObj) {
 
         mDataset.add(dataObj);

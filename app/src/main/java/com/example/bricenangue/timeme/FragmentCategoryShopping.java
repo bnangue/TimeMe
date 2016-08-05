@@ -49,10 +49,11 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
 
     private boolean isShown=false;
     private OnCalendarEventsChanged calendarEventsChanged;
+    private UserLocalStore userLocalStore;
 
     private void prepareRecyclerView(Context context,ArrayList<GroceryList> arrayList){
         mRecyclerView.setVisibility(View.VISIBLE);
-        mAdapter = new RecyclerAdapterSmallCards(context,arrayList,myClickListener,myDoneClickListener,false);
+        mAdapter = new RecyclerAdapterSmallCards(((NewCalendarActivty)getActivity()),arrayList,myClickListener,myDoneClickListener,false);
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -63,7 +64,7 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
     private void prepareRecyclerViewdone(Context context,ArrayList<GroceryList> arrayList){
 
         mRecyclerViewdone.setVisibility(View.VISIBLE);
-        mAdapter = new RecyclerAdapterSmallCards(context,arrayList,myClickListener,myDoneClickListener,true);
+        mAdapter = new RecyclerAdapterSmallCards(((NewCalendarActivty)getActivity()),arrayList,myClickListener,myDoneClickListener,true);
         mRecyclerViewdone.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerViewdone.setLayoutManager(mLayoutManager);
@@ -81,6 +82,18 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
 
     }
 
+
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        //Save the fragment's state here
+        outState.putParcelableArrayList("list_recent",shoppingListsrecent);
+        outState.putParcelableArrayList("list_done",shoppingListdone);
+    }
+
+
     private ArrayList<GroceryList> getGroceryList(){
         return sqLiteShoppingList.getAllShoppingList()[0];
     }
@@ -93,6 +106,7 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
       //  getEvents(mySQLiteHelper.getAllIncomingNotification());
         // Inflate the layout for this fragment
         sqLiteShoppingList=new SQLiteShoppingList(getContext());
+        userLocalStore=new UserLocalStore(getContext());
         View v = inflater.inflate(R.layout.fragment_grocery_list, container, false);
         textBalance = (TextView) v.findViewById(R.id.grocery_fragment_balance_amount);
         add_List = (Button) v.findViewById(R.id.grocery_fragment_add_recently_button);
@@ -119,6 +133,13 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
 
 
         add_List.setOnClickListener(this);
+        if(userLocalStore.getUserAccountBalance().contains("-")){
+            textBalance.setText(userLocalStore.getUserAccountBalance()+" €");
+            textBalance.setTextColor(getResources().getColor(R.color.warning_color));
+        }else {
+            textBalance.setText(userLocalStore.getUserAccountBalance()+" €");
+        }
+
 
         return v;
     }
@@ -136,6 +157,10 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
         super.onActivityCreated(savedInstanceState);
         mySQLiteHelper=new MySQLiteHelper(getContext());
         //prepareListview
+        if(savedInstanceState!=null){
+            shoppingListdone=savedInstanceState.getParcelableArrayList("list_done");
+            shoppingListsrecent=savedInstanceState.getParcelableArrayList("list_recent");
+        }
 
     }
 
@@ -221,6 +246,13 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
         prepareRecyclerView(getContext(),shoppingListsrecent);
         prepareRecyclerViewdone(getContext(),shoppingListdone);
 
+
+        if(userLocalStore.getUserAccountBalance().contains("-")){
+            textBalance.setText(userLocalStore.getUserAccountBalance()+" €");
+            textBalance.setTextColor(getResources().getColor(R.color.warning_color));
+        }else {
+            textBalance.setText(userLocalStore.getUserAccountBalance()+" €");
+        }
     ((RecyclerAdapterSmallCards) mAdapter).setOnshoppinglistsmallClickListener(myClickListener,myDoneClickListener);
     }
 

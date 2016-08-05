@@ -23,7 +23,7 @@ import java.util.ArrayList;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class FragmentMyEvent extends Fragment implements DialogDeleteEventFragment.OnDeleteListener, FragmentCommunicator ,FragmentLife{
+public class FragmentMyEvent extends Fragment implements  FragmentCommunicator ,FragmentLife{
 
 
     private TextView eventpriode,creatorname,createdtime,notes,descriptionexpand;
@@ -46,7 +46,7 @@ public class FragmentMyEvent extends Fragment implements DialogDeleteEventFragme
 
     private void prepareRecyclerView(Context context,ArrayList<CalendarCollection> arrayList){
 
-        mAdapter = new MyRecyclerViewAdapter(context,arrayList,myClickListener);
+        mAdapter = new MyRecyclerViewAdapter(((NewCalendarActivty)getActivity()),arrayList,myClickListener);
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -56,7 +56,7 @@ public class FragmentMyEvent extends Fragment implements DialogDeleteEventFragme
 
     private void prepareRecyclerView(ArrayList<CalendarCollection> arrayList){
 
-        mAdapter = new MyRecyclerViewAdapter(getContext(),arrayList,myClickListener);
+        mAdapter = new MyRecyclerViewAdapter(((NewCalendarActivty)getActivity()),arrayList,myClickListener);
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -75,6 +75,7 @@ public class FragmentMyEvent extends Fragment implements DialogDeleteEventFragme
 
       //  getEvents(mySQLiteHelper.getAllIncomingNotification());
         // Inflate the layout for this fragment
+        mySQLiteHelper=new MySQLiteHelper(getContext());
         View rootView = inflater.inflate(R.layout.fragment_fragment_my_event, container, false);
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.my_recycler_view);
 
@@ -85,22 +86,6 @@ public class FragmentMyEvent extends Fragment implements DialogDeleteEventFragme
                 Log.i(LOG_TAG, " MY event Clicked on Item " + position);
             }
 
-            @Override
-            public void onButtonClick(int position, View v) {
-                int iD = v.getId();
-                switch (iD) {
-                    case R.id.buttondeletecardview:
-
-                        DialogFragment dialogFragment = DialogDeleteEventFragment.newInstance(position);
-                        dialogFragment.setCancelable(false);
-                        dialogFragment.setTargetFragment(fragment, 1);
-                        dialogFragment.show(getActivity().getSupportFragmentManager(), "DELETEMYEVENTEVENTFRAGMENT");
-
-                        break;
-                    case R.id.buttonsharecardview:
-                        break;
-                }
-            }
         };
 
 
@@ -148,7 +133,7 @@ public class FragmentMyEvent extends Fragment implements DialogDeleteEventFragme
         userLocalStore=new UserLocalStore(getContext());
         mySQLiteHelper=new MySQLiteHelper(getContext());
 
-        mAdapter = new MyRecyclerViewAdapter(getContext(),collectionArrayList,myClickListener);
+        mAdapter = new MyRecyclerViewAdapter(((NewCalendarActivty)getActivity()),collectionArrayList,myClickListener);
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -182,14 +167,9 @@ public class FragmentMyEvent extends Fragment implements DialogDeleteEventFragme
     public void onResume() {
         super.onResume();
 
-        //collectionArrayList=CalendarCollection.date_collection_arr;
-        if(!isShown){
-
 
                 prepareRecyclerView(getContext(),getCalendarEvents(mySQLiteHelper.getAllIncomingNotification()));
 
-
-        }
                 ((MyRecyclerViewAdapter) mAdapter).setOnItemClickListener(myClickListener);
 
 
@@ -204,16 +184,9 @@ public class FragmentMyEvent extends Fragment implements DialogDeleteEventFragme
         ((MyRecyclerViewAdapter)mAdapter).setOnItemClickListener(null);
     }
 
-    @Override
-    public void delete(int position) {
-       // deleteFromSQLITEAndSERver(position);
-        ((MyRecyclerViewAdapter)mAdapter).deleteItem(position);
-        //((MyRecyclerViewAdapter)mAdapter).notifyDataSetChanged();
-        calendarEventsChanged.eventsCahnged(true);
-    }
 
     private void deleteFromSQLITEAndSERver(final int index){
-        ServerRequests serverRequests= new ServerRequests(getContext());
+        ServerRequests serverRequests= new ServerRequests(((NewCalendarActivty)getActivity()));
         serverRequests.deleteCalenderEventInBackgroung(collectionArrayList.get(index), new GetEventsCallbacks() {
             @Override
             public void done(ArrayList<CalendarCollection> returnedeventobject) {

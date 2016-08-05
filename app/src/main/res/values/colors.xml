@@ -38,6 +38,10 @@
     <color name="black">#000</color>
     <color name="grey">#b1afaf</color>
     <color name="grey_light">#d7d5d5</color>
+    <color name="color_account_balance_positive">#089c28</color>
+
+    <color name="createandloginBackground">#F4F4F4</color>
+
 
 
 </resources>

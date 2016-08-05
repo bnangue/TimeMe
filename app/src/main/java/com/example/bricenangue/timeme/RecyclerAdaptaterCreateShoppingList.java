@@ -72,7 +72,7 @@ public class RecyclerAdaptaterCreateShoppingList  extends RecyclerView
             isListwithDoneList=isListwithDoneList1;
             mcard=(LinearLayout)itemView.findViewById(R.id.lin_create_shopping_list_card);
 
-            listname = (TextView) itemView.findViewById(R.id.textView_Grocery_listname_create_shopping_list_card);
+            listname = (TextView) itemView.findViewById(R.id.TextView_listname_create_shopping_list_card);
             listcreator = (TextView) itemView.findViewById(R.id.textView_Listcreator_create_shopping_list_card);
             listStatus = (TextView) itemView.findViewById(R.id.textView_LisStatus_create_shopping_list_card);
             share = (Button) itemView.findViewById(R.id.buttonsharecardview_create_shopping_list_card);

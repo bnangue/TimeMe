@@ -1,159 +1,168 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/coordinateLayout__creatList_add_item_to_list"
     tools:context="com.example.bricenangue.timeme.AddItemToListActivity">
-
 
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentTop="true"
+        android:layout_height="match_parent">
 
-        android:paddingTop="@dimen/activity_vertical_margin"
-        android:layout_above="@+id/linearLayout_separator_activity_details_shopping_list">
-        <Button
-            android:paddingLeft="@dimen/activity_horizontal_margin"
-            android:paddingRight="@dimen/activity_horizontal_margin"
-            android:id="@+id/grocery_activity_add_itemtoList_button"
+
+
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            style="@style/Base.Widget.AppCompat.Button.Borderless"
-            android:drawableLeft="@drawable/addprevisory"
-            android:drawableStart="@drawable/addprevisory"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="3dp"
-            android:text="@string/text_add_item_to_list_createnewItem_button"
-            android:textSize="15sp"
-            android:textColor="@color/create_new_ShoppingList"/>
+            android:layout_height="match_parent"
+            android:layout_alignParentTop="true"
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:id="@+id/secondlinearelaoutadditemtolist"
-            android:orientation="horizontal"
-            android:layout_below="@+id/grocery_activity_add_itemtoList_button"
-            >
-
-
+            android:paddingTop="@dimen/activity_vertical_margin"
+            android:layout_above="@+id/linearLayout_separator_activity_details_shopping_list">
             <Button
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:hint="22-07-2016"
-                android:id="@+id/dateaddeventstart_creatList_add_item_to_list"
-                android:gravity="center"
-                android:drawableLeft="@drawable/tearcalendar"
-                style="@style/Widget.AppCompat.Button.Borderless"
-                android:layout_weight="3"/>
-
-            <android.support.v7.widget.SearchView
                 android:paddingLeft="@dimen/activity_horizontal_margin"
                 android:paddingRight="@dimen/activity_horizontal_margin"
-                android:layout_width="0dp"
+                android:id="@+id/grocery_activity_add_itemtoList_button"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="5"
-                android:id="@+id/actionbarsearch_add_item_to_list"
+                style="@style/Base.Widget.AppCompat.Button.Borderless"
+                android:drawableLeft="@drawable/addprevisory"
+                android:drawableStart="@drawable/addprevisory"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="3dp"
+                android:text="@string/text_add_item_to_list_createnewItem_button"
+                android:textSize="15sp"
+                android:textColor="@color/create_new_ShoppingList"/>
 
-                />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:id="@+id/secondlinearelaoutadditemtolist"
+                android:orientation="horizontal"
+                android:layout_below="@+id/grocery_activity_add_itemtoList_button"
+                >
 
-        </LinearLayout>
+
+                <Button
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:hint="22-07-2016"
+                    android:id="@+id/dateaddeventstart_creatList_add_item_to_list"
+                    android:gravity="center"
+                    android:drawableLeft="@drawable/tearcalendar"
+                    style="@style/Widget.AppCompat.Button.Borderless"
+                    android:layout_weight="3"/>
+
+                <android.support.v7.widget.SearchView
+                    android:paddingLeft="@dimen/activity_horizontal_margin"
+                    android:paddingRight="@dimen/activity_horizontal_margin"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="5"
+                    android:id="@+id/actionbarsearch_add_item_to_list"
+
+                    />
+
+            </LinearLayout>
 
 
 
 
-        <LinearLayout
-            android:paddingLeft="3dp"
-            android:paddingRight="3dp"
-            android:layout_width="match_parent"
-            android:layout_height="30dp"
-            android:orientation="horizontal"
-            android:id="@+id/linearLayout_activity_add_item_to_list"
-            android:layout_below="@+id/secondlinearelaoutadditemtolist"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="5dp">
-            <TextView
-                android:layout_width="0dp"
+            <LinearLayout
+                android:paddingLeft="3dp"
+                android:paddingRight="3dp"
+                android:layout_width="match_parent"
+                android:layout_height="30dp"
+                android:orientation="horizontal"
+                android:id="@+id/linearLayout_activity_add_item_to_list"
+                android:layout_below="@+id/secondlinearelaoutadditemtolist"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/text_add_itme_to_list_DataBase_empty"
+                    android:layout_gravity="bottom"
+                    android:layout_weight="3"
+                    android:id="@+id/textView_add_item_to_list_List_empty"
+
+                    />
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/activity_details_shopping_list_text_sort_by"
+                    android:layout_gravity="bottom"
+                    android:layout_weight="1"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:gravity="end"
+                    />
+
+                <Spinner
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/spinner_activity_add_item_to_list"
+                    android:layout_gravity="bottom"
+                    android:layout_weight="2"
+                    />
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:orientation="horizontal"
+                android:background="@color/primary"
+                android:id="@+id/linearLayout_separator_activity_details_shopping_list1"
+                android:layout_below="@+id/linearLayout_activity_add_item_to_list"/>
+
+
+            <ListView
+                android:paddingLeft="4dp"
+                android:paddingRight="4dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/text_add_itme_to_list_DataBase_empty"
-               android:layout_gravity="bottom"
-                android:layout_weight="3"
-                android:id="@+id/textView_add_item_to_list_List_empty"
-
-                />
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:text="@string/activity_details_shopping_list_text_sort_by"
-                android:layout_gravity="bottom"
-                android:layout_weight="1"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                android:gravity="end"
-                />
-
-            <Spinner
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:id="@+id/spinner_activity_add_item_to_list"
-                android:layout_gravity="bottom"
-                android:layout_weight="2"
-                />
-        </LinearLayout>
+                android:visibility="gone"
+                android:id="@+id/shoppinglistViewaddItemToListactivity"
+                android:layout_below="@+id/linearLayout_separator_activity_details_shopping_list1"/>
+        </RelativeLayout>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="2dp"
             android:orientation="horizontal"
             android:background="@color/primary"
-            android:id="@+id/linearLayout_separator_activity_details_shopping_list1"
-            android:layout_below="@+id/linearLayout_activity_add_item_to_list"/>
+            android:id="@+id/linearLayout_separator_activity_details_shopping_list"
+            android:layout_above="@+id/relative_add_Item_to_list_activity"/>
 
-
-        <ListView
-            android:paddingLeft="4dp"
-            android:paddingRight="4dp"
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:id="@+id/shoppinglistViewaddItemToListactivity"
-            android:layout_below="@+id/linearLayout_separator_activity_details_shopping_list1"/>
-    </RelativeLayout>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="2dp"
-        android:orientation="horizontal"
-        android:background="@color/primary"
-        android:id="@+id/linearLayout_separator_activity_details_shopping_list"
-        android:layout_above="@+id/relative_add_Item_to_list_activity"/>
+            android:layout_alignParentBottom="true"
+            android:id="@+id/relative_add_Item_to_list_activity"
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:id="@+id/relative_add_Item_to_list_activity"
+            >
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_margin="10dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/grocery_add_item_to_list_to_pay_text"
+                    android:layout_weight="1"/>
+                <TextView
+                    android:id="@+id/grocery_fragment_balance_amount_activity_add_item_to_list"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/null_item_total_price"
+                    android:gravity="end"
+                    android:layout_weight="8"/>
+            </LinearLayout>
 
-        >
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_margin="10dp">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/grocery_add_item_to_list_to_pay_text"
-                android:layout_weight="1"/>
-            <TextView
-                android:id="@+id/grocery_fragment_balance_amount_activity_add_item_to_list"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/null_item_total_price"
-                android:gravity="end"
-                android:layout_weight="8"/>
-        </LinearLayout>
+        </RelativeLayout>
+
 
     </RelativeLayout>
 
 
-</RelativeLayout>
+</android.support.design.widget.CoordinatorLayout>

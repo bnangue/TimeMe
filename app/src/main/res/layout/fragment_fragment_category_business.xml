@@ -1,14 +1,95 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".FragmentCategoryFinance">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:id="@+id/fragment_finance_add_account_buttonslayout"
+        >
+        <Button
+
+            android:id="@+id/fragment_finance_add_account_button"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            style="@style/Base.Widget.AppCompat.Button.Borderless"
+            android:drawableLeft="@drawable/addprevisory"
+            android:drawableStart="@drawable/addprevisory"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="3dp"
+            android:text="@string/text_create_new_Account_button"
+            android:textSize="15sp"
+            android:textColor="@color/create_new_ShoppingList"
+            android:layout_marginRight="3dp"/>
+
+        <Button
+
+            android:id="@+id/fragment_finance_add_finance_record_button"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            style="@style/Base.Widget.AppCompat.Button.Borderless"
+            android:drawableRight="@drawable/euro_sign_small"
+            android:drawableEnd="@drawable/euro_sign_small"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="3dp"
+            android:text="@string/text_create_new_Finance_record_button"
+            android:textSize="15sp"
+            android:visibility="gone"
+            android:textColor="@color/create_new_ShoppingList"
+            android:layout_marginLeft="3dp"
+            />
+
+    </LinearLayout>
+
+
     <android.support.v7.widget.RecyclerView
         android:id="@+id/my_recycler_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scrollbars="vertical"/>
+        android:scrollbars="vertical"
+        android:layout_below="@+id/fragment_finance_add_account_buttonslayout"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:orientation="horizontal"
+        android:background="@color/primary_light"
+        android:id="@+id/linearLayout_separator_activity_grocery_list"
+        android:layout_above="@+id/relative_fragment_grocery2"/>
 
 
-</FrameLayout>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:id="@+id/relative_fragment_grocery2"
+        android:background="@color/primary_dark">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_margin="10dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/grocery_fragment_balance"
+                android:layout_weight="1"
+                android:textColor="@color/white"/>
+            <TextView
+                android:id="@+id/finance_fragment_balance_amount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text=" 0,00 €"
+                android:textColor="@color/white"
+                android:layout_weight="8"/>
+        </LinearLayout>
+
+    </RelativeLayout>
+
+
+</RelativeLayout>

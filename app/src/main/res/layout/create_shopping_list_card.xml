@@ -33,7 +33,7 @@
                 >
 
                 <TextView
-                    android:id="@+id/textView_Grocery_listname_create_shopping_list_card"
+                    android:id="@+id/TextView_listname_create_shopping_list_card"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textStyle="bold"

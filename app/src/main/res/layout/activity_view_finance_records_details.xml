@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+
+    tools:context="com.example.bricenangue.timeme.ViewFinanceRecordsDetailsActivity">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="6dp">
+
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+
+            android:layout_alignParentTop="true"
+            android:id="@+id/editText_View_Finance_records_details_NAme_layout"
+            android:layout_gravity="bottom"
+            >
+
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:ems="10"
+                android:hint="@string/textView_Finance_records_details_NAme"
+                android:id="@+id/editText_View_Finance_records_details_NAme"
+                android:enabled="false"
+                />
+        </android.support.design.widget.TextInputLayout>
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+
+            android:layout_below="@id/editText_View_Finance_records_details_NAme_layout"
+
+            android:id="@+id/editText_View_Finance_records_details_Category_layout"
+            android:layout_gravity="bottom"
+            >
+
+            <EditText
+                android:enabled="false"
+
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:ems="10"
+                android:hint="@string/text_View_Finance_records_Categoriy_Amount"
+                android:id="@+id/editText_View_Finance_records_Categoriy"
+                />
+        </android.support.design.widget.TextInputLayout>
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_below="@+id/editText_View_Finance_records_details_Category_layout"
+            android:id="@+id/editText_View_Finance_records_details_Value_DAte_layout"
+            android:layout_gravity="bottom"
+            >
+
+            <EditText
+                android:enabled="false"
+
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:ems="10"
+                android:hint="@string/text_View_Finance_records_details_VAlue_DAte"
+                android:id="@+id/_editText_View_Finance_records_details_VAlue_DAte"
+                />
+        </android.support.design.widget.TextInputLayout>
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_below="@+id/editText_View_Finance_records_details_Value_DAte_layout"
+
+            android:id="@+id/editText_View_Finance_records_details_Booking_Date_layout"
+            android:layout_gravity="bottom"
+            >
+
+            <EditText
+                android:enabled="false"
+
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:ems="10"
+                android:hint="@string/text_View_Finance_records_details_Booking_Date"
+                android:id="@+id/editText_View_Finance_records_details_Booking_Date"
+                />
+        </android.support.design.widget.TextInputLayout>
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+
+            android:layout_below="@id/editText_View_Finance_records_details_Booking_Date_layout"
+            android:id="@+id/editText_View_Finance_records_details_creator_layout"
+            android:layout_gravity="bottom"
+            >
+
+            <EditText
+                android:enabled="false"
+
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:ems="10"
+                android:hint="@string/text_View_Finance_records_details_creator"
+                android:id="@+id/editText_View_Finance_records_details_creator"
+                />
+        </android.support.design.widget.TextInputLayout>
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+
+            android:layout_below="@id/editText_View_Finance_records_details_creator_layout"
+
+            android:id="@+id/editText_View_Finance_records_details_Amount_layout"
+            android:layout_gravity="bottom"
+            >
+
+            <EditText
+                android:enabled="false"
+
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:ems="10"
+                android:hint="@string/text_View_Finance_records_details_Amount"
+                android:id="@+id/editText_View_Finance_records_details_Amount"
+                />
+        </android.support.design.widget.TextInputLayout>
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+
+            android:layout_below="@id/editText_View_Finance_records_details_Amount_layout"
+
+            android:id="@+id/editText_View_Finance_records_details_ID_layout"
+            android:layout_gravity="bottom"
+            >
+
+            <EditText
+                android:enabled="false"
+
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:ems="10"
+                android:hint="@string/text_View_Finance_records_ID_Amount"
+                android:id="@+id/editText_View_Finance_records_ID"
+                />
+        </android.support.design.widget.TextInputLayout>
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+
+            android:layout_below="@id/editText_View_Finance_records_details_ID_layout"
+            android:id="@+id/editText_View_Finance_records_details_Note_layout"
+            android:layout_gravity="bottom"
+            >
+
+            <EditText
+                android:enabled="false"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:ems="10"
+                android:hint="@string/text_View_Finance_records_note"
+                android:id="@+id/editText_View_Finance_records_note"
+                />
+        </android.support.design.widget.TextInputLayout>
+    </RelativeLayout>
+
+
+
+</ScrollView>

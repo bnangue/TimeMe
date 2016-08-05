@@ -1,7 +1,9 @@
 package com.example.bricenangue.timeme;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -72,34 +74,6 @@ public class LoginScreenActivity extends AppCompatActivity implements View.OnCli
         }
     }
 
-    private void logCurrenUserIn() {
-        ServerRequests serverRequests=new ServerRequests(this);
-        serverRequests.getCalenderEventAndUserInBackgroung(new GetEventsCallbacks() {
-            @Override
-            public void done(ArrayList<CalendarCollection> returnedeventobject) {
-                if(returnedeventobject.size()!=0){
-
-                    saveeventtoSQl(returnedeventobject);
-                   logCurrentuserIn();
-                    MainActivity.eventsareloaded=true;
-
-                }else {
-                    logCurrentuserIn();
-                }
-            }
-
-            @Override
-            public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
-
-            }
-
-            @Override
-            public void updated(String reponse) {
-
-            }
-        });
-    }
-
 
     private void saveloggedInuserPreferences(User returneduser){
         userLocalStore.setUserLoggedIn(true);
@@ -132,9 +106,6 @@ public class LoginScreenActivity extends AppCompatActivity implements View.OnCli
 
 
                     }else {
-                        Intent intent=new Intent(LoginScreenActivity.this,NewCalendarActivty.class);
-                        intent.putExtra("loggedInUser",returneduser);
-                        startActivity(intent);
                         showErrordialog("Could not log in.  Wrong email or password");
                     }
                 }
@@ -246,4 +217,6 @@ public class LoginScreenActivity extends AppCompatActivity implements View.OnCli
         }
 
     }
+
+
 }

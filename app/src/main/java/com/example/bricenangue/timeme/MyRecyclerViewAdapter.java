@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.app.DialogFragment;
 import android.app.FragmentManager;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
         import android.util.Log;
@@ -15,6 +17,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,12 +36,14 @@ public class MyRecyclerViewAdapter extends RecyclerView
         .DataObjectHolder> {
     private static String LOG_TAG = "MyRecyclerViewAdapter";
     private ArrayList<CalendarCollection> mDataset;
+    private static LayoutInflater inflater=null;
     private  MyClickListener myClickListener;
     private MySQLiteHelper mySQLiteHelper;
-    private Context context;
+    private AppCompatActivity context;
     private FragmentManager manager;
     private MyRecyclerViewAdapter myRecyclerViewAdapter=this;
     private UserLocalStore userLocalStore;
+    private SQLiteShoppingList sqLiteShoppingList;
 
 
     public class OnExpandDetailsClickListener implements View.OnClickListener {
@@ -113,11 +118,13 @@ public class MyRecyclerViewAdapter extends RecyclerView
         this.myClickListener = myClickListener;
     }
 
-    public MyRecyclerViewAdapter(Context context,ArrayList<CalendarCollection> myDataset, MyClickListener myClickListener) {
+    public MyRecyclerViewAdapter(AppCompatActivity context,ArrayList<CalendarCollection> myDataset, MyClickListener myClickListener) {
         this.context=context;
         mDataset = myDataset;
         this.myClickListener=myClickListener;
+        inflater= (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         mySQLiteHelper=new MySQLiteHelper(context);
+        sqLiteShoppingList=new SQLiteShoppingList(context);
         manager=((Activity)context).getFragmentManager();
         userLocalStore=new UserLocalStore(context);
 
@@ -171,21 +178,52 @@ public class MyRecyclerViewAdapter extends RecyclerView
         holder.share.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                myClickListener.onButtonClick(holder.getAdapterPosition(), v);
+
             }
         });
         holder.delete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int id=v.getId();
-               // deleteItem(holder.getAdapterPosition());
-               myClickListener.onButtonClick(holder.getAdapterPosition(), v);
+                alertDialogDelete(holder);
 
 
             }
         });
     }
 
+
+    public void alertDialogDelete(final DataObjectHolder holder){
+
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                context);
+        View dialoglayout = inflater.inflate(R.layout.dialog_warning_delete_event, null);
+
+        final android.support.v7.app.AlertDialog alertDialog = alertDialogBuilder.create();
+
+        alertDialog.setView(dialoglayout);
+        Button delete= (Button)dialoglayout.findViewById(R.id.buttonDeleteaccount);
+        Button cancel= (Button)dialoglayout.findViewById(R.id.buttonCancelaccount);
+        cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                alertDialog.dismiss();
+
+            }
+        });
+        delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int position=holder.getAdapterPosition();
+                deleteItem(position);
+
+                alertDialog.dismiss();
+            }
+        });
+
+        alertDialog.setCancelable(false);
+        // show it
+        alertDialog.show();
+    }
     public void addItem(CalendarCollection dataObj) {
 
         mDataset.add(dataObj);
@@ -201,7 +239,7 @@ public class MyRecyclerViewAdapter extends RecyclerView
 
     public interface MyClickListener {
         public void onItemClick(int position, View v);
-        public void onButtonClick(int position, View v);
+
     }
 
 
@@ -242,7 +280,7 @@ public class MyRecyclerViewAdapter extends RecyclerView
 
 
     private void deleteFromSQLITEAndSERver(final int index){
-        ServerRequests serverRequests= new ServerRequests(context);
+        final ServerRequests serverRequests= new ServerRequests(context);
         serverRequests.deleteCalenderEventInBackgroung(mDataset.get(index), new GetEventsCallbacks() {
             @Override
             public void done(ArrayList<CalendarCollection> returnedeventobject) {
@@ -258,8 +296,11 @@ public class MyRecyclerViewAdapter extends RecyclerView
             public void updated(String reponse) {
                 if (reponse.contains("Event successfully deleted")) {
                     mySQLiteHelper.deleteIncomingNotification(mDataset.get(index).incomingnotifictionid);
-                    mDataset.remove(index);
-                    notifyItemRemoved(index);
+
+                        mDataset.remove(index);
+                        notifyItemRemoved(index);
+                        Toast.makeText(context,"Event deleted",Toast.LENGTH_SHORT).show();
+
                     //getEvents(mySQLiteHelper.getAllIncomingNotification());
 
                 }

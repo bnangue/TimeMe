@@ -63,7 +63,7 @@ public class SQLiteShoppingList extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put(LIST_LISTNAME, groceryList.getDatum());
         values.put(LIST_CREATOR, groceryList.getCreatorName());
-        values.put(LIST_CONTAIN, groceryList.getListcontain());
+        values.put(LIST_CONTAIN, groceryList.getListcontain().replace("\\",""));
         values.put(LIST_STATUS, groceryList.isListdone() ? 1 : 0);
         values.put(LIST_ID, groceryList.getList_unique_id());
         values.put(LIST_IS_SHARE_STATUS, groceryList.isToListshare() ? 1 : 0);
@@ -102,7 +102,9 @@ public class SQLiteShoppingList extends SQLiteOpenHelper {
                 groceryList.setListdone((cursor.getInt(4) == 1));
                 groceryList.setList_unique_id(cursor.getString(5));
                 groceryList.setToListshare((cursor.getInt(6) == 1));
+                groceryList.setItemsOftheList(groceryList.getListItems());
 
+               groceryList.getListItems();
                 // Add grocery list to arraylist
                 if(groceryList.isListdone()){
                     groceryListsdone.add(groceryList);
@@ -164,6 +166,18 @@ public class SQLiteShoppingList extends SQLiteOpenHelper {
         return i;
     }
     public void reInitializeShoppingListSqliteTable(){
+        // 1. get reference to writable DB
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // 2. delete
+        db.delete(SHOPPING_LIST_TABLE, //table name
+                null,  // selections
+                null); //selections args
+
+        // 3. close
+        db.close();
+    }
+    public void reInitializeShoppinListSqliteTable(){
         // 1. get reference to writable DB
         SQLiteDatabase db = this.getWritableDatabase();
 

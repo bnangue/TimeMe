@@ -2,7 +2,10 @@ package com.example.bricenangue.timeme;
 
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.graphics.Color;
 import android.os.AsyncTask;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -27,6 +30,7 @@ import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
@@ -45,6 +49,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.File;
+import java.util.Locale;
 
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.util.HSSFColor;
@@ -54,6 +59,7 @@ import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.json.JSONObject;
 
 import android.content.Context;
 import android.util.Log;
@@ -80,7 +86,10 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
     private Spinner spinner;
     private String [] userAccArray={"standard","most used","price ascending","price descending","selected first","selected last"};
 
-    private FileHelper fileHelper;
+    private Snackbar snackbar;
+    private CoordinatorLayout coordinatorLayout;
+    private MySQLiteHelper mySQLiteHelper;
+    private FinanceAccount financeAccount=new FinanceAccount(this);
 
 
     public static boolean newItem=false;
@@ -89,16 +98,19 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
    private ArrayList<ShoppingItem> productResults = new ArrayList<ShoppingItem>();
     //Based on the search string, only filtered products will be moved here from productResults
     private ArrayList<ShoppingItem> filteredProductResults = new ArrayList<ShoppingItem>();
-
+    private SQLFinanceAccount sqlFinanceAccount;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_item_to_list);
-        fileHelper=new FileHelper(this);
         userLocalStore=new UserLocalStore(this);
         sqLiteShoppingList=new SQLiteShoppingList(this);
+        mySQLiteHelper=new MySQLiteHelper(this);
+
+        sqlFinanceAccount=new SQLFinanceAccount(this);
+        coordinatorLayout=(CoordinatorLayout)findViewById(R.id.coordinateLayout__creatList_add_item_to_list);
         setDateButtuon=(Button)findViewById(R.id.dateaddeventstart_creatList_add_item_to_list);
         createnewitem=(Button) findViewById(R.id.grocery_activity_add_itemtoList_button);
         addItemtolistListview=(ListView)findViewById(R.id.shoppinglistViewaddItemToListactivity);
@@ -134,9 +146,10 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         search.setOnQueryTextListener(this);
         createnewitem.setOnClickListener(this);
 
-        initializeDatePicker();
-        listName=setDateButtuon.getText().toString();
+
+
         if(savedInstanceState==null){
+            initializeDatePicker();
              if(itemsDB.size()==0 || itemsDB==null){
                  new LoadItemDBAsyncTask().execute();
              }else {
@@ -145,7 +158,18 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
 
         }else {
             itemsDB=savedInstanceState.getParcelableArrayList("itemDB");
+            assert itemsDB != null;
+            itemstoShoparray=new ShoppingItem[itemsDB.size()];
+            initArray();
+            listName=savedInstanceState.getString("listname");
+            spinner.setSelection(savedInstanceState.getInt("sortType"));
+
+
+            setDateButtuon.setText(listName);
+
+            initTotalPricetextView();
             populateListview();
+            sort(spinner.getSelectedItem().toString());
         }
 
 
@@ -182,31 +206,55 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         switch (sortname){
             case "standard":
                 Collections.sort(itemsDB, new ComparatorShoppingItemName());
+                itemstoShoparray=new ShoppingItem[itemsDB.size()];
+                initArray();
+                initTotalPricetextView();
+                populateListview();
                 break;
             case "price ascending":
                 Collections.sort(itemsDB, new ComparatorShoppingItemPrice());
+                itemstoShoparray=new ShoppingItem[itemsDB.size()];
+                initArray();
+                initTotalPricetextView();
+                populateListview();
                 break;
             case "price descending":
                 Comparator<ShoppingItem> comparator_type = Collections.reverseOrder(new ComparatorShoppingItemPrice());
                 Collections.sort(itemsDB, comparator_type);
+                itemstoShoparray=new ShoppingItem[itemsDB.size()];
+                initArray();
+                initTotalPricetextView();
+                populateListview();
                 break;
             case "most used":
                 Comparator<ShoppingItem> comparator_type2 = Collections.reverseOrder(new ComparatorShoppingItemMostUsed());
                 Collections.sort(itemsDB, comparator_type2);
+                itemstoShoparray=new ShoppingItem[itemsDB.size()];
+                initArray();
+                initTotalPricetextView();
+                populateListview();
 
                 break;
             case "selected first":
                 Comparator<ShoppingItem> comparator_type1 = Collections.reverseOrder(new CompareAddItemAlreadyadded());
                 Collections.sort(itemsDB, comparator_type1);
+                itemstoShoparray=new ShoppingItem[itemsDB.size()];
+                initArray();
+                initTotalPricetextView();
+                populateListview();
                 break;
             case "selected last":
                 Collections.sort(itemsDB, new CompareAddItemAlreadyadded());
+                itemstoShoparray=new ShoppingItem[itemsDB.size()];
+                initArray();
+                initTotalPricetextView();
+                populateListview();
                 break;
 
 
         }
 
-        populateListview();
+
 
 
     }
@@ -219,8 +267,12 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
 
             textViewNoDatainDB.setText(R.string.text_add_itme_to_list_DataBase_not_empty);
         }
+
         if(productResults.size()!=0){
             merge();
+        }
+        if(itemstoShoparray==null){
+            itemstoShoparray=new ShoppingItem[itemsDB.size()];
         }
         ListViewAdapter listViewAdapter=new ListViewAdapter(this,itemsDB,this);
         addItemtolistListview.setVisibility(View.VISIBLE);
@@ -293,26 +345,56 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                 Calendar c=new GregorianCalendar();
                 Date dat=c.getTime();
                 //String day= String.valueOf(dat.getDay());
-                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.GERMAN);
 
                 String date = (String) android.text.format.DateFormat.format("dd-MM-yyyy", dat);
                 GroceryList groceryList=new GroceryList();
                 groceryList.setItemsOftheList(list);
+                groceryList.getListcontain();
                 int hashid=(userLocalStore.getUserfullname() + format.format(dat)).hashCode();
                 groceryList.setList_unique_id(String.valueOf(hashid));
                 groceryList.setCreatorName(userLocalStore.getUserfullname());
-                updateExcelFile(this,list);
+
                 listName=setDateButtuon.getText().toString();
                 if(!listName.isEmpty()){
                     groceryList.setDatum(listName);
                 }
 
-               if(sqLiteShoppingList.addShoppingList(groceryList)!= -1) {
-                   startActivity(new Intent(this, CreateNewShoppingListActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP).putExtra("GroceryshoppingList",groceryList));
-                   finish();
-               }else{
-                   Toast.makeText(getApplicationContext(),"could not save the shopping list",Toast.LENGTH_SHORT).show();
-               }
+                SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd, HH:mm");
+                formatter.setLenient(false);
+
+                Date currentDate = new Date();
+
+
+                String currentTime = formatter.format(currentDate);
+                CalendarCollection    calendarCollection=new CalendarCollection(listName,groceryList.getListcontain(),
+                        groceryList.getCreatorName(),listName, listName + " 17:00",
+                        listName +" 20:00",String.valueOf(hashid),getString(R.string.Event_Category_Category_Shopping),"0","0",currentTime);
+
+                SimpleDateFormat formatterr = new SimpleDateFormat("dd-MM-yyy HH:mm:ss");
+                String currentTimer = formatterr.format(currentDate);
+                FinanceRecords financeRecords=new FinanceRecords(getString(R.string.textInitialize_create_account_grocery_note),currentTimer.split(" ")[0],
+                        getString(R.string.textInitialize_create_account_grocery_note),groceryList.getGroceryListTotalPriceToPayString().replace(",",".")
+                        ,String.valueOf(hashid),
+                        getString(R.string.textInitialize_create_account_grocery_category),groceryList.getDatum(),userLocalStore.getUserfullname(),0,false,false);
+
+
+               ArrayList<FinanceAccount> financeAccountArrayList= sqlFinanceAccount.getAllFinanceAccount();
+                if(financeAccountArrayList.size()!=0){
+                     financeAccount=financeAccountArrayList.get(0);
+                    financeAccount.addRecordToAccount(financeRecords);
+                    financeAccount.setLastchangeToAccount();
+                }
+
+                if(financeAccount.getAccountRecordsString().isEmpty()){
+                    createGroceryAndUpdateFinance(financeAccount,groceryList,calendarCollection);
+                   // saveGroceryListToServer(groceryList,calendarCollection,null);
+                }else {
+                    createGroceryAndUpdateFinance(financeAccount,groceryList,calendarCollection);
+
+                    // saveGroceryListToServer(groceryList,calendarCollection,financeAccount);
+                }
+
 
             }else {
 
@@ -331,6 +413,70 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         return super.onOptionsItemSelected(item);
     }
 
+    private void saveGroceryListLocally(GroceryList groceryList){
+
+
+            if(sqLiteShoppingList.addShoppingList(groceryList)!= -1) {
+
+                Toast.makeText(getApplicationContext(),"Grocery list on " +groceryList.getDatum()+ " created",Toast.LENGTH_SHORT).show();
+                updateExcelFile(this,groceryList.getItemsOftheList());
+                startActivity(new Intent(this, CreateNewShoppingListActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP).putExtra("GroceryshoppingList",groceryList));
+                finish();
+            }else{
+                Toast.makeText(getApplicationContext(),"could not save the shopping list locally",Toast.LENGTH_SHORT).show();
+            }
+
+
+    }
+
+
+    public void saveFinanceAccountToServer(final FinanceAccount financeAccount, final GroceryList groceryList){
+        ServerRequests serverRequests =new ServerRequests(this);
+        serverRequests.updateFinanceAccountInBackgroung(financeAccount, new FinanceAccountCallbacks() {
+            @Override
+            public void fetchDone(ArrayList<FinanceAccount> returnedAccounts) {
+
+            }
+
+            @Override
+            public void setServerResponse(String serverResponse) {
+
+                if(serverResponse.contains("Account successfully updated")){
+                    saveFinanceAccountLocally(financeAccount,groceryList);
+                }else {
+                    Toast.makeText(getApplicationContext(),"Error creating account "+ financeAccount.getAccountName(),Toast.LENGTH_SHORT).show();
+
+                }
+            }
+        });
+
+    }
+
+    public void createGroceryAndUpdateFinance(final FinanceAccount financeAccount, final GroceryList groceryList, final CalendarCollection calendarCollection){
+        ServerRequests serverRequests =new ServerRequests(this);
+        serverRequests.createGroceryAndUpdateFinanceAccountInBackgroung(groceryList, financeAccount, new FinanceAccountCallbacks() {
+            @Override
+            public void fetchDone(ArrayList<FinanceAccount> returnedAccounts) {
+
+            }
+
+            @Override
+            public void setServerResponse(String serverResponse) {
+                if(serverResponse.contains("Account Updated and Grocery list successfully created")){
+                    saveEvent(calendarCollection,groceryList,financeAccount);
+                }else {
+                    Toast.makeText(getApplicationContext(),"Error creating account "+ financeAccount.getAccountName(),Toast.LENGTH_SHORT).show();
+
+                }
+            }
+        });
+    }
+    public void saveFinanceAccountLocally(FinanceAccount financeAccount, GroceryList groceryList){
+
+        if (sqlFinanceAccount.updateFinanceAccount(financeAccount)!=0){
+           saveGroceryListLocally(groceryList);
+        }
+    }
     private  boolean updateExcelFile(Context context, ArrayList<ShoppingItem> items) {
         boolean success= false;
 
@@ -433,6 +579,9 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
             super.onSaveInstanceState(state);
 
             state.putParcelableArrayList("itemDB", itemsDB);
+        state.putParcelableArray("arrayitems", itemstoShoparray);
+        state.putString("listname",listName);
+        state.putInt("sortType",spinner.getSelectedItemPosition());
 
     }
 
@@ -461,6 +610,8 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         return false;
     }
 
+
+
     @Override
     public void onClick(View v) {
         int id=v.getId();
@@ -479,6 +630,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
     @Override
     public void dateSet(String date, boolean isstart) {
         setDateButtuon.setText(date);
+        listName=date;
     }
 
     private void initializeDatePicker(){
@@ -488,6 +640,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         Date curDate = new Date();
         String curTime = formatter.format(curDate);
         setDateButtuon.setText(curTime);
+        listName=curTime;
     }
     public void onDatePickercliced(boolean bol){
         android.support.v4.app.FragmentManager manager=getSupportFragmentManager();
@@ -784,7 +937,13 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
     @Override
     public void onShoppingOtemSet(ShoppingItem item,int position) {
 
-        itemstoShoparray[position]=item;
+        for (int i=0; i<itemsDB.size();i++){
+            if(itemsDB.get(i).getUnique_item_id().equals(item.getUnique_item_id())){
+                itemstoShoparray[i]=item;
+                break;
+            }
+        }
+
         initTotalPricetextView();
 
     }
@@ -978,17 +1137,112 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         }
     }
 
-    private void mergeItemsDB(ArrayList<ShoppingItem> items) {
-        for (int i=0;i<items.size();i++){
-            for(int j=0;j<itemsDB.size();j++){
-                if(items.get(i).getUnique_item_id().equals(itemsDB.get(j).getUnique_item_id())&&
-                        items.get(i).getNumberofItemsetForList()!=itemsDB.get(j).getNumberofItemsetForList()){
 
-                    itemsDB.set(j,items.get(i));
-                }
+   private void saveGroceryListToServer(final GroceryList groceryList, final CalendarCollection collection, final FinanceAccount financeAccount){
+       ServerRequests serverRequests=new ServerRequests(this);
+       serverRequests.saveGroceryListInBackgroung(groceryList, new GroceryListCallBacks() {
+           @Override
+           public void fetchDone(ArrayList<GroceryList> returnedGroceryLists) {
+
+           }
+
+           @Override
+           public void setServerResponse(String serverResponse) {
+               if(serverResponse.contains("Grocery list added successfully")){
+                   // list save to server save it locally
+                   saveEvent(collection,groceryList,financeAccount);
+
+               }else {
+                 // error snackbar
+                   showSnackBar(groceryList,collection,financeAccount);
+               }
+           }
+       });
+   }
+
+    void saveEvent(final CalendarCollection collection, final
+                   GroceryList groceryList, final FinanceAccount financeAccount){
+        ServerRequests serverRequests=new ServerRequests(this);
+        serverRequests.saveCalenderEventInBackgroung(collection, new GetEventsCallbacks() {
+            @Override
+            public void done(ArrayList<CalendarCollection> returnedeventobject) {
+
             }
 
-        }
+            @Override
+            public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
+
+            }
+
+            @Override
+            public void updated(String reponse) {
+                if (reponse.contains("Event added successfully")) {
+                    /**if(financeAccount==null){
+                        saveGroceryListLocally(groceryList);
+                        saveeventtoSQl(collection);
+                    }else {
+                        saveFinanceAccountToServer(financeAccount,groceryList);
+                        saveeventtoSQl(collection);
+                    }
+                    **/
+                    saveFinanceAccountLocally(financeAccount,groceryList);
+                    saveeventtoSQl(collection);
+
+                }
+            }
+        });
+
     }
+    private void saveeventtoSQl(CalendarCollection calendarCollections) {
+
+
+            try {
+                JSONObject jsonObject=new JSONObject();
+                jsonObject.put("title",calendarCollections.title);
+                jsonObject.put("description",calendarCollections.description);
+                jsonObject.put("datetime",calendarCollections.datetime);
+                jsonObject.put("creator",calendarCollections.creator);
+                jsonObject.put("category",calendarCollections.category);
+                jsonObject.put("startingtime",calendarCollections.startingtime);
+                jsonObject.put("endingtime",calendarCollections.endingtime);
+                jsonObject.put("hashid",calendarCollections.hashid);
+                jsonObject.put("alldayevent",calendarCollections.alldayevent);
+                jsonObject.put("everymonth",calendarCollections.everymonth);
+                jsonObject.put("defaulttime",calendarCollections.creationdatetime);
+                Calendar c=new GregorianCalendar();
+                Date dat=c.getTime();
+                //String day= String.valueOf(dat.getDay());
+                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+                String date = (String) android.text.format.DateFormat.format("yyyy-MM-dd", dat);
+               IncomingNotification incomingNotification=new IncomingNotification(1,0,jsonObject.toString(),date);
+                int incomingNotifiId =  mySQLiteHelper.addIncomingNotification(incomingNotification);
+
+            }catch (Exception e){
+                e.printStackTrace();
+
+            }
+
+
+    }
+    public void showSnackBar(final GroceryList groceryList, final CalendarCollection collection, final FinanceAccount financeAccount){
+        snackbar = Snackbar
+                .make(coordinatorLayout, "An error occured during the connection to the server", Snackbar.LENGTH_INDEFINITE)
+                .setAction("RETRY", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        createGroceryAndUpdateFinance(financeAccount,groceryList,collection);
+
+                        // saveGroceryListToServer(groceryList,collection,financeAccount);
+                    }
+                });
+        snackbar.setActionTextColor(Color.WHITE);
+        View snackbarView = snackbar.getView();
+        snackbarView.setBackgroundColor(getResources().getColor(R.color.colorSnackbar));
+        TextView textView = (TextView) snackbarView.findViewById(android.support.design.R.id.snackbar_text);
+        textView.setTextColor(Color.WHITE);
+        snackbar.show();
+    }
+
 
 }

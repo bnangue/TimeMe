@@ -1,14 +1,20 @@
 package com.example.bricenangue.timeme;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
 import android.util.Pair;
+import android.view.Surface;
+import android.view.WindowManager;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -31,80 +37,176 @@ import java.util.ArrayList;
  */
 public class ServerRequests {
 
-    private ProgressDialog progressDialog;
+    private FragmentProgressBarLoading progressDialog;
     public static final int CONNECTION_TIMEOUT=1000*15;
-    public static final String SERVER_ADDRESS="http://time-tracker.comlu.com/";
-    private Context context;
-    private MySQLiteHelper mySQLiteHelper;
+   // public static final String SERVER_ADDRESS="http://time-tracker.comlu.com/";
+    public static final String SERVER_ADDRESS="http://timemebrice.site88.net/";
+    AppCompatActivity activity;
 
-    public ServerRequests(Context context) {
-        this.context=context;
-        progressDialog = new ProgressDialog(context);
+    public ServerRequests(AppCompatActivity appCompatActivity) {
+        activity=appCompatActivity;
+        progressDialog = new FragmentProgressBarLoading();
         progressDialog.setCancelable(false);
-        mySQLiteHelper=new MySQLiteHelper(context);
+
+
     }
 
     public void registerUserinBackground(User user, GetUserCallbacks callbacks){
-        progressDialog.setTitle("Registring...");
         progressDialog.setCancelable(false);
-        progressDialog.show();
+        progressDialog.setTitle(activity.getSupportFragmentManager(),activity.getString(R.string.AsyncTsk_Register_User_In_Backgroung));
+        progressDialog.show(activity.getSupportFragmentManager(), "task_progress");
+        lockScreenOrientation(activity);
         new RegisterUserAsyncTask(user,callbacks).execute();
     }
 
     public void loggingUserinBackground(User user, GetUserCallbacks callbacks){
-        progressDialog.setTitle("Logging...");
         progressDialog.setCancelable(false);
-        progressDialog.show();
+        progressDialog.setTitle(activity.getSupportFragmentManager(),activity.getString(R.string.AsyncTsk_LOGGING_User_In_Backgroung));
+
+        progressDialog.show(activity.getSupportFragmentManager(), "task_progress");
+        lockScreenOrientation(activity);
         new LoggingUserAsynckTacks(user,callbacks).execute();
     }
 
     public void savingEmailAndPassowrdChangedUserinBackground(User currentuser, User newuser,GetUserCallbacks callbacks){
-        progressDialog.setTitle("Saving...");
+
         progressDialog.setCancelable(false);
-        progressDialog.show();
+        progressDialog.setTitle(activity.getSupportFragmentManager(),activity.getString(R.string.AsyncTsk_Saving_Email_Password_Changed_User_In_Backgroung));
+
+        progressDialog.show(activity.getSupportFragmentManager(), "task_progress");
+        lockScreenOrientation(activity);
         new UpdateUserPasswordAndEmailListAsynckTacks(currentuser,newuser,callbacks).execute();
     }
 
     public void saveCalenderEventInBackgroung(CalendarCollection calendarCollection,GetEventsCallbacks callbacks){
-        progressDialog.setTitle("Storing event...");
         progressDialog.setCancelable(false);
-        progressDialog.show();
+        progressDialog.setTitle(activity.getSupportFragmentManager(),activity.getString(R.string.AsyncTsk_Creating_Event_In_Backgroung));
+
+        progressDialog.show(activity.getSupportFragmentManager(), "task_progress");
+        lockScreenOrientation(activity);
         new StoreCalenderEventsAsynckTacks(calendarCollection,callbacks).execute();
     }
 
-    public void saveItemInBackgroung(ShoppingItem item,GetEventsCallbacks callbacks){
-        progressDialog.setTitle("creating item...");
+    public void saveGroceryListInBackgroung(GroceryList groceryList,GroceryListCallBacks callbacks){
         progressDialog.setCancelable(false);
-        progressDialog.show();
+        progressDialog.setTitle(activity.getSupportFragmentManager(),activity.getString(R.string.AsyncTsk_Creating_Grocery_List_In_Backgroung));
+
+        progressDialog.show(activity.getSupportFragmentManager(), "task_progress");
+        lockScreenOrientation(activity);
+        new StoreGroceryListAsynckTacks(groceryList,callbacks).execute();
+    }
+
+
+
+    public void saveFinanceAccountInBackgroung(FinanceAccount financeAccount,FinanceAccountCallbacks callbacks){
+
+        progressDialog.show(activity.getSupportFragmentManager(), "task_progress");
+        lockScreenOrientation(activity);
+        new StoreFinanceAccountAsynckTacks(financeAccount,callbacks).execute();
+    }
+
+
+    public void saveItemInBackgroung(ShoppingItem item,GetEventsCallbacks callbacks){
+        progressDialog.setCancelable(false);
+        progressDialog.setTitle(activity.getSupportFragmentManager(),activity.getString(R.string.AsyncTsk_Creating_Shopping_Item_In_Backgroung));
+
+        progressDialog.show(activity.getSupportFragmentManager(), "task_progress");
+        lockScreenOrientation(activity);
         new StoreItemsAsynckTacks(item,callbacks).execute();
     }
 
-    public void getCalenderEventInBackgroung(GetEventsCallbacks callbacks){
 
+    public void getCalenderEventInBackgroung(GetEventsCallbacks callbacks){
+        lockScreenOrientation(activity);
         new FetchAllEventsAsynckTacks(callbacks).execute();
     }
 
+    public void getGroceryListsInBackgroung(GroceryListCallBacks callbacks){
+        lockScreenOrientation(activity);
+        new FetchAllGroceryListsAsynckTacks(callbacks).execute();
+    }
     public void getItemsInBackgroung(GetEventsCallbacks callbacks){
-
+        lockScreenOrientation(activity);
         new FetchAllShoppingItemsAsynckTacks(callbacks).execute();
     }
     public void getCalenderEventAndUserInBackgroung(GetEventsCallbacks callbacks){
-        progressDialog.setTitle("Logging...");
         progressDialog.setCancelable(false);
-        progressDialog.show();
+        progressDialog.show(activity.getSupportFragmentManager(), "task_progress");
+        lockScreenOrientation(activity);
         new FetchAllEventsAsynckTacks(callbacks).execute();
     }
+
+    public void getFinanceAccountsAndUserInBackgroung(FinanceAccountCallbacks callbacks){
+        lockScreenOrientation(activity);
+        new FetchAllFinanceAccountsAsynckTacks(callbacks).execute();
+    }
+
+
     public void deleteCalenderEventInBackgroung(CalendarCollection calendarCollection,GetEventsCallbacks callbacks){
-        progressDialog.setTitle("Deleting event...");
         progressDialog.setCancelable(false);
-        progressDialog.show();
+        progressDialog.setTitle(activity.getSupportFragmentManager(),activity.getString(R.string.AsyncTsk_Deleting_Event_In_Backgroung));
+
+        progressDialog.show(activity.getSupportFragmentManager(), "task_progress");
+        lockScreenOrientation(activity);
         new DeleteEventsAsynckTasks(calendarCollection,callbacks).execute();
     }
 
-    public void logginguserOutInBackgroung(User user,GetUserCallbacks callbacks){
-        progressDialog.setTitle("Logging out...");
+    public void deleteGroceryListInBackgroung(GroceryList groceryList,GroceryListCallBacks callbacks){
         progressDialog.setCancelable(false);
-        progressDialog.show();
+        progressDialog.setTitle(activity.getSupportFragmentManager(),activity.getString(R.string.AsyncTsk_Deleting_Grocery_List_In_Backgroung));
+
+        progressDialog.show(activity.getSupportFragmentManager(), "task_progress");
+        lockScreenOrientation(activity);
+        new DeleteGroceryListAsynckTasks(groceryList,callbacks).execute();
+    }
+
+
+    public void deleteFinanceAccountInBackgroung(FinanceAccount financeAccount,FinanceAccountCallbacks callbacks){
+
+        progressDialog.show(activity.getSupportFragmentManager(), "task_progress");
+        lockScreenOrientation(activity);
+        new DeleteFinanceAccountAsynckTasks(financeAccount,callbacks).execute();
+    }
+
+    public void updateGroceryListInBackgroung(GroceryList groceryList,GroceryListCallBacks callbacks){
+        progressDialog.setCancelable(false);
+        progressDialog.setTitle(activity.getSupportFragmentManager(),activity.getString(R.string.AsyncTsk_Upadte_Grocery_List_In_Backgroung));
+
+        progressDialog.show(activity.getSupportFragmentManager(), "task_progress");
+        lockScreenOrientation(activity);
+        new UpdateGroceryListAsynckTacks(groceryList,callbacks).execute();
+    }
+
+    public void updateFinanceAccountInBackgroung(FinanceAccount financeAccount,FinanceAccountCallbacks callbacks){
+
+        progressDialog.show(activity.getSupportFragmentManager(), "task_progress");
+        lockScreenOrientation(activity);
+        new UpdateFinanceAccountAsynckTacks(financeAccount,callbacks).execute();
+    }
+
+
+
+    public void updateGroceryAndFinanceAccountInBackgroung(GroceryList groceryList, FinanceAccount financeAccount,FinanceAccountCallbacks callbacks){
+
+        progressDialog.show(activity.getSupportFragmentManager(), "task_progress");
+        lockScreenOrientation(activity);
+        new UpdateGroceryAndFinanceAccountAsynckTacks(groceryList,financeAccount,callbacks).execute();
+    }
+
+    public void createGroceryAndUpdateFinanceAccountInBackgroung(GroceryList groceryList, FinanceAccount financeAccount,FinanceAccountCallbacks callbacks){
+
+        progressDialog.show(activity.getSupportFragmentManager(), "task_progress");
+        lockScreenOrientation(activity);
+        new createGroceryAndUpdateFinanceAccountAsynckTacks(groceryList,financeAccount,callbacks).execute();
+    }
+
+
+    public void logginguserOutInBackgroung(User user,GetUserCallbacks callbacks){
+        progressDialog.setCancelable(false);
+        progressDialog.setTitle(activity.getSupportFragmentManager(),activity.getString(R.string.AsyncTsk_Logging_USER_Out_In_Backgroung));
+
+        progressDialog.show(activity.getSupportFragmentManager(), "task_progress");
+        lockScreenOrientation(activity);
         new UpdateUserStatusAsynckTacks(user,callbacks).execute();
     }
 
@@ -126,7 +228,8 @@ public class ServerRequests {
         }
         @Override
         protected void onPostExecute(String reponse) {
-            progressDialog.dismiss();
+            unlockScreenOrientation(activity);
+            progressDialog.dismiss(activity.getSupportFragmentManager());
             userCallbacks.serverReponse(reponse);
             super.onPostExecute(reponse);
         }
@@ -192,8 +295,10 @@ public class ServerRequests {
 
         @Override
         protected void onPostExecute(User returneduser) {
+
             if(MainActivity.eventsareloaded=true){
-                progressDialog.dismiss();
+                unlockScreenOrientation(activity);
+                progressDialog.dismiss(activity.getSupportFragmentManager());
 
                 userCallbacks.done(returneduser);
                 super.onPostExecute(returneduser);
@@ -332,7 +437,8 @@ public class ServerRequests {
         }
         @Override
         protected void onPostExecute(String reponse) {
-            progressDialog.dismiss();
+            unlockScreenOrientation(activity);
+            progressDialog.dismiss(activity.getSupportFragmentManager());
             getUserCallbacks.serverReponse(reponse);
             super.onPostExecute(reponse);
         }
@@ -419,7 +525,8 @@ public class ServerRequests {
         }
         @Override
         protected void onPostExecute(String aVoid) {
-            progressDialog.dismiss();
+            unlockScreenOrientation(activity);
+            progressDialog.dismiss(activity.getSupportFragmentManager());
             eventsCallbacks.updated(aVoid);
             super.onPostExecute(aVoid);
         }
@@ -478,6 +585,441 @@ public class ServerRequests {
 
 
 
+    public class StoreGroceryListAsynckTacks extends AsyncTask<Void,Void,String>{
+
+        GroceryList groceryList;
+        GroceryListCallBacks groceryListCallBacks;
+
+        public StoreGroceryListAsynckTacks( GroceryList groceryList,  GroceryListCallBacks groceryListCallBacks){
+            this.groceryList=groceryList;
+            this.groceryListCallBacks=groceryListCallBacks;
+        }
+        @Override
+        protected void onPostExecute(String aVoid) {
+            unlockScreenOrientation(activity);
+            progressDialog.dismiss(activity.getSupportFragmentManager());
+           groceryListCallBacks.setServerResponse(aVoid);
+            super.onPostExecute(aVoid);
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+
+            String reponse=null;
+            ArrayList<Pair<String,String>> data=new ArrayList<>();
+            int status=(groceryList.isListdone())? 1 : 0;
+            int shareStatus=(groceryList.isToListshare())? 1 : 0;
+
+            data.add(new Pair<String, String>("list_name", groceryList.getDatum()));
+            data.add(new Pair<String, String>("list_creator",groceryList.getCreatorName()));
+            data.add(new Pair<String, String>("list_status", String.valueOf(status)));
+            data.add(new Pair<String, String>("list_uniqueId", groceryList.getList_unique_id()));
+            data.add(new Pair<String, String>("list_contain", groceryList.getListcontain()));
+            data.add(new Pair<String, String>("list_isShareStatus",String.valueOf(shareStatus)));
+            data.add(new Pair<String, String>("list_note","nothing specify"));
+
+
+
+            URL url;
+            HttpURLConnection urlConnection=null;
+            try {
+
+                byte[] postData= getData(data).getBytes("UTF-8");
+                url=new URL(SERVER_ADDRESS + "CreateGroceryList.php");
+                urlConnection=(HttpURLConnection)url.openConnection();
+                urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                urlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
+                urlConnection.setDoOutput(true);
+                urlConnection.getOutputStream().write(postData);
+
+                BufferedReader in = new BufferedReader(
+                        new InputStreamReader(urlConnection.getInputStream()));
+                String inputLine;
+                StringBuffer response = new StringBuffer();
+
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                reponse=response.toString();
+
+                in.close();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            return reponse;
+        }
+    }
+
+
+
+    public class StoreFinanceAccountAsynckTacks extends AsyncTask<Void,Void,String>{
+
+        FinanceAccount financeAccount;
+        FinanceAccountCallbacks callbacks;
+
+        public StoreFinanceAccountAsynckTacks(FinanceAccount financeAccount, FinanceAccountCallbacks callbacks){
+            this.financeAccount=financeAccount;
+            this.callbacks=callbacks;
+        }
+        @Override
+        protected void onPostExecute(String aVoid) {
+            unlockScreenOrientation(activity);
+            progressDialog.dismiss(activity.getSupportFragmentManager());
+            callbacks.setServerResponse(aVoid);
+            super.onPostExecute(aVoid);
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+
+            String reponse=null;
+            ArrayList<Pair<String,String>> data=new ArrayList<>();
+
+            data.add(new Pair<String, String>("account_name", financeAccount.getAccountName()));
+            data.add(new Pair<String, String>("account_owner",financeAccount.getAccountOwnersToString()));
+            data.add(new Pair<String, String>("account_balance", financeAccount.getAccountBlanceTostring()));
+            data.add(new Pair<String, String>("account_uniqueId", financeAccount.getAccountUniqueId()));
+            data.add(new Pair<String, String>("account_lastchange", financeAccount.getLastChangeDateToAccount()));
+            data.add(new Pair<String, String>("account_records",financeAccount.getAccountRecordsString()));
+
+
+
+
+            URL url;
+            HttpURLConnection urlConnection=null;
+            try {
+
+                byte[] postData= getData(data).getBytes("UTF-8");
+                url=new URL(SERVER_ADDRESS + "CreateFinanceAccount.php");
+                urlConnection=(HttpURLConnection)url.openConnection();
+                urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                urlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
+                urlConnection.setDoOutput(true);
+                urlConnection.getOutputStream().write(postData);
+
+                BufferedReader in = new BufferedReader(
+                        new InputStreamReader(urlConnection.getInputStream()));
+                String inputLine;
+                StringBuffer response = new StringBuffer();
+
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                reponse=response.toString();
+
+                in.close();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            return reponse;
+        }
+    }
+
+
+
+    public class UpdateGroceryListAsynckTacks extends AsyncTask<Void,Void,String>{
+
+        GroceryList groceryList;
+        GroceryListCallBacks groceryListCallBacks;
+
+        public UpdateGroceryListAsynckTacks(GroceryList groceryList, GroceryListCallBacks groceryListCallBacks){
+            this.groceryList=groceryList;
+            this.groceryListCallBacks=groceryListCallBacks;
+        }
+        @Override
+        protected void onPostExecute(String aVoid) {
+            unlockScreenOrientation(activity);
+            progressDialog.dismiss(activity.getSupportFragmentManager());
+            groceryListCallBacks.setServerResponse(aVoid);
+            super.onPostExecute(aVoid);
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+
+            String reponse=null;
+            ArrayList<Pair<String,String>> data=new ArrayList<>();
+            int status=(groceryList.isListdone())? 1 : 0;
+            int shareStatus=(groceryList.isToListshare())? 1 : 0;
+
+            data.add(new Pair<String, String>("list_name", groceryList.getDatum()));
+            data.add(new Pair<String, String>("list_creator",groceryList.getCreatorName()));
+            data.add(new Pair<String, String>("list_status", String.valueOf(status)));
+            data.add(new Pair<String, String>("list_uniqueId", groceryList.getList_unique_id()));
+            data.add(new Pair<String, String>("list_contain", groceryList.getListcontain()));
+            data.add(new Pair<String, String>("list_isShareStatus",String.valueOf(shareStatus)));
+            data.add(new Pair<String, String>("list_note","nothing specify"));
+
+
+
+            URL url;
+            HttpURLConnection urlConnection=null;
+            try {
+
+                byte[] postData= getData(data).getBytes("UTF-8");
+                url=new URL(SERVER_ADDRESS + "UpdateGroceryList.php");
+                urlConnection=(HttpURLConnection)url.openConnection();
+                urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                urlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
+                urlConnection.setDoOutput(true);
+                urlConnection.getOutputStream().write(postData);
+
+                BufferedReader in = new BufferedReader(
+                        new InputStreamReader(urlConnection.getInputStream()));
+                String inputLine;
+                StringBuffer response = new StringBuffer();
+
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                reponse=response.toString();
+
+                in.close();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            return reponse;
+        }
+    }
+
+
+    public class UpdateFinanceAccountAsynckTacks extends AsyncTask<Void,Void,String>{
+
+        FinanceAccount financeAccount;
+        FinanceAccountCallbacks callbacks;
+
+        public UpdateFinanceAccountAsynckTacks(FinanceAccount financeAccount, FinanceAccountCallbacks callbacks){
+            this.financeAccount=financeAccount;
+            this.callbacks=callbacks;
+        }
+        @Override
+        protected void onPostExecute(String aVoid) {
+            unlockScreenOrientation(activity);
+            progressDialog.dismiss(activity.getSupportFragmentManager());
+            callbacks.setServerResponse(aVoid);
+            super.onPostExecute(aVoid);
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+
+            String reponse=null;
+            ArrayList<Pair<String,String>> data=new ArrayList<>();
+
+
+            data.add(new Pair<String, String>("account_owner", financeAccount.getAccountOwnersToString()));
+            data.add(new Pair<String, String>("account_balance",financeAccount.getAccountBlanceTostring()));
+            data.add(new Pair<String, String>("account_uniqueId", financeAccount.getAccountUniqueId()));
+            data.add(new Pair<String, String>("account_lastchange", financeAccount.getLastChangeDateToAccount()));
+            data.add(new Pair<String, String>("account_records", financeAccount.getAccountRecordsString()));
+
+
+
+
+            URL url;
+            HttpURLConnection urlConnection=null;
+            try {
+
+                byte[] postData= getData(data).getBytes("UTF-8");
+                url=new URL(SERVER_ADDRESS + "UpdateFinanceAccount.php");
+                urlConnection=(HttpURLConnection)url.openConnection();
+                urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                urlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
+                urlConnection.setDoOutput(true);
+                urlConnection.getOutputStream().write(postData);
+
+                BufferedReader in = new BufferedReader(
+                        new InputStreamReader(urlConnection.getInputStream()));
+                String inputLine;
+                StringBuffer response = new StringBuffer();
+
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                reponse=response.toString();
+
+                in.close();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            return reponse;
+        }
+    }
+
+
+
+
+    public class UpdateGroceryAndFinanceAccountAsynckTacks extends AsyncTask<Void,Void,String>{
+
+        FinanceAccount financeAccount;
+        GroceryList groceryList;
+        FinanceAccountCallbacks callbacks;
+
+        public UpdateGroceryAndFinanceAccountAsynckTacks(GroceryList groceryList, FinanceAccount financeAccount, FinanceAccountCallbacks callbacks){
+            this.financeAccount=financeAccount;
+            this.groceryList=groceryList;
+            this.callbacks=callbacks;
+        }
+        @Override
+        protected void onPostExecute(String aVoid) {
+            unlockScreenOrientation(activity);
+            progressDialog.dismiss(activity.getSupportFragmentManager());
+            callbacks.setServerResponse(aVoid);
+            super.onPostExecute(aVoid);
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+
+            String reponse=null;
+            ArrayList<Pair<String,String>> data=new ArrayList<>();
+
+
+            data.add(new Pair<String, String>("account_owner", financeAccount.getAccountOwnersToString()));
+            data.add(new Pair<String, String>("account_balance",financeAccount.getAccountBlanceTostring()));
+            data.add(new Pair<String, String>("account_uniqueId", financeAccount.getAccountUniqueId()));
+            data.add(new Pair<String, String>("account_lastchange", financeAccount.getLastChangeDateToAccount()));
+            data.add(new Pair<String, String>("account_records", financeAccount.getAccountRecordsString()));
+
+            int status=(groceryList.isListdone())? 1 : 0;
+            int shareStatus=(groceryList.isToListshare())? 1 : 0;
+
+            data.add(new Pair<String, String>("list_name", groceryList.getDatum()));
+            data.add(new Pair<String, String>("list_creator",groceryList.getCreatorName()));
+            data.add(new Pair<String, String>("list_status", String.valueOf(status)));
+            data.add(new Pair<String, String>("list_uniqueId", groceryList.getList_unique_id()));
+            data.add(new Pair<String, String>("list_contain", groceryList.getListcontain()));
+            data.add(new Pair<String, String>("list_isShareStatus",String.valueOf(shareStatus)));
+            data.add(new Pair<String, String>("list_note","nothing specify"));
+
+
+
+
+            URL url;
+            HttpURLConnection urlConnection=null;
+            try {
+
+                byte[] postData= getData(data).getBytes("UTF-8");
+                url=new URL(SERVER_ADDRESS + "UpdateGroceryAndFinance.php");
+                urlConnection=(HttpURLConnection)url.openConnection();
+                urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                urlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
+                urlConnection.setDoOutput(true);
+                urlConnection.getOutputStream().write(postData);
+
+                BufferedReader in = new BufferedReader(
+                        new InputStreamReader(urlConnection.getInputStream()));
+                String inputLine;
+                StringBuffer response = new StringBuffer();
+
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                reponse=response.toString();
+
+                in.close();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            return reponse;
+        }
+    }
+
+    public class createGroceryAndUpdateFinanceAccountAsynckTacks extends AsyncTask<Void,Void,String>{
+
+        FinanceAccount financeAccount;
+        GroceryList groceryList;
+        FinanceAccountCallbacks callbacks;
+
+        public createGroceryAndUpdateFinanceAccountAsynckTacks(GroceryList groceryList, FinanceAccount financeAccount, FinanceAccountCallbacks callbacks){
+            this.financeAccount=financeAccount;
+            this.groceryList=groceryList;
+            this.callbacks=callbacks;
+        }
+        @Override
+        protected void onPostExecute(String aVoid) {
+            unlockScreenOrientation(activity);
+            progressDialog.dismiss(activity.getSupportFragmentManager());
+            callbacks.setServerResponse(aVoid);
+            super.onPostExecute(aVoid);
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+
+            String reponse=null;
+            ArrayList<Pair<String,String>> data=new ArrayList<>();
+
+
+            data.add(new Pair<String, String>("account_owner", financeAccount.getAccountOwnersToString()));
+            data.add(new Pair<String, String>("account_balance",financeAccount.getAccountBlanceTostring()));
+            data.add(new Pair<String, String>("account_uniqueId", financeAccount.getAccountUniqueId()));
+            data.add(new Pair<String, String>("account_lastchange", financeAccount.getLastChangeDateToAccount()));
+            data.add(new Pair<String, String>("account_records", financeAccount.getAccountRecordsString()));
+
+            int status=(groceryList.isListdone())? 1 : 0;
+            int shareStatus=(groceryList.isToListshare())? 1 : 0;
+
+            data.add(new Pair<String, String>("list_name", groceryList.getDatum()));
+            data.add(new Pair<String, String>("list_creator",groceryList.getCreatorName()));
+            data.add(new Pair<String, String>("list_status", String.valueOf(status)));
+            data.add(new Pair<String, String>("list_uniqueId", groceryList.getList_unique_id()));
+            data.add(new Pair<String, String>("list_contain", groceryList.getListcontain()));
+            data.add(new Pair<String, String>("list_isShareStatus",String.valueOf(shareStatus)));
+            data.add(new Pair<String, String>("list_note","nothing specify"));
+
+
+
+
+            URL url;
+            HttpURLConnection urlConnection=null;
+            try {
+
+                byte[] postData= getData(data).getBytes("UTF-8");
+                url=new URL(SERVER_ADDRESS + "CreateGroceryListAndUpdateFinanceAccount.php");
+                urlConnection=(HttpURLConnection)url.openConnection();
+                urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                urlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
+                urlConnection.setDoOutput(true);
+                urlConnection.getOutputStream().write(postData);
+
+                BufferedReader in = new BufferedReader(
+                        new InputStreamReader(urlConnection.getInputStream()));
+                String inputLine;
+                StringBuffer response = new StringBuffer();
+
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                reponse=response.toString();
+
+                in.close();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            return reponse;
+        }
+    }
+
+
     public class StoreItemsAsynckTacks extends AsyncTask<Void,Void,String>{
 
         ShoppingItem item;
@@ -489,7 +1031,8 @@ public class ServerRequests {
         }
         @Override
         protected void onPostExecute(String aVoid) {
-            progressDialog.dismiss();
+            unlockScreenOrientation(activity);
+            progressDialog.dismiss(activity.getSupportFragmentManager());
             eventsCallbacks.updated(aVoid);
             super.onPostExecute(aVoid);
         }
@@ -552,7 +1095,8 @@ public class ServerRequests {
 
         @Override
         protected void onPostExecute(ArrayList<CalendarCollection> returnedevents) {
-            progressDialog.dismiss();
+            unlockScreenOrientation(activity);
+            progressDialog.dismiss(activity.getSupportFragmentManager());
             eventsCallbacks.done(returnedevents);
             super.onPostExecute(returnedevents);
         }
@@ -604,6 +1148,140 @@ public class ServerRequests {
     }
 
 
+
+    public class FetchAllFinanceAccountsAsynckTacks extends AsyncTask<Void,Void,ArrayList<FinanceAccount>> {
+
+        FinanceAccountCallbacks callbacks;
+
+
+        public FetchAllFinanceAccountsAsynckTacks(FinanceAccountCallbacks callbacks) {
+            this.callbacks = callbacks;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<FinanceAccount> returnedevents) {
+            unlockScreenOrientation(activity);
+
+            callbacks.fetchDone(returnedevents);
+            super.onPostExecute(returnedevents);
+        }
+
+        @Override
+        protected ArrayList<FinanceAccount> doInBackground(Void... params) {
+
+            ArrayList<FinanceAccount> returnedAccounts=new ArrayList<>();
+            URL url;
+            HttpURLConnection urlConnection=null;
+            try {
+                url=new URL(SERVER_ADDRESS + "FetchAllFinanceAccounts.php");
+                urlConnection=(HttpURLConnection)url.openConnection();
+                urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setDoOutput(true);
+                urlConnection.setDoInput(true);
+
+
+                InputStream in =urlConnection.getInputStream();
+                String respons="";
+                StringBuilder bi=new StringBuilder();
+                BufferedReader reader=new BufferedReader(new InputStreamReader(in));
+                String line;
+                while((line=reader.readLine())!=null){
+                    bi.append(line).append("\n");
+                }
+                reader.close();
+                in.close();
+
+                respons =bi.toString();
+                JSONArray jsonArray= new JSONArray(respons);
+                returnedAccounts= getDetailsFinancesAccounts(  jsonArray);
+
+
+                // fetch data to a jason object
+            }catch (Exception e){
+                e.printStackTrace();
+            }finally {
+                assert urlConnection != null;
+                urlConnection.disconnect();
+            }
+
+            return returnedAccounts;
+        }
+
+
+    }
+
+
+
+
+
+    public class FetchAllGroceryListsAsynckTacks extends AsyncTask<Void,Void,ArrayList<GroceryList>> {
+
+        GroceryListCallBacks eventsCallbacks;
+
+
+        public FetchAllGroceryListsAsynckTacks(GroceryListCallBacks callbacks) {
+            this.eventsCallbacks = callbacks;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<GroceryList> groceryLists) {
+            unlockScreenOrientation(activity);
+            progressDialog.dismiss(activity.getSupportFragmentManager());
+            eventsCallbacks.fetchDone(groceryLists);
+            super.onPostExecute(groceryLists);
+        }
+
+        @Override
+        protected ArrayList<GroceryList> doInBackground(Void... params) {
+
+            ArrayList<GroceryList> returnedEvents=new ArrayList<>();
+            URL url;
+            HttpURLConnection urlConnection=null;
+            try {
+                url=new URL(SERVER_ADDRESS + "FetchAllGroceryLists.php");
+                urlConnection=(HttpURLConnection)url.openConnection();
+                urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setDoOutput(true);
+                urlConnection.setDoInput(true);
+
+
+                InputStream in =urlConnection.getInputStream();
+                String respons="";
+                StringBuilder bi=new StringBuilder();
+                BufferedReader reader=new BufferedReader(new InputStreamReader(in));
+                String line;
+                while((line=reader.readLine())!=null){
+                    bi.append(line).append("\n");
+                }
+                reader.close();
+                in.close();
+
+                respons =bi.toString();
+                JSONArray jsonArray= new JSONArray(respons);
+
+                returnedEvents= getGroceryListdetails(jsonArray);
+
+
+                // fetch data to a jason object
+            }catch (Exception e){
+                e.printStackTrace();
+            }finally {
+                assert urlConnection != null;
+                urlConnection.disconnect();
+            }
+
+            return returnedEvents;
+        }
+
+
+    }
+
+
+
     public class FetchAllShoppingItemsAsynckTacks extends AsyncTask<Void,Void,ArrayList<ShoppingItem>> {
 
         GetEventsCallbacks eventsCallbacks;
@@ -615,7 +1293,8 @@ public class ServerRequests {
 
         @Override
         protected void onPostExecute(ArrayList<ShoppingItem> returnedevents) {
-            progressDialog.dismiss();
+            unlockScreenOrientation(activity);
+            progressDialog.dismiss(activity.getSupportFragmentManager());
             eventsCallbacks.itemslis(returnedevents);
             super.onPostExecute(returnedevents);
         }
@@ -705,7 +1384,96 @@ public class ServerRequests {
 
     }
 
+    public ArrayList<FinanceAccount> getDetailsFinancesAccounts(JSONArray jsonArray){
+        ArrayList<FinanceAccount> events=new ArrayList<>();
 
+        try {
+
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject jo_inside = jsonArray.getJSONObject(i);
+
+                String accountname = jo_inside.getString("account_name");
+                String accountowner = jo_inside.getString("account_owner");
+                String accountbalance = jo_inside.getString("account_balance");
+                String accountuniqueId = jo_inside.getString("account_uniqueId");
+                String accountlastchange = jo_inside.getString("account_lastchange");
+                String accountrecords = jo_inside.getString("account_records");
+
+                FinanceAccount object=new FinanceAccount(activity);
+                object.setAccountName(accountname);
+                object.setAccountOwnersToString(accountowner);
+                object.setAccountBalanceToString(accountbalance);
+                object.setAccountUniqueId(accountuniqueId);
+                object.setLastchangeToAccount(accountlastchange);
+                object.setAccountRecordsString(accountrecords);
+                object.getRecords();
+
+
+                events.add(object);
+
+
+            }
+
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return events;
+
+    }
+
+
+
+    public ArrayList<GroceryList> getGroceryListdetails(JSONArray jsonArray){
+        ArrayList<GroceryList> events=new ArrayList<>();
+
+        try {
+
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject jo_inside = jsonArray.getJSONObject(i);
+
+                String listname = jo_inside.getString("list_name");
+                String listcreator = jo_inside.getString("list_creator");
+
+                String liststatus = jo_inside.getString("list_status");
+
+                String listuniqueId = jo_inside.getString("list_uniqueId");
+                String listcontain = jo_inside.getString("list_contain");
+
+                String listisShareStatus = jo_inside.getString("list_isShareStatus");
+
+                String listnote = jo_inside.getString("list_note");
+
+                boolean status= (Integer.parseInt(liststatus) == 1);
+                boolean shareStatus= (Integer.parseInt(listisShareStatus) == 1);
+
+                GroceryList  groceryList =new GroceryList();
+
+                groceryList.setDatum(listname);
+                groceryList.setCreatorName(listcreator);
+                groceryList.setListdone(status);
+                groceryList.setList_unique_id(listuniqueId);
+                groceryList.setListcontain(listcontain);
+                groceryList.setToListshare(shareStatus);
+
+               // groceryList.setDatum(listname);
+
+                events.add(groceryList);
+
+
+            }
+
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return events;
+
+    }
 
 
     public ArrayList<ShoppingItem> getDetailsItems(JSONArray jsonArray){
@@ -816,6 +1584,140 @@ public class ServerRequests {
     }
 
 
+    public class DeleteGroceryListAsynckTasks extends AsyncTask<Void,Void,String>{
+
+        GroceryList groceryList;
+        GroceryListCallBacks groceryListCallBacks;
+
+        public DeleteGroceryListAsynckTasks(GroceryList groceryList, GroceryListCallBacks groceryListCallBacks){
+            this.groceryList=groceryList;
+            this.groceryListCallBacks=groceryListCallBacks;
+
+        }
+        @Override
+        protected void onPostExecute(String aVoid) {
+            unlockScreenOrientation(activity);
+            progressDialog.dismiss(activity.getSupportFragmentManager());
+            groceryListCallBacks.setServerResponse(aVoid);
+            super.onPostExecute(aVoid);
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+
+            ArrayList<Pair<String,String>> data=new ArrayList<>();
+
+            data.add(new Pair<String, String>("list_creator", groceryList.getCreatorName()));
+            data.add(new Pair<String, String>("list_uniqueId",groceryList.getList_unique_id()));
+
+
+
+            URL url;
+            String line=null;
+            HttpURLConnection urlConnection=null;
+            try {
+
+                byte[] postData= getData(data).getBytes("UTF-8");
+                url=new URL(SERVER_ADDRESS + "DeleteGroceryList.php");
+                urlConnection=(HttpURLConnection)url.openConnection();
+                urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                urlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
+                urlConnection.setDoOutput(true);
+                urlConnection.getOutputStream().write(postData);
+
+                urlConnection.getOutputStream().close();
+                int responsecode=urlConnection.getResponseCode();
+                if(responsecode==HttpURLConnection.HTTP_OK){
+                    InputStream in =urlConnection.getInputStream();
+
+                    BufferedReader reader= new BufferedReader(new InputStreamReader(in));
+                    StringBuilder bld =new StringBuilder();
+                    String il;
+                    while((il=reader.readLine())!=null){
+                        bld.append(il);
+                    }
+                    line=bld.toString();
+                }else{
+                    line="Error";
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            return line;
+        }
+    }
+
+
+    public class DeleteFinanceAccountAsynckTasks extends AsyncTask<Void,Void,String>{
+
+        FinanceAccount financeAccount;
+        FinanceAccountCallbacks callbacks;
+
+        public DeleteFinanceAccountAsynckTasks(FinanceAccount financeAccount, FinanceAccountCallbacks callbacks){
+            this.financeAccount=financeAccount;
+            this.callbacks=callbacks;
+
+        }
+        @Override
+        protected void onPostExecute(String aVoid) {
+            unlockScreenOrientation(activity);
+            progressDialog.dismiss(activity.getSupportFragmentManager());
+            callbacks.setServerResponse(aVoid);
+            super.onPostExecute(aVoid);
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+
+            ArrayList<Pair<String,String>> data=new ArrayList<>();
+
+            data.add(new Pair<String, String>("account_uniqueId", financeAccount.getAccountUniqueId()));
+
+
+            URL url;
+            String line=null;
+            HttpURLConnection urlConnection=null;
+            try {
+
+                byte[] postData= getData(data).getBytes("UTF-8");
+                url=new URL(SERVER_ADDRESS + "DeleteFinanceAccount.php");
+                urlConnection=(HttpURLConnection)url.openConnection();
+                urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                urlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
+                urlConnection.setDoOutput(true);
+                urlConnection.getOutputStream().write(postData);
+
+                urlConnection.getOutputStream().close();
+                int responsecode=urlConnection.getResponseCode();
+                if(responsecode==HttpURLConnection.HTTP_OK){
+                    InputStream in =urlConnection.getInputStream();
+
+                    BufferedReader reader= new BufferedReader(new InputStreamReader(in));
+                    StringBuilder bld =new StringBuilder();
+                    String il;
+                    while((il=reader.readLine())!=null){
+                        bld.append(il);
+                    }
+                    line=bld.toString();
+                }else{
+                    line="Error";
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            return line;
+        }
+    }
+
+
+
+
     public class UpdateUserStatusAsynckTacks extends AsyncTask<Void,Void,String>
     {
 
@@ -828,7 +1730,8 @@ public class ServerRequests {
         }
         @Override
         protected void onPostExecute(String reponse) {
-            progressDialog.dismiss();
+            unlockScreenOrientation(activity);
+            progressDialog.dismiss(activity.getSupportFragmentManager());
             getUserCallbacks.serverReponse(reponse);
             super.onPostExecute(reponse);
         }
@@ -892,6 +1795,63 @@ public class ServerRequests {
     }
 
 
+    public static void lockScreenOrientation(Activity activity)
+    {
+        WindowManager windowManager =  (WindowManager) activity.getSystemService(Context.WINDOW_SERVICE);
+        Configuration configuration = activity.getResources().getConfiguration();
+        int rotation = windowManager.getDefaultDisplay().getRotation();
+
+        // Search for the natural position of the device
+        if(configuration.orientation == Configuration.ORIENTATION_LANDSCAPE &&
+                (rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_180) ||
+                configuration.orientation == Configuration.ORIENTATION_PORTRAIT &&
+                        (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270))
+        {
+            // Natural position is Landscape
+            switch (rotation)
+            {
+                case Surface.ROTATION_0:
+                    activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                    break;
+                case Surface.ROTATION_90:
+                    activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT);
+                    break;
+                case Surface.ROTATION_180:
+                    activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE);
+                    break;
+                case Surface.ROTATION_270:
+                    activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                    break;
+            }
+        }
+        else
+        {
+            // Natural position is Portrait
+            switch (rotation)
+            {
+                case Surface.ROTATION_0:
+                    activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                    break;
+                case Surface.ROTATION_90:
+                    activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                    break;
+                case Surface.ROTATION_180:
+                    activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT);
+                    break;
+                case Surface.ROTATION_270:
+                    activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE);
+                    break;
+            }
+        }
+    }
+
+    public static void unlockScreenOrientation(Activity activity)
+    {
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+    }
+
+
+
 
     public String getStringImage(Bitmap bmp){
         try {
@@ -931,7 +1891,7 @@ public class ServerRequests {
         boolean haveConnectedWifi = false;
         boolean haveConnectedMobile = false;
 
-        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager cm = (ConnectivityManager) activity.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo[] netInfo = cm.getAllNetworkInfo();
         for (NetworkInfo ni : netInfo) {
             if ( "WIFI".equals(ni.getTypeName()))

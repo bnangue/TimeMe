@@ -43,7 +43,7 @@ public class FragmentCategoryBirthdays extends Fragment implements DialogDeleteE
 
     private void prepareRecyclerView(Context context,ArrayList<CalendarCollection> arrayList){
 
-        mAdapter = new MyRecyclerViewAdapter(context,arrayList,myClickListener);
+        mAdapter = new MyRecyclerViewAdapter(((NewCalendarActivty)getActivity()),arrayList,myClickListener);
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -53,7 +53,7 @@ public class FragmentCategoryBirthdays extends Fragment implements DialogDeleteE
 
     private void prepareRecyclerView(ArrayList<CalendarCollection> arrayList){
 
-        mAdapter = new MyRecyclerViewAdapter(getContext(),arrayList,myClickListener);
+        mAdapter = new MyRecyclerViewAdapter(((NewCalendarActivty)getActivity()),arrayList,myClickListener);
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -86,22 +86,6 @@ public class FragmentCategoryBirthdays extends Fragment implements DialogDeleteE
                 Log.i(LOG_TAG, "  birthdays Clicked on Item " + position);
             }
 
-            @Override
-            public void onButtonClick(int position, View v) {
-                int iD = v.getId();
-                switch (iD) {
-                    case R.id.buttondeletecardview:
-                        DialogFragment dialogFragment = DialogDeleteEventFragment.newInstance(position);
-                        dialogFragment.setCancelable(false);
-                        dialogFragment.setTargetFragment(fragment, 1);
-                        dialogFragment.show(getActivity().getSupportFragmentManager(), "DELETEBirthdaysEVENTFRAGMENT");
-
-                        break;
-                    case R.id.buttonsharecardview:
-                        Log.i(LOG_TAG, " Clicked on share" + position);
-                        break;
-                }
-            }
         };
 
 
@@ -158,7 +142,7 @@ public class FragmentCategoryBirthdays extends Fragment implements DialogDeleteE
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView.setLayoutManager(mLayoutManager);
-        mAdapter = new MyRecyclerViewAdapter(getContext(),collectionArrayList,myClickListener);
+        mAdapter = new MyRecyclerViewAdapter(((NewCalendarActivty)getActivity()),collectionArrayList,myClickListener);
 
         mRecyclerView.setAdapter(mAdapter);
     }
@@ -202,29 +186,6 @@ public class FragmentCategoryBirthdays extends Fragment implements DialogDeleteE
         calendarEventsChanged.eventsCahnged(true);
     }
 
-    private void deleteFromSQLITEAndSERver(final int index){
-        ServerRequests serverRequests= new ServerRequests(getContext());
-        serverRequests.deleteCalenderEventInBackgroung(collectionArrayList.get(index), new GetEventsCallbacks() {
-            @Override
-            public void done(ArrayList<CalendarCollection> returnedeventobject) {
-
-            }
-
-            @Override
-            public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
-
-            }
-
-            @Override
-            public void updated(String reponse) {
-                if (reponse.contains("Event successfully deleted")) {
-                    mySQLiteHelper.deleteIncomingNotification(collectionArrayList.get(index).incomingnotifictionid);
-                    // getEvents(mySQLiteHelper.getAllIncomingNotification());
-
-                }
-            }
-        });
-    }
 
     public void updateUi(ArrayList<CalendarCollection> arrayList){
         ArrayList<CalendarCollection> a=new ArrayList<>();

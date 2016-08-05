@@ -1,11 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
   >
 
+    <TextView
+        android:id="@+id/TextView_Progress_Dialog_Fragment"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/Text_Progress_Dialog_Fragment"
+
+        android:layout_above="@+id/TextView_Progress_Dialog_Fragment_message"/>
+    <TextView
+        android:id="@+id/TextView_Progress_Dialog_Fragment_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/Text_Progress_Dialog_Fragment_message"
+
+        android:layout_above="@+id/prbar"/>
 
     <ProgressBar
         android:layout_width="wrap_content"

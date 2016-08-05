@@ -23,7 +23,7 @@ import java.util.ArrayList;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class FragmentCategoryWorkPlan extends Fragment implements DialogDeleteEventFragment.OnDeleteListener, FragmentCommunicator,FragmentLife {
+public class FragmentCategoryWorkPlan extends Fragment implements FragmentCommunicator,FragmentLife {
 
     private TextView eventpriode,creatorname,createdtime,notes,descriptionexpand;
 
@@ -43,7 +43,7 @@ public class FragmentCategoryWorkPlan extends Fragment implements DialogDeleteEv
 
     private void prepareRecyclerView(Context context,ArrayList<CalendarCollection> arrayList){
 
-        mAdapter = new MyRecyclerViewAdapter(context,arrayList,myClickListener);
+        mAdapter = new MyRecyclerViewAdapter(((NewCalendarActivty)getActivity()),arrayList,myClickListener);
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -53,7 +53,7 @@ public class FragmentCategoryWorkPlan extends Fragment implements DialogDeleteEv
 
     private void prepareRecyclerView(ArrayList<CalendarCollection> arrayList){
 
-        mAdapter = new MyRecyclerViewAdapter(getContext(),arrayList,myClickListener);
+        mAdapter = new MyRecyclerViewAdapter(((NewCalendarActivty)getActivity()),arrayList,myClickListener);
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -82,21 +82,6 @@ public class FragmentCategoryWorkPlan extends Fragment implements DialogDeleteEv
                 Log.i(LOG_TAG, " work plan Clicked on Item " + position);
             }
 
-            @Override
-            public void onButtonClick(int position, View v) {
-                int iD = v.getId();
-                switch (iD) {
-                    case R.id.buttondeletecardview:
-                        DialogFragment dialogFragment = DialogDeleteEventFragment.newInstance(position);
-                        dialogFragment.setCancelable(false);
-                        dialogFragment.setTargetFragment(fragment, 1);
-                        dialogFragment.show(getActivity().getSupportFragmentManager(), "DELETEWorkplanEVENTFRAGMENT");
-
-                        break;
-                    case R.id.buttonsharecardview:
-                        break;
-                }
-            }
         };
 
 
@@ -144,7 +129,7 @@ public class FragmentCategoryWorkPlan extends Fragment implements DialogDeleteEv
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView.setLayoutManager(mLayoutManager);
-        mAdapter = new MyRecyclerViewAdapter(getContext(),collectionArrayList,myClickListener);
+        mAdapter = new MyRecyclerViewAdapter(((NewCalendarActivty)getActivity()),collectionArrayList,myClickListener);
 
         mRecyclerView.setAdapter(mAdapter);
     }
@@ -188,37 +173,6 @@ public class FragmentCategoryWorkPlan extends Fragment implements DialogDeleteEv
         ((MyRecyclerViewAdapter)mAdapter).setOnItemClickListener(null);
     }
 
-    @Override
-    public void delete(int position) {
-        //deleteFromSQLITEAndSERver(position);
-        ((MyRecyclerViewAdapter)mAdapter).deleteItem(position);
-        //((MyRecyclerViewAdapter)mAdapter).notifyDataSetChanged();
-        calendarEventsChanged.eventsCahnged(true);
-    }
-
-    private void deleteFromSQLITEAndSERver(final int index){
-        ServerRequests serverRequests= new ServerRequests(getContext());
-        serverRequests.deleteCalenderEventInBackgroung(collectionArrayList.get(index), new GetEventsCallbacks() {
-            @Override
-            public void done(ArrayList<CalendarCollection> returnedeventobject) {
-
-            }
-
-            @Override
-            public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
-
-            }
-
-            @Override
-            public void updated(String reponse) {
-                if (reponse.contains("Event successfully deleted")) {
-                    mySQLiteHelper.deleteIncomingNotification(collectionArrayList.get(index).incomingnotifictionid);
-                    //getEvents(mySQLiteHelper.getAllIncomingNotification());
-
-                }
-            }
-        });
-    }
 
     public void updateUi(ArrayList<CalendarCollection> arrayList){
         ArrayList<CalendarCollection> a=new ArrayList<>();

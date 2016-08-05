@@ -2,7 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.bricenangue.timeme">
 
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -27,6 +26,7 @@
         android:protectionLevel="signature" />
 
     <uses-permission android:name="com.bricefamily.alex.time_tracker.permission.C2D_MESSAGE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
@@ -35,7 +35,8 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity"
+        <activity
+            android:name=".MainActivity"
             android:label="@string/app_name_main_activity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -43,46 +44,63 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".LoginScreenActivity"
-            android:label="@string/app_name_login_screen_activity"/>
-        <activity android:name=".RegisterUserActivity"
-            android:label="@string/app_name_create_user_activity"/>
-        <activity android:name=".OpenUserProfileActivity"
-            android:label="@string/app_name_open_user_profile_activity"/>
+        <activity
+            android:name=".LoginScreenActivity"
+            android:label="@string/app_name_login_screen_activity" />
+        <activity
+            android:name=".RegisterUserActivity"
+            android:label="@string/app_name_create_user_activity" />
+        <activity
+            android:name=".OpenUserProfileActivity"
+            android:label="@string/app_name_open_user_profile_activity" />
         <activity
             android:name=".SettingsActivity"
             android:label="@string/action_settings" />
         <activity android:name=".CalendarTest" />
         <activity
             android:name=".NewCalendarActivty"
-            android:theme="@style/MYAppTheme"
-            android:label="@string/app_name_newcalendar_activity"/>
-        <activity android:name=".AddNewEventActivity"
-            android:label="@string/app_name_add_new_event_activity"/>
-        <activity android:name=".AddNewEventFragment"
-            android:label="@string/app_name_add_new_event_fragment"/>
+            android:label="@string/app_name_newcalendar_activity"
+            android:theme="@style/MYAppTheme" />
+        <activity
+            android:name=".AddNewEventActivity"
+            android:label="@string/app_name_add_new_event_activity" />
+        <activity
+            android:name=".AddNewEventFragment"
+            android:label="@string/app_name_add_new_event_fragment" />
         <activity
             android:name=".BaseActivity"
-            android:parentActivityName=".NewCalendarActivty"
-            android:label="@string/app_name_base_activity">
+            android:label="@string/app_name_base_activity"
+            android:parentActivityName=".NewCalendarActivty">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".NewCalendarActivty" />
         </activity>
-        <activity android:name=".BasicActivity"
-            android:label="@string/app_name_basic_activity"/>
-        <activity android:name=".AsynchronousActivity"
-            android:label="@string/app_name"/>
-        <activity android:name=".CreateNewShoppingListActivity"
-            android:label="@string/app_name_create_new_shopping_list_activity"/>
-        <activity android:name=".AddItemToListActivity"
-            android:label="@string/app_name_add_item_to_list_activity"/>
-        <activity android:name=".CreatANewItemActivity"
-            android:label="@string/app_name_create_a_new_item_activity"/>
-        <activity android:name=".DetailsShoppingListActivity"
-            android:label="@string/app_name_details_shopping_list_activity"></activity>
-        <activity android:name=".PreferenceAppActivity"
-            android:label="@string/app_name_preference_app_activity"/>
+        <activity
+            android:name=".BasicActivity"
+            android:label="@string/app_name_basic_activity" />
+        <activity
+            android:name=".AsynchronousActivity"
+            android:label="@string/app_name" />
+        <activity
+            android:name=".CreateNewShoppingListActivity"
+            android:label="@string/app_name_create_new_shopping_list_activity" />
+        <activity
+            android:name=".AddItemToListActivity"
+            android:label="@string/app_name_add_item_to_list_activity" />
+        <activity
+            android:name=".CreatANewItemActivity"
+            android:label="@string/app_name_create_a_new_item_activity" />
+        <activity
+            android:name=".DetailsShoppingListActivity"
+            android:label="@string/app_name_details_shopping_list_activity" />
+        <activity
+            android:name=".PreferenceAppActivity"
+            android:label="@string/app_name_preference_app_activity" />
+        <activity android:name=".CreateFinanceAccountActivity" />
+        <activity android:name=".DetailsFinanceAccountActivity" />
+        <activity android:name=".CreateFinanceRecordsActivity" />
+        <activity android:name=".ViewFinanceRecordsDetailsActivity"
+            android:windowSoftInputMode="stateHidden"/>
     </application>
 
 </manifest>

@@ -124,6 +124,35 @@ public class UserLocalStore {
     }
 
 
+    public void setUserAccountBalance(String balance){
+
+        SharedPreferences.Editor editor=userLocalDataBase.edit();
+        editor.putString("balance", balance);
+        editor.apply();
+
+    }
+    public String getUserAccountBalance() {
+        String balance = userLocalDataBase.getString("balance", "");
+        if (balance.isEmpty()) {
+            return "0,00";
+        }
+        return balance;
+    }
+    public void setUserAccountBalancelastChange(String lastchange){
+
+        SharedPreferences.Editor editor=userLocalDataBase.edit();
+        editor.putString("lastchange", lastchange);
+        editor.apply();
+
+    }
+    public String getUserAccountBalancelastChange() {
+        String lastchange = userLocalDataBase.getString("lastchange", "");
+        if (lastchange.isEmpty()) {
+            return "";
+        }
+        return lastchange;
+    }
+
     public void clearUserData(){
         SharedPreferences.Editor spEditor=userLocalDataBase.edit();
         spEditor.clear();

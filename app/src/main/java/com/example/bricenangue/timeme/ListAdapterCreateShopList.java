@@ -15,6 +15,8 @@ import java.util.ArrayList;
  * Created by bricenangue on 25/07/16.
  */
 public class ListAdapterCreateShopList extends BaseAdapter {
+    private boolean isAllBought=false;
+
     public interface ShoppingItemBoughtListener{
         void onShoppingItemBought(ShoppingItem item,boolean[] position);
     }
@@ -38,8 +40,9 @@ public class ListAdapterCreateShopList extends BaseAdapter {
     private boolean[] numberSelectedOnrow;
     private boolean bol = false;
 
-    public ListAdapterCreateShopList(Context oldContext, ArrayList<ShoppingItem> shoppingItemsDBList,ShoppingItemBoughtListener shoppingItemSetListener)
+    public ListAdapterCreateShopList(Context oldContext, ArrayList<ShoppingItem> shoppingItemsDBList,ShoppingItemBoughtListener shoppingItemSetListener,boolean isAllBought)
     {
+        this.isAllBought=isAllBought;
         context = oldContext;
         this.shoppingItemsList = shoppingItemsDBList;
         if(null != shoppingItemsDBList) {
@@ -122,6 +125,10 @@ public class ListAdapterCreateShopList extends BaseAdapter {
             viewHolder.totalPrice.setText(priceStr+"€");
         }
 
+        if(isAllBought){
+            viewHolder.buttonisbought.setClickable(false);
+            viewHolder.buttonisbought.setEnabled(false);
+        }
 
         viewHolder.buttonisbought.setOnClickListener(new View.OnClickListener() {
             @Override

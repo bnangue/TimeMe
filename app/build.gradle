@@ -1,15 +1,26 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 23
+    compileSdkVersion 24
     buildToolsVersion "23.0.2"
 
     defaultConfig {
         applicationId "com.example.bricenangue.timeme"
         minSdkVersion 16
-        targetSdkVersion 23
+        targetSdkVersion 24
         versionCode 1
         versionName "1.0"
+        multiDexEnabled true
+
+    }
+    lintOptions {
+        checkReleaseBuilds false
+        // Or, if you prefer, you can continue to check for errors in release builds,
+        // but continue the build even when errors are found:
+        abortOnError false
+    }
+    dexOptions {
+        javaMaxHeapSize "4g"
     }
     buildTypes {
         release {
@@ -22,13 +33,13 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:23.2.0'
-    compile 'com.android.support:design:23.2.0'
+    compile 'com.android.support:appcompat-v7:24.0.0'
+    compile 'com.android.support:design:24.0.0'
     compile 'com.github.lopspower:CircularImageView:3.0.0'
-    compile 'com.android.support:support-v4:23.2.0'
-    compile 'com.android.support:support-v13:23.2.0'
-    compile 'com.android.support:cardview-v7:23.2.0'
-    compile 'com.android.support:recyclerview-v7:23.2.0'
+    compile 'com.android.support:support-v4:24.0.0'
+    compile 'com.android.support:support-v13:24.0.0'
+    compile 'com.android.support:cardview-v7:24.0.0'
+    compile 'com.android.support:recyclerview-v7:24.0.0'
     compile 'com.github.sundeepk:compact-calendar-view:1.8.0'
     compile 'com.github.alamkanak:android-week-view:1.2.6'
     compile 'com.squareup.retrofit:retrofit:1.9.0'
@@ -37,4 +48,5 @@ dependencies {
     compile files('libs/jxl-2.6.9.jar')
     compile files('libs/aa-poi-3.10-min-0.1.5.jar')
     compile files('libs/aa-poi-ooxml-schemas-3.10-reduced-more-0.1.5.jar')
+ 
 }

@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class FragmentOverview extends Fragment implements DialogDeleteEventFragment.OnDeleteListener,FragmentCommunicator,FragmentLife,ShareWithFriendAdapter.OnEventSelected {
+public class FragmentOverview extends Fragment implements FragmentCommunicator,FragmentLife,ShareWithFriendAdapter.OnEventSelected {
 
     private TextView eventpriode, creatorname, createdtime, notes, descriptionexpand;
 
@@ -47,7 +47,7 @@ public class FragmentOverview extends Fragment implements DialogDeleteEventFragm
 
     private void prepareRecyclerView(Context context, ArrayList<CalendarCollection> arrayList) {
 
-        mAdapter = new MyRecyclerViewAdapter(context, arrayList, myClickListener);
+        mAdapter = new MyRecyclerViewAdapter(((NewCalendarActivty)getActivity()), arrayList, myClickListener);
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -57,7 +57,7 @@ public class FragmentOverview extends Fragment implements DialogDeleteEventFragm
 
     private void prepareRecyclerView(ArrayList<CalendarCollection> arrayList) {
 
-        mAdapter = new MyRecyclerViewAdapter(getContext(), arrayList, myClickListener);
+        mAdapter = new MyRecyclerViewAdapter(((NewCalendarActivty)getActivity()), arrayList, myClickListener);
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -102,26 +102,6 @@ public class FragmentOverview extends Fragment implements DialogDeleteEventFragm
                 setViews(v, position);
             }
 
-            @Override
-            public void onButtonClick(int position, View v) {
-                int iD = v.getId();
-                switch (iD) {
-                    case R.id.buttondeletecardview:
-                        DialogFragment dialogFragment = DialogDeleteEventFragment.newInstance(position);
-                        dialogFragment.setCancelable(false);
-                        dialogFragment.setTargetFragment(fragment, 1);
-                        dialogFragment.show(getActivity().getSupportFragmentManager(), "DELETEALLEVENTFRAGMENT");
-
-
-                        break;
-                    case R.id.buttonsharecardview:
-                        ArrayList<User> userArrayList=new ArrayList<>();
-                        userArrayList.add(userLocalStore.getLoggedInUser());
-
-                        showDialogsharewithfriend(userArrayList);
-                        break;
-                }
-            }
         };
 
         // Code to Add an item with default animation
@@ -242,6 +222,8 @@ public class FragmentOverview extends Fragment implements DialogDeleteEventFragm
         createdtime = (TextView) v.findViewById(R.id.textViewexpandcreationtime);
         eventpriode = (TextView) v.findViewById(R.id.textViewexpandperiode);
         descriptionexpand = (TextView) v.findViewById(R.id.textViewexpanddescription);
+        TextView descriptionTitle=(TextView)v.findViewById(R.id.textViewexpanddescriptionheader);
+
         notes = (TextView) v.findViewById(R.id.textViewexpandnote);
 
 
@@ -250,7 +232,13 @@ public class FragmentOverview extends Fragment implements DialogDeleteEventFragm
             CalendarCollection ecollection=collectionArrayList.get(position);
             creatorname.setText(ecollection.creator);
             createdtime.setText(ecollection.creationdatetime);
-            descriptionexpand.setText(ecollection.description);
+            if(ecollection.description.contains("list_contain")){
+                descriptionTitle.setText(getContext().getString(R.string.Frangment_Oveview_textView_Description_title_CardView));
+                descriptionexpand.setText(new GroceryList().getListItemsAsDescription(ecollection.description));
+            }else {
+                descriptionexpand.setText(ecollection.description);
+            }
+
 
             String[] sttime=ecollection.startingtime.split(" ");
             String[] edtime=ecollection.endingtime.split(" ");
@@ -301,7 +289,7 @@ public class FragmentOverview extends Fragment implements DialogDeleteEventFragm
         super.onActivityCreated(savedInstanceState);
 
         mySQLiteHelper=new MySQLiteHelper(getContext());
-        mAdapter = new MyRecyclerViewAdapter(getContext(), collectionArrayList, myClickListener);
+        mAdapter = new MyRecyclerViewAdapter(((NewCalendarActivty)getActivity()), collectionArrayList, myClickListener);
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -329,15 +317,8 @@ public class FragmentOverview extends Fragment implements DialogDeleteEventFragm
         super.onResume();
 
 
-        if(!isShown){
-
-
             collectionArrayList=getCalendarEvents(mySQLiteHelper.getAllIncomingNotification());
                 prepareRecyclerView(getContext(),collectionArrayList);
-
-
-        }
-
 
         ((MyRecyclerViewAdapter) mAdapter).setOnItemClickListener(myClickListener);
 
@@ -385,19 +366,6 @@ public class FragmentOverview extends Fragment implements DialogDeleteEventFragm
         }
         return a;
     }
-
-
-
-    @Override
-    public void delete(int position) {
-        ((MyRecyclerViewAdapter)mAdapter).deleteItem(position);
-
-        calendarEventsChanged.eventsCahnged(true);
-
-    }
-
-
-
 
     @Override
     public void onUpdateUi(ArrayList<CalendarCollection> arrayList,String uName) {

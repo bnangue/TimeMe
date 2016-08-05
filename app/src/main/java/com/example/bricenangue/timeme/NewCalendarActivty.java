@@ -11,6 +11,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -41,7 +42,7 @@ import java.util.TimerTask;
 /**
  * Created by bricenangue on 27/02/16.
  */
-public class NewCalendarActivty extends ActionBarActivity implements NavigationDrawerFragment.NavigationDrawerCallbacks, View.OnClickListener,
+public class NewCalendarActivty extends AppCompatActivity implements NavigationDrawerFragment.NavigationDrawerCallbacks, View.OnClickListener,
         FragmentCategoryShopping.OnFragmentCategoryShoppingInteractionListener,DialogLogoutFragment.YesNoListenerDeleteAccount,OnCalendarEventsChanged{
 
     /**
@@ -58,6 +59,11 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
     public final static String FRAGMENTFINANCE="My Finance";
     public final static String FRAGMENTSHOPPING="My Grocery";
     private SQLiteShoppingList sqLiteShoppingList;
+
+    private FragmentOverview fragmentOverview;
+    private FragmentCategoryFinance fragmentCategoryFinance;
+    private FragmentMyEvent fragmentMyEvent;
+    private FragmentCategoryShopping fragmentCategoryShopping;
 
     private AppBarLayout mAppBarLayout;
 
@@ -97,9 +103,14 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.time_sheet_act_test);
+        userLocalStore=new UserLocalStore(this);
 
         mySQLiteHelper=new MySQLiteHelper(this);
-        userLocalStore=new UserLocalStore(this);
+         fragmentOverview=new FragmentOverview();
+       fragmentCategoryFinance=new FragmentCategoryFinance();
+  fragmentMyEvent=new FragmentMyEvent();
+         fragmentCategoryShopping=new FragmentCategoryShopping();
+
 
         sqLiteShoppingList=new SQLiteShoppingList(this);
 
@@ -127,6 +138,7 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.ttoolbar);
         setSupportActionBar(toolbar);
+
 
         fab=(FloatingActionButton)findViewById(R.id.fab);
         fab.setOnClickListener(this);
@@ -220,6 +232,7 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
 
 
 
+
     private void initViewPagerAndTabs() {
 
         viewPager = (ViewPager) findViewById(R.id.viewPager);
@@ -228,10 +241,10 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
 
         final ViewPagerAdapter pagerAdapter=new ViewPagerAdapter(getSupportFragmentManager());
 
-        pagerAdapter.addFragment(new FragmentOverview(),FRAGMENTOVERVIEW);
-        pagerAdapter.addFragment(new FragmentMyEvent(),FRAGMENTEVENTS);
-        pagerAdapter.addFragment(new FragmentCategoryFinance(),FRAGMENTFINANCE);
-        pagerAdapter.addFragment(new FragmentCategoryShopping(),FRAGMENTSHOPPING);
+        pagerAdapter.addFragment(fragmentOverview,FRAGMENTOVERVIEW);
+        pagerAdapter.addFragment(fragmentMyEvent,FRAGMENTEVENTS);
+        pagerAdapter.addFragment(fragmentCategoryFinance,FRAGMENTFINANCE);
+        pagerAdapter.addFragment(fragmentCategoryShopping,FRAGMENTSHOPPING);
 
         viewPager.setAdapter(pagerAdapter);
 
@@ -246,9 +259,21 @@ public class NewCalendarActivty extends ActionBarActivity implements NavigationD
             public void onPageSelected(int position) {
 
 
-                if(position==3){
+                if(position==2 ){
+                   // fragmentCategoryFinance.onResume();
+
                     fab.setVisibility(View.GONE);
+                }else if(position==3){
+                   // fragmentCategoryShopping.onResume();
+
+                    fab.setVisibility(View.GONE);
+                }else if(position==1){
+                  //  fragmentMyEvent.onResume();
+
+                    fab.setVisibility(View.VISIBLE);
                 }else {
+                   // fragmentOverview.onResume();
+
                     fab.setVisibility(View.VISIBLE);
                 }
 

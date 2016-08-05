@@ -29,6 +29,8 @@ public class MainActivity extends AppCompatActivity {
     private MySQLiteHelper mySQLiteHelper;
     private ProgressBar loadprogressBar;
     public static boolean eventsareloaded=false;
+    private SQLiteShoppingList sqLiteShoppingList;
+    private SQLFinanceAccount sqlFinanceAccount;
 
     private boolean haveNetworkConnection() {
         boolean haveConnectedWifi = false;
@@ -53,7 +55,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         loadprogressBar=(ProgressBar)findViewById(R.id.prbar);
-        loadprogressBar.setVisibility(View.VISIBLE);
+
+         sqLiteShoppingList=new SQLiteShoppingList(this);
+        sqlFinanceAccount=new SQLFinanceAccount(this);
 
         mySQLiteHelper=new MySQLiteHelper(this);
         coordinatorLayout=(CoordinatorLayout)findViewById(R.id.coordinateLayoutmainactivity);
@@ -63,13 +67,17 @@ public class MainActivity extends AppCompatActivity {
 
     }
     void startapp(){
+        loadprogressBar.setVisibility(View.VISIBLE);
         if (haveNetworkConnection()){
+            sqlFinanceAccount.reInitializeFinanceSqliteTable();
             mySQLiteHelper.reInitializeSqliteTable();
+            sqLiteShoppingList.reInitializeShoppingListSqliteTable();
+
             getEventsfromMySQL();
 
         }else{
             showSnackBar();
-            startActivity(new Intent(MainActivity.this, LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+            //startActivity(new Intent(MainActivity.this, LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
         }
     }
 
@@ -81,17 +89,26 @@ public class MainActivity extends AppCompatActivity {
                 if(returnedeventobject.size()!=0){
 
                         saveeventtoSQl(returnedeventobject);
-                    serverRequests.getItemsInBackgroung(new GetEventsCallbacks() {
+                    serverRequests.getFinanceAccountsAndUserInBackgroung(new FinanceAccountCallbacks() {
                         @Override
-                        public void done(ArrayList<CalendarCollection> returnedeventobject) {
-
+                        public void fetchDone(ArrayList<FinanceAccount> returnedAccounts) {
+                            if(returnedAccounts.size()!=0){
+                                saveAccountLocally(returnedAccounts);
+                            }
                         }
 
                         @Override
-                        public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
+                        public void setServerResponse(String serverResponse) {
 
-                            if(returnedShoppingItem.size()!=0){
-                                saveItemtoSQl(returnedShoppingItem);
+                        }
+                    });
+                    serverRequests.getGroceryListsInBackgroung(new GroceryListCallBacks() {
+                        @Override
+                        public void fetchDone(ArrayList<GroceryList> returnedGroceryLists) {
+                            if(returnedGroceryLists.size()!=0){
+                                //save to sql
+                                saveGroceryListtoSQl(returnedGroceryLists);
+                                saveGroceryListtoSQlIncome(returnedGroceryLists);
                                 loadprogressBar.setIndeterminate(false);
                                 loadprogressBar.setVisibility(View.INVISIBLE);
                                 startActivity(new Intent(MainActivity.this,LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
@@ -101,7 +118,56 @@ public class MainActivity extends AppCompatActivity {
                                 eventsareloaded=false;
                                 loadprogressBar.setIndeterminate(false);
                                 loadprogressBar.setVisibility(View.INVISIBLE);
-                                startActivity(new Intent(MainActivity.this, LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+                                 startActivity(new Intent(MainActivity.this, LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+
+                            }
+                        }
+
+                        @Override
+                        public void setServerResponse(String serverResponse) {
+
+                        }
+                    });
+                 /**   serverRequests.getItemsInBackgroung(new GetEventsCallbacks() {
+                        @Override
+                        public void done(ArrayList<CalendarCollection> returnedeventobject) {
+
+                        }
+
+                        @Override
+                        public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
+
+                            if(returnedShoppingItem.size()!=0){
+
+
+
+                            }else{
+                                serverRequests.getGroceryListsInBackgroung(new GroceryListCallBacks() {
+                                    @Override
+                                    public void fetchDone(ArrayList<GroceryList> returnedGroceryLists) {
+                                        if(returnedGroceryLists.size()!=0){
+                                            //save to sql
+                                            saveGroceryListtoSQl(returnedGroceryLists);
+                                            saveGroceryListtoSQlIncome(returnedGroceryLists);
+                                            loadprogressBar.setIndeterminate(false);
+                                            loadprogressBar.setVisibility(View.INVISIBLE);
+                                            startActivity(new Intent(MainActivity.this,LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+                                            eventsareloaded=true;
+                                        }else{
+                                            showSnackBar();
+                                            eventsareloaded=false;
+                                            loadprogressBar.setIndeterminate(false);
+                                            loadprogressBar.setVisibility(View.INVISIBLE);
+                                            //startActivity(new Intent(MainActivity.this, LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+
+                                        }
+                                    }
+
+                                    @Override
+                                    public void setServerResponse(String serverResponse) {
+
+                                    }
+                                });
 
                             }
                         }
@@ -111,20 +177,29 @@ public class MainActivity extends AppCompatActivity {
 
                         }
                     });
-
-
+                    **/
                 }else {
-                    serverRequests.getItemsInBackgroung(new GetEventsCallbacks() {
-                        @Override
-                        public void done(ArrayList<CalendarCollection> returnedeventobject) {
 
+                    serverRequests.getFinanceAccountsAndUserInBackgroung(new FinanceAccountCallbacks() {
+                        @Override
+                        public void fetchDone(ArrayList<FinanceAccount> returnedAccounts) {
+                            if(returnedAccounts.size()!=0){
+                                saveAccountLocally(returnedAccounts);
+                            }
                         }
 
                         @Override
-                        public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
+                        public void setServerResponse(String serverResponse) {
 
-                            if(returnedShoppingItem.size()!=0){
-                                saveItemtoSQl(returnedShoppingItem);
+                        }
+                    });
+                    serverRequests.getGroceryListsInBackgroung(new GroceryListCallBacks() {
+                        @Override
+                        public void fetchDone(ArrayList<GroceryList> returnedGroceryLists) {
+                            if(returnedGroceryLists.size()!=0){
+                                //save to sql
+                                saveGroceryListtoSQl(returnedGroceryLists);
+                                saveGroceryListtoSQlIncome(returnedGroceryLists);
                                 loadprogressBar.setIndeterminate(false);
                                 loadprogressBar.setVisibility(View.INVISIBLE);
                                 startActivity(new Intent(MainActivity.this,LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
@@ -140,10 +215,62 @@ public class MainActivity extends AppCompatActivity {
                         }
 
                         @Override
+                        public void setServerResponse(String serverResponse) {
+
+                        }
+                    });
+
+                /**    serverRequests.getItemsInBackgroung(new GetEventsCallbacks() {
+                        @Override
+                        public void done(ArrayList<CalendarCollection> returnedeventobject) {
+
+                        }
+
+                        @Override
+                        public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
+
+                            if(returnedShoppingItem.size()!=0){
+
+
+
+                            }else{
+                                serverRequests.getGroceryListsInBackgroung(new GroceryListCallBacks() {
+                                    @Override
+                                    public void fetchDone(ArrayList<GroceryList> returnedGroceryLists) {
+                                        if(returnedGroceryLists.size()!=0){
+                                            //save to sql
+                                            saveGroceryListtoSQl(returnedGroceryLists);
+                                            saveGroceryListtoSQlIncome(returnedGroceryLists);
+                                            loadprogressBar.setIndeterminate(false);
+                                            loadprogressBar.setVisibility(View.INVISIBLE);
+                                            startActivity(new Intent(MainActivity.this,LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+                                            eventsareloaded=true;
+                                        }else{
+                                            showSnackBar();
+                                            eventsareloaded=false;
+                                            loadprogressBar.setIndeterminate(false);
+                                            loadprogressBar.setVisibility(View.INVISIBLE);
+                                            //startActivity(new Intent(MainActivity.this, LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+
+                                        }
+                                    }
+
+                                    @Override
+                                    public void setServerResponse(String serverResponse) {
+
+                                    }
+                                });
+
+                            }
+                        }
+
+                        @Override
                         public void updated(String reponse) {
 
                         }
                     });
+
+                    **/
 
                 }
             }
@@ -160,6 +287,70 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void saveAccountLocally(ArrayList<FinanceAccount> accounts) {
+        for(int i=0;i<accounts.size();i++){
+            sqlFinanceAccount.addFINANCEACCOUNT(accounts.get(i));
+
+        }
+    }
+
+    private void saveGroceryListtoSQlIncome(ArrayList<GroceryList> groceryLists) {
+
+        if(groceryLists.size()!=0){
+
+        }
+        for(int i=0;i<groceryLists.size();i++){
+            try {
+                JSONObject jsonObject=new JSONObject();
+
+                int status=(groceryLists.get(i).isListdone())? 1 : 0;
+                int shareStatus=(groceryLists.get(i).isToListshare())? 1 : 0;
+
+                jsonObject.put("list_name",groceryLists.get(i).getDatum());
+                jsonObject.put("list_creator",groceryLists.get(i).getCreatorName());
+                jsonObject.put("list_status",String.valueOf(status));
+                jsonObject.put("list_uniqueId",groceryLists.get(i).getList_unique_id());
+                jsonObject.put("list_contain",groceryLists.get(i).getListcontain());
+                jsonObject.put("list_isShareStatus",String.valueOf(shareStatus));
+                jsonObject.put("list_note","nothing specified");
+
+                Calendar c=new GregorianCalendar();
+                Date dat=c.getTime();
+                //String day= String.valueOf(dat.getDay());
+                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+                String date = (String) android.text.format.DateFormat.format("yyyy-MM-dd", dat);
+                incomingNotification=new IncomingNotification(2,0,jsonObject.toString(),date);
+                int incomingNotifiId =  mySQLiteHelper.addIncomingNotification(incomingNotification);
+
+            }catch (Exception e){
+                e.printStackTrace();
+
+            }
+
+
+        }
+
+    }
+
+    private void saveGroceryListtoSQl(ArrayList<GroceryList> groceryLists) {
+
+        if(groceryLists.size()!=0){
+
+        }
+        for(int i=0;i<groceryLists.size();i++){
+            try {
+                SQLiteShoppingList sqLiteShoppingList=new SQLiteShoppingList(this);
+                sqLiteShoppingList.addShoppingList(groceryLists.get(i));
+            }catch (Exception e){
+                e.printStackTrace();
+
+            }
+
+
+        }
+
+    }
     private void saveeventtoSQl(ArrayList<CalendarCollection> calendarCollections) {
 
         if(calendarCollections.size()!=0){
@@ -264,7 +455,13 @@ public class MainActivity extends AppCompatActivity {
 
     public void showSnackBar(){
         snackbar = Snackbar
-                .make(coordinatorLayout, "No connection internet detected.", Snackbar.LENGTH_SHORT);
+                .make(coordinatorLayout, "No connection internet detected.", Snackbar.LENGTH_INDEFINITE)
+                .setAction("RETRY", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        startapp();
+                    }
+                });;
         View snackbarView = snackbar.getView();
         snackbarView.setBackgroundColor(getResources().getColor(R.color.colorSnackbar));
         TextView textView = (TextView) snackbarView.findViewById(android.support.design.R.id.snackbar_text);

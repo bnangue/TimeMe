@@ -21,7 +21,8 @@
         android:id="@+id/buttonregisterReg"
         android:layout_marginLeft="20dp"
         android:layout_marginRight="20dp"
-        style="@style/buttondelete"
+        android:textColor="@color/primary_dark"
+        style="@style/Base.Widget.AppCompat.Button.Borderless"
         android:layout_below="@+id/imageViewloginlogo"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="24dp" />
@@ -48,7 +49,8 @@
         android:layout_marginBottom="121dp"
         android:layout_alignRight="@+id/buttonregisterReg"
         android:layout_alignEnd="@+id/buttonregisterReg"
-        android:layout_marginTop="51dp">
+        android:layout_marginTop="51dp"
+        android:background="@drawable/roundspinner">
 
         <EditText
             android:hint="@string/emailloggin"
@@ -57,7 +59,8 @@
             android:layout_height="wrap_content"
             android:inputType="textEmailAddress"
             android:maxLines="1"
-            android:singleLine="true" />
+            android:singleLine="true"
+            />
 
     </android.support.design.widget.TextInputLayout>
 
@@ -70,7 +73,8 @@
         android:layout_alignStart="@+id/editTextemaillayout"
         android:layout_alignRight="@+id/editTextemaillayout"
         android:layout_alignEnd="@+id/editTextemaillayout"
-        android:layout_marginTop="51dp">
+        android:layout_marginTop="51dp"
+        android:background="@drawable/roundpassword">
 
         <EditText
             android:hint="@string/passwordlogin"

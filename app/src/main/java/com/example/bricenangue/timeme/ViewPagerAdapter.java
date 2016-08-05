@@ -3,6 +3,7 @@ package com.example.bricenangue.timeme;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
+import android.view.ViewGroup;
 
 import java.util.ArrayList;
 
@@ -85,6 +86,15 @@ public class ViewPagerAdapter extends FragmentStatePagerAdapter {
         fragmentTitleList.add(title);
     }
 
+    @Override
+    public void destroyItem(ViewGroup container, int position, Object object) {
+        // Yet another bug in FragmentStatePagerAdapter that destroyItem is called on fragment that hasnt been added. Need to catch
+        try {
+            super.destroyItem(container, position, object);
+        } catch (IllegalStateException ex) {
+            ex.printStackTrace();
+        }
+    }
     @Override
     public int getItemPosition(Object object) {
         return super.getItemPosition(object);

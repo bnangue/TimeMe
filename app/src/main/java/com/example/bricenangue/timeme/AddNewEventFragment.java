@@ -87,7 +87,9 @@ public class AddNewEventFragment extends AppCompatActivity implements DialogFrag
         Date curDate = new Date();
         String curTime = formatter.format(curDate);
         String dgdh[]=curTime.split(",");
-        String [] userAccArray={"Normal","Business","Birthdays","Grocery","Work Plans"};
+        String [] userAccArray={getString(R.string.Event_Category_Category_Normal),getString(R.string.Event_Category_Category_Business)
+                ,getString(R.string.Event_Category_Category_Birthdays),getString(R.string.Event_Category_Category_Shopping)
+                ,getString(R.string.Event_Category_Category_Work_Plans)};
         SpinnerAdapter adap = new ArrayAdapter<>(this, R.layout.spinnerlayout, userAccArray);
         spinner.setAdapter(adap);
         spinner.setSelection(categoryname);
@@ -154,7 +156,12 @@ public class AddNewEventFragment extends AppCompatActivity implements DialogFrag
                 }
                 Calendar c = Calendar.getInstance();
 
+               SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd, HH:mm");
+                formatter.setLenient(false);
+
                 Date currentDate = new Date();
+
+
                 String currentTime = formatter.format(currentDate);
 
                 int eventHashcode=(dateSet+userLocalStore.getUserfullname()+formatter.format(c.getTime())).hashCode();

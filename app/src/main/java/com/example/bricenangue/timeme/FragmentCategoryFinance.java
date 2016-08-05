@@ -3,49 +3,64 @@ package com.example.bricenangue.timeme;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.alamkanak.weekview.WeekViewEvent;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class FragmentCategoryFinance extends Fragment implements DialogDeleteEventFragment.OnDeleteListener, FragmentCommunicator,FragmentLife {
+public class FragmentCategoryFinance extends Fragment implements View.OnClickListener {
 
-    private ListView lv_android;
-    private AndroidListAdapter list_adapter;
+
     private MySQLiteHelper mySQLiteHelper;
+    private SQLFinanceAccount sqlFinanceAccount;
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
     private static String LOG_TAG = "RecyclerViewActivity";
-    private TextView eventpriode,creatorname,createdtime,notes,descriptionexpand;
+    private ArrayList<FinanceAccount> accounts=new ArrayList<>();
+
+    private Button buttonCreateAccount,buttonAddFinanceRecords;
+    private TextView textViewBalance;
+    private UserLocalStore userLocalStore;
 
 
-    private MyRecyclerViewAdapter.MyClickListener myClickListener;
+    private RecyclerViewAdapterCreateAccount.MyRecyclerAdaptaterCreateAccountClickListener myClickListener;
     private boolean isShown=false;
     private Fragment fragment=this;
-    private ArrayList<CalendarCollection> newItems = new ArrayList<>();
-    private ArrayList<CalendarCollection> collectionArrayList = new ArrayList<>();
-    private OnCalendarEventsChanged calendarEventsChanged;
+    private ArrayList<FinanceAccount> newItems = new ArrayList<>();
+    private ArrayList<FinanceAccount> collectionArrayList = new ArrayList<>();
 
-    private void prepareRecyclerView(Context context,ArrayList<CalendarCollection> arrayList){
+    private void prepareRecyclerView(Context context,ArrayList<FinanceAccount> arrayList){
 
-        mAdapter = new MyRecyclerViewAdapter(context,arrayList,myClickListener);
+        mAdapter = new RecyclerViewAdapterCreateAccount(((NewCalendarActivty)getActivity()),arrayList,myClickListener);
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -53,9 +68,9 @@ public class FragmentCategoryFinance extends Fragment implements DialogDeleteEve
 
     }
 
-    private void prepareRecyclerView(ArrayList<CalendarCollection> arrayList){
+    private void prepareRecyclerView(ArrayList<FinanceAccount> arrayList){
 
-        mAdapter = new MyRecyclerViewAdapter(getContext(),arrayList,myClickListener);
+        mAdapter = new RecyclerViewAdapterCreateAccount(((NewCalendarActivty)getActivity()),arrayList,myClickListener);
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -77,29 +92,28 @@ public class FragmentCategoryFinance extends Fragment implements DialogDeleteEve
 
         //getEvents(mySQLiteHelper.getAllIncomingNotification());
         // Inflate the layout for this fragment
+
         View rootView = inflater.inflate(R.layout.fragment_fragment_category_business, container, false);
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.my_recycler_view);
-        myClickListener=new MyRecyclerViewAdapter.MyClickListener() {
+        textViewBalance=(TextView)rootView.findViewById(R.id.finance_fragment_balance_amount);
+        buttonCreateAccount=(Button)rootView.findViewById(R.id.fragment_finance_add_account_button) ;
+        buttonCreateAccount.setOnClickListener(this);
+        buttonAddFinanceRecords=(Button)rootView.findViewById(R.id.fragment_finance_add_finance_record_button) ;
+        buttonAddFinanceRecords.setOnClickListener(this);
+        myClickListener=new RecyclerViewAdapterCreateAccount.MyRecyclerAdaptaterCreateAccountClickListener() {
             @Override
             public void onItemClick(int position, View v) {
-                setViews(v,position);
-                Log.i(LOG_TAG, " bussiness Clicked on Item " + position);
+                //open account details
+                startActivity(new Intent(getActivity(), DetailsFinanceAccountActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .putExtra("Account",accounts.get(position)));
             }
 
             @Override
-            public void onButtonClick(int position, View v) {
-                int iD = v.getId();
-                switch (iD) {
-                    case R.id.buttondeletecardview:
-                        DialogFragment dialogFragment = DialogDeleteEventFragment.newInstance(position);
-                        dialogFragment.setCancelable(false);
-                        dialogFragment.setTargetFragment(fragment, 1);
-                        dialogFragment.show(getActivity().getSupportFragmentManager(), "DELETEBussinesEVENTFRAGMENT");
+            public void onLongClick(int position, View v) {
+                //show popup menu delete
 
-                        break;
-                    case R.id.buttonsharecardview:
-                        break;
-                }
+                showFilterPopup(v, accounts.get(position),position);
+
             }
         };
 
@@ -108,56 +122,79 @@ public class FragmentCategoryFinance extends Fragment implements DialogDeleteEve
         return rootView;
     }
 
-    private void setViews(View v, int position){
-        creatorname = (TextView) v.findViewById(R.id.textViewexpandcreator);
-        createdtime = (TextView) v.findViewById(R.id.textViewexpandcreationtime);
-        eventpriode = (TextView) v.findViewById(R.id.textViewexpandperiode);
-        descriptionexpand = (TextView) v.findViewById(R.id.textViewexpanddescription);
-        notes = (TextView) v.findViewById(R.id.textViewexpandnote);
 
-
-
-        if(collectionArrayList.size()!=0){
-            CalendarCollection ecollection=collectionArrayList.get(position);
-            creatorname.setText(ecollection.creator);
-            createdtime.setText(ecollection.creationdatetime);
-            descriptionexpand.setText(ecollection.description);
-
-            String[] sttime=ecollection.startingtime.split(" ");
-            String[] edtime=ecollection.endingtime.split(" ");
-
-            eventpriode.setText(sttime[0]+"  -  "+edtime[0]);
-            StringBuilder builder=new StringBuilder();
-            if(ecollection.alldayevent.equals("1")){
-                builder.append("All day");
+    private void showFilterPopup(View v, final FinanceAccount account, final int position) {
+        PopupMenu popup = new PopupMenu(getContext(), v);
+        // Inflate the menu from xml
+        popup.getMenuInflater().inflate(R.menu.finance_account_menu, popup.getMenu());
+        // Setup menu item selection
+        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.menu_delete_Account:
+                        deleteFinanceAccount(account,position);
+                        mAdapter.notifyDataSetChanged();
+                        return true;
+                    default:
+                        return false;
+                }
             }
-            if(ecollection.alldayevent.equals("1")){
-                builder.append(",").append(" repeat every month");
-            }
-            if(builder.toString().isEmpty()){
-                notes.setText("");
-            }else{
-                notes.setText(builder.toString());
+        });
+        // Handle dismissal with: popup.setOnDismissListener(...);
+        // Show the menu
+        popup.show();
+    }
+
+    private void deleteFinanceAccount(final FinanceAccount account, final int position) {
+        ServerRequests serverRequests= new ServerRequests((AppCompatActivity)getContext());
+        serverRequests.deleteFinanceAccountInBackgroung(account, new FinanceAccountCallbacks() {
+            @Override
+            public void fetchDone(ArrayList<FinanceAccount> returnedAccounts) {
+
             }
 
+            @Override
+            public void setServerResponse(String serverResponse) {
+
+                if(serverResponse.contains("Account successfully deleted")){
+
+                    deleteFinanceAccountLocally(account,position);
+                }else {
+                    Toast.makeText(getActivity(), "Error removing account "+ account.getAccountName() +" on server", Toast.LENGTH_SHORT).show();
+
+                }
+            }
+        });
+    }
+
+    private void deleteFinanceAccountLocally(FinanceAccount account,int position) {
+        int i =sqlFinanceAccount.deleteFinanceAccount(account.getAccountUniqueId());
+        if(i!=0){
+            ((RecyclerViewAdapterCreateAccount)mAdapter).deleteItem(position);
+            onResume();
+            Toast.makeText(getActivity(), "account " + account.getAccountName() + " deleted", Toast.LENGTH_SHORT).show();
+        }else {
+            Toast.makeText(getActivity(), "Error removing account "+ account.getAccountName() +" locally", Toast.LENGTH_SHORT).show();
         }
     }
+
+
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        calendarEventsChanged =(OnCalendarEventsChanged)getActivity();
-        ((NewCalendarActivty)getActivity()).fragmentCommunicator = this;
 
     }
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         mySQLiteHelper=new MySQLiteHelper(getContext());
+        sqlFinanceAccount=new SQLFinanceAccount(getContext());
 
         mRecyclerView.setHasFixedSize(true);
+        userLocalStore=new UserLocalStore(getContext());
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView.setLayoutManager(mLayoutManager);
-        mAdapter = new MyRecyclerViewAdapter(getContext(),collectionArrayList,myClickListener);
+        mAdapter = new RecyclerViewAdapterCreateAccount(((NewCalendarActivty)getActivity()),collectionArrayList,myClickListener);
         mRecyclerView.setAdapter(mAdapter);
     }
 
@@ -176,111 +213,115 @@ public class FragmentCategoryFinance extends Fragment implements DialogDeleteEve
     @Override
     public void onResume() {
         super.onResume();
-        if(!isShown){
 
-                prepareRecyclerView(getContext(),getCalendarEvents(mySQLiteHelper.getAllIncomingNotification()));
 
-        }
-        ((MyRecyclerViewAdapter) mAdapter).setOnItemClickListener(myClickListener);
+
+            accounts=sqlFinanceAccount.getAllFinanceAccount();
+                prepareRecyclerView(getContext(),accounts);
+            if(accounts.size()==0){
+                buttonAddFinanceRecords.setVisibility(View.GONE);
+                buttonCreateAccount.setVisibility(View.VISIBLE);
+            }else if (accounts.size()==1){
+                buttonCreateAccount.setVisibility(View.VISIBLE);
+                buttonAddFinanceRecords.setVisibility(View.VISIBLE);
+            }else if(accounts.size()>=2){
+                buttonCreateAccount.setVisibility(View.GONE);
+                buttonAddFinanceRecords.setVisibility(View.VISIBLE);
+            }
+           setBalance();
+
+
+
+        ((RecyclerViewAdapterCreateAccount) mAdapter).setOnCreateAccountlistClickListener(myClickListener);
+
 
 
 
     }
 
+    private void refresh(){
+        accounts=sqlFinanceAccount.getAllFinanceAccount();
+        prepareRecyclerView(getContext(),accounts);
+        if(accounts.size()==0){
+            buttonAddFinanceRecords.setVisibility(View.GONE);
+            buttonCreateAccount.setVisibility(View.VISIBLE);
+        }else if (accounts.size()==1){
+            buttonCreateAccount.setVisibility(View.VISIBLE);
+            buttonAddFinanceRecords.setVisibility(View.VISIBLE);
+        }else if(accounts.size()>=2){
+            buttonCreateAccount.setVisibility(View.GONE);
+            buttonAddFinanceRecords.setVisibility(View.VISIBLE);
+        }
+        setBalance();
+    }
+
+    void setBalance(){
+        if(accounts!=null){
+            double balce=0;
+            for (int i=0; i<accounts.size();i++){
+                balce=balce+accounts.get(i).getAccountBalance();
+            }
+            DecimalFormat df = new DecimalFormat("0.00");
+            df.setMaximumFractionDigits(2);
+
+            String priceStr = df.format(balce);
+            if(priceStr.contains("-")){
+                textViewBalance.setText(priceStr+" €");
+                userLocalStore.setUserAccountBalance(priceStr);
+                textViewBalance.setTextColor(getResources().getColor(R.color.warning_color));
+            }else {
+                textViewBalance.setText(priceStr+" €");
+                userLocalStore.setUserAccountBalance(priceStr);
+
+            }
+
+
+        }
+    }
+    private void getAccount(){
+        sqlFinanceAccount.reInitializeFinanceSqliteTable();
+        ServerRequests serverRequests=new ServerRequests((AppCompatActivity) getActivity());
+        serverRequests.getFinanceAccountsAndUserInBackgroung(new FinanceAccountCallbacks() {
+            @Override
+            public void fetchDone(ArrayList<FinanceAccount> returnedAccounts) {
+                if(returnedAccounts.size()!=0){
+                    accounts=returnedAccounts;
+                    saveAccountLocally(returnedAccounts);
+                }
+            }
+
+            @Override
+            public void setServerResponse(String serverResponse) {
+
+            }
+        });
+
+    }
+    private void saveAccountLocally(ArrayList<FinanceAccount> accounts) {
+        for(int i=0;i<accounts.size();i++){
+            sqlFinanceAccount.addFINANCEACCOUNT(accounts.get(i));
+
+        }
+    }
     @Override
     public void onPause() {
         super.onPause();
-        ((MyRecyclerViewAdapter)mAdapter).setOnItemClickListener(null);
+        ((RecyclerViewAdapterCreateAccount)mAdapter).setOnCreateAccountlistClickListener(null);
     }
 
-    public void updateUi(ArrayList<CalendarCollection> arrayList){
-        ArrayList<CalendarCollection> a=new ArrayList<>();
-        for(int i=0;i<arrayList.size();i++){
-            if(arrayList.get(i).category.contains("Business")){
-                a.add(arrayList.get(i));
-            }
-        }
-        prepareRecyclerView(a);
-    }
+
     @Override
-    public void delete(int position) {
-       // deleteFromSQLITEAndSERver(position);
-        ((MyRecyclerViewAdapter)mAdapter).deleteItem(position);
-        //((MyRecyclerViewAdapter)mAdapter).notifyDataSetChanged();
-        calendarEventsChanged.eventsCahnged(true);
-    }
+    public void onClick(View view) {
+        if(view.getId()==R.id.fragment_finance_add_account_button){
+            //start create Account Activity
+            startActivity(new Intent(getActivity(),CreateFinanceAccountActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        }else if( view.getId()==R.id.fragment_finance_add_finance_record_button){
+            //start activity add finance record
 
-    private void deleteFromSQLITEAndSERver(final int index){
-        ServerRequests serverRequests= new ServerRequests(getContext());
-        serverRequests.deleteCalenderEventInBackgroung(collectionArrayList.get(index), new GetEventsCallbacks() {
-            @Override
-            public void done(ArrayList<CalendarCollection> returnedeventobject) {
-
-            }
-
-            @Override
-            public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
-
-            }
-
-            @Override
-            public void updated(String reponse) {
-                if (reponse.contains("Event successfully deleted")) {
-                    mySQLiteHelper.deleteIncomingNotification(collectionArrayList.get(index).incomingnotifictionid);
-                    //getEvents(mySQLiteHelper.getAllIncomingNotification());
-
-                }
-            }
-        });
-    }
-
-    private ArrayList<CalendarCollection> getCalendarEvents(ArrayList<IncomingNotification> incomingNotifications){
-
-        ArrayList<CalendarCollection> a =new ArrayList<>();
-        for (int i=0;i<incomingNotifications.size();i++){
-            JSONObject jo_inside = null;
-            try {
-                jo_inside = new JSONObject(incomingNotifications.get(i).body);
-
-                String titel = jo_inside.getString("title");
-                String infotext = jo_inside.getString("description");
-                String creator = jo_inside.getString("creator");
-                String creationTime = jo_inside.getString("datetime");
-                String category = jo_inside.getString("category");
-                String startingtime = jo_inside.getString("startingtime");
-                String endingtime = jo_inside.getString("endingtime");
-                String alldayevent = jo_inside.getString("alldayevent");
-                String eventHash = jo_inside.getString("hashid");
-                String everymonth = jo_inside.getString("everymonth");
-                String creationdatetime = jo_inside.getString("defaulttime");
-
-                CalendarCollection  object =new CalendarCollection(titel,infotext,creator,creationTime,startingtime,endingtime,eventHash,category,alldayevent,everymonth,creationdatetime);
-                object.incomingnotifictionid = incomingNotifications.get(i).id;
-                if(object.category.contains("Business")){
-                    a.add(object);
-                }
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+                startActivity(new Intent(getActivity(),CreateFinanceRecordsActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .putExtra("AccountToUpdate",accounts));
 
 
         }
-        return a;
     }
-
-
-    @Override
-    public void passDataToFragment(ArrayList<CalendarCollection> someValue) {
-        collectionArrayList=someValue;
-    }
-
-
-
-    @Override
-    public void onUpdateUi(ArrayList<CalendarCollection> arrayList,String uname) {
-        updateUi(arrayList);
-    }
-
-
 }
