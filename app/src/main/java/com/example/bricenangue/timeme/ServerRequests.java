@@ -116,29 +116,29 @@ public class ServerRequests {
     }
 
 
-    public void getCalenderEventInBackgroung(GetEventsCallbacks callbacks){
+    public void getCalenderEventInBackgroung(String username,GetEventsCallbacks callbacks){
         lockScreenOrientation(activity);
-        new FetchAllEventsAsynckTacks(callbacks).execute();
+        new FetchAllEventsAsynckTacks(username,callbacks).execute();
     }
 
-    public void getGroceryListsInBackgroung(GroceryListCallBacks callbacks){
+    public void getGroceryListsInBackgroung(String username, GroceryListCallBacks callbacks){
         lockScreenOrientation(activity);
-        new FetchAllGroceryListsAsynckTacks(callbacks).execute();
+        new FetchAllGroceryListsAsynckTacks(username, callbacks).execute();
     }
     public void getItemsInBackgroung(GetEventsCallbacks callbacks){
         lockScreenOrientation(activity);
         new FetchAllShoppingItemsAsynckTacks(callbacks).execute();
     }
-    public void getCalenderEventAndUserInBackgroung(GetEventsCallbacks callbacks){
+    public void getCalenderEventAndUserInBackgroung(String username,GetEventsCallbacks callbacks){
         progressDialog.setCancelable(false);
         progressDialog.show(activity.getSupportFragmentManager(), "task_progress");
         lockScreenOrientation(activity);
-        new FetchAllEventsAsynckTacks(callbacks).execute();
+        new FetchAllEventsAsynckTacks(username,callbacks).execute();
     }
 
-    public void getFinanceAccountsAndUserInBackgroung(FinanceAccountCallbacks callbacks){
+    public void getFinanceAccountsAndUserInBackgroung(String username, FinanceAccountCallbacks callbacks){
         lockScreenOrientation(activity);
-        new FetchAllFinanceAccountsAsynckTacks(callbacks).execute();
+        new FetchAllFinanceAccountsAsynckTacks(username,callbacks).execute();
     }
 
 
@@ -1087,10 +1087,12 @@ public class ServerRequests {
     public class FetchAllEventsAsynckTacks extends AsyncTask<Void,Void,ArrayList<CalendarCollection>> {
 
         GetEventsCallbacks eventsCallbacks;
+        String username;
 
 
-        public FetchAllEventsAsynckTacks( GetEventsCallbacks callbacks) {
+        public FetchAllEventsAsynckTacks( String username, GetEventsCallbacks callbacks) {
             this.eventsCallbacks = callbacks;
+            this.username=username;
         }
 
         @Override
@@ -1107,14 +1109,23 @@ public class ServerRequests {
             ArrayList<CalendarCollection> returnedEvents=new ArrayList<>();
             URL url;
             HttpURLConnection urlConnection=null;
+            ArrayList<Pair<String,String>> data=new ArrayList<>();
+
+            data.add(new Pair<String, String>("creator",username));
+
             try {
+                byte[] postData= getData(data).getBytes("UTF-8");
+
                 url=new URL(SERVER_ADDRESS + "FetchAllCalenderEvents.php");
                 urlConnection=(HttpURLConnection)url.openConnection();
                 urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
                 urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
                 urlConnection.setRequestMethod("POST");
-                urlConnection.setDoOutput(true);
                 urlConnection.setDoInput(true);
+                urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                urlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
+                urlConnection.setDoOutput(true);
+                urlConnection.getOutputStream().write(postData);
 
 
                 InputStream in =urlConnection.getInputStream();
@@ -1152,10 +1163,12 @@ public class ServerRequests {
     public class FetchAllFinanceAccountsAsynckTacks extends AsyncTask<Void,Void,ArrayList<FinanceAccount>> {
 
         FinanceAccountCallbacks callbacks;
+        String username;
 
 
-        public FetchAllFinanceAccountsAsynckTacks(FinanceAccountCallbacks callbacks) {
+        public FetchAllFinanceAccountsAsynckTacks(String username, FinanceAccountCallbacks callbacks) {
             this.callbacks = callbacks;
+            this.username=username;
         }
 
         @Override
@@ -1172,7 +1185,14 @@ public class ServerRequests {
             ArrayList<FinanceAccount> returnedAccounts=new ArrayList<>();
             URL url;
             HttpURLConnection urlConnection=null;
+
+            ArrayList<Pair<String,String>> data=new ArrayList<>();
+
+            data.add(new Pair<String, String>("account_owner",username));
+
             try {
+                byte[] postData= getData(data).getBytes("UTF-8");
+
                 url=new URL(SERVER_ADDRESS + "FetchAllFinanceAccounts.php");
                 urlConnection=(HttpURLConnection)url.openConnection();
                 urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
@@ -1180,6 +1200,9 @@ public class ServerRequests {
                 urlConnection.setRequestMethod("POST");
                 urlConnection.setDoOutput(true);
                 urlConnection.setDoInput(true);
+                urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                urlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
+                urlConnection.getOutputStream().write(postData);
 
 
                 InputStream in =urlConnection.getInputStream();
@@ -1219,10 +1242,12 @@ public class ServerRequests {
     public class FetchAllGroceryListsAsynckTacks extends AsyncTask<Void,Void,ArrayList<GroceryList>> {
 
         GroceryListCallBacks eventsCallbacks;
+        String username;
 
 
-        public FetchAllGroceryListsAsynckTacks(GroceryListCallBacks callbacks) {
+        public FetchAllGroceryListsAsynckTacks(String username, GroceryListCallBacks callbacks) {
             this.eventsCallbacks = callbacks;
+            this.username=username;
         }
 
         @Override
@@ -1239,7 +1264,13 @@ public class ServerRequests {
             ArrayList<GroceryList> returnedEvents=new ArrayList<>();
             URL url;
             HttpURLConnection urlConnection=null;
+            ArrayList<Pair<String,String>> data=new ArrayList<>();
+
+            data.add(new Pair<String, String>("list_creator",username));
+
             try {
+                byte[] postData= getData(data).getBytes("UTF-8");
+
                 url=new URL(SERVER_ADDRESS + "FetchAllGroceryLists.php");
                 urlConnection=(HttpURLConnection)url.openConnection();
                 urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
@@ -1247,6 +1278,11 @@ public class ServerRequests {
                 urlConnection.setRequestMethod("POST");
                 urlConnection.setDoOutput(true);
                 urlConnection.setDoInput(true);
+                urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                urlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
+                urlConnection.getOutputStream().write(postData);
+
+
 
 
                 InputStream in =urlConnection.getInputStream();

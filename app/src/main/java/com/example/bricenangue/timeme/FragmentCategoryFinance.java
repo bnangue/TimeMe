@@ -281,7 +281,7 @@ public class FragmentCategoryFinance extends Fragment implements View.OnClickLis
     private void getAccount(){
         sqlFinanceAccount.reInitializeFinanceSqliteTable();
         ServerRequests serverRequests=new ServerRequests((AppCompatActivity) getActivity());
-        serverRequests.getFinanceAccountsAndUserInBackgroung(new FinanceAccountCallbacks() {
+        serverRequests.getFinanceAccountsAndUserInBackgroung(userLocalStore.getUserfullname(),new FinanceAccountCallbacks() {
             @Override
             public void fetchDone(ArrayList<FinanceAccount> returnedAccounts) {
                 if(returnedAccounts.size()!=0){

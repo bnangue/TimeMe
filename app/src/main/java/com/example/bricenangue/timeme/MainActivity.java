@@ -31,6 +31,8 @@ public class MainActivity extends AppCompatActivity {
     public static boolean eventsareloaded=false;
     private SQLiteShoppingList sqLiteShoppingList;
     private SQLFinanceAccount sqlFinanceAccount;
+    private UserLocalStore userLocalStore;
+
 
     private boolean haveNetworkConnection() {
         boolean haveConnectedWifi = false;
@@ -56,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
 
         loadprogressBar=(ProgressBar)findViewById(R.id.prbar);
 
+        userLocalStore= new UserLocalStore(this);
          sqLiteShoppingList=new SQLiteShoppingList(this);
         sqlFinanceAccount=new SQLFinanceAccount(this);
 
@@ -83,13 +86,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void getEventsfromMySQL() {
         final ServerRequests serverRequests=new ServerRequests(this);
-        serverRequests.getCalenderEventInBackgroung(new GetEventsCallbacks() {
+        serverRequests.getCalenderEventInBackgroung(userLocalStore.getUserfullname(),new GetEventsCallbacks() {
             @Override
             public void done(ArrayList<CalendarCollection> returnedeventobject) {
                 if(returnedeventobject.size()!=0){
 
                         saveeventtoSQl(returnedeventobject);
-                    serverRequests.getFinanceAccountsAndUserInBackgroung(new FinanceAccountCallbacks() {
+                    serverRequests.getFinanceAccountsAndUserInBackgroung(userLocalStore.getUserfullname(),new FinanceAccountCallbacks() {
                         @Override
                         public void fetchDone(ArrayList<FinanceAccount> returnedAccounts) {
                             if(returnedAccounts.size()!=0){
@@ -102,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
 
                         }
                     });
-                    serverRequests.getGroceryListsInBackgroung(new GroceryListCallBacks() {
+                    serverRequests.getGroceryListsInBackgroung(userLocalStore.getUserfullname(),new GroceryListCallBacks() {
                         @Override
                         public void fetchDone(ArrayList<GroceryList> returnedGroceryLists) {
                             if(returnedGroceryLists.size()!=0){
@@ -180,7 +183,7 @@ public class MainActivity extends AppCompatActivity {
                     **/
                 }else {
 
-                    serverRequests.getFinanceAccountsAndUserInBackgroung(new FinanceAccountCallbacks() {
+                    serverRequests.getFinanceAccountsAndUserInBackgroung(userLocalStore.getUserfullname(),new FinanceAccountCallbacks() {
                         @Override
                         public void fetchDone(ArrayList<FinanceAccount> returnedAccounts) {
                             if(returnedAccounts.size()!=0){
@@ -193,7 +196,7 @@ public class MainActivity extends AppCompatActivity {
 
                         }
                     });
-                    serverRequests.getGroceryListsInBackgroung(new GroceryListCallBacks() {
+                    serverRequests.getGroceryListsInBackgroung(userLocalStore.getUserfullname(),new GroceryListCallBacks() {
                         @Override
                         public void fetchDone(ArrayList<GroceryList> returnedGroceryLists) {
                             if(returnedGroceryLists.size()!=0){
