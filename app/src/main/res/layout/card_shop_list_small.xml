@@ -53,14 +53,14 @@
 
 
                 <Button
-                    android:layout_width="50dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/buttondeletecardview_create_shopping_list_small_card"
                     android:layout_alignParentBottom="true"
                     android:layout_alignParentRight="true"
                     android:layout_alignParentEnd="true"
                     android:textColor="@color/primary_dark"
-                    android:drawableRight="@drawable/delete_small"
+                    android:drawableRight="@mipmap/ic_delete_time_me"
                     style="@style/Base.Widget.AppCompat.Button.Borderless"
                      />
 

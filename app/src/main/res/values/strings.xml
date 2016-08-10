@@ -217,5 +217,8 @@
     <string name="text_View_Finance_records_ID_Amount">Identifier</string>
     <string name="text_View_Finance_records_Categoriy_Amount">Category</string>
     <string name="text_View_Finance_records_note">Note</string>
+    <string name="menu_edit">Edit</string>
+    <string name="grocery_fragment_list_hide">hide all</string>
+    <string name="grocery_fragment_list_show">show all</string>
 
 </resources>

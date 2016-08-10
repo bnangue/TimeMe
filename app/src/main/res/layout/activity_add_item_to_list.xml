@@ -11,57 +11,66 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-
-
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_alignParentTop="true"
-
             android:paddingTop="@dimen/activity_vertical_margin"
             android:layout_above="@+id/linearLayout_separator_activity_details_shopping_list">
-            <Button
-                android:paddingLeft="@dimen/activity_horizontal_margin"
-                android:paddingRight="@dimen/activity_horizontal_margin"
-                android:id="@+id/grocery_activity_add_itemtoList_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                style="@style/Base.Widget.AppCompat.Button.Borderless"
-                android:drawableLeft="@drawable/addprevisory"
-                android:drawableStart="@drawable/addprevisory"
-                android:layout_marginTop="5dp"
-                android:layout_marginBottom="3dp"
-                android:text="@string/text_add_item_to_list_createnewItem_button"
-                android:textSize="15sp"
-                android:textColor="@color/create_new_ShoppingList"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:id="@+id/secondlinearelaoutadditemtolist"
+                android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_below="@+id/grocery_activity_add_itemtoList_button"
-                >
-
+                android:id="@+id/button_create_item_set_date_layout"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="3dp">
 
                 <Button
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:hint="22-07-2016"
                     android:id="@+id/dateaddeventstart_creatList_add_item_to_list"
-                    android:gravity="center"
+                    android:textSize="15sp"
                     android:drawableLeft="@drawable/tearcalendar"
                     style="@style/Widget.AppCompat.Button.Borderless"
-                    android:layout_weight="3"/>
+                    android:layout_weight="1"
+                    android:layout_gravity="center_vertical"/>
+
+
+                <Button
+                    android:id="@+id/grocery_activity_add_itemtoList_button"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    style="@style/Base.Widget.AppCompat.Button.Borderless"
+                    android:drawableLeft="@mipmap/ic_add_time_me"
+                    android:drawableStart="@mipmap/ic_add_time_me"
+                    android:text="@string/text_add_item_to_list_createnewItem_button"
+                    android:textColor="@color/create_new_ShoppingList"
+                    />
+
+
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:id="@+id/secondlinearelaoutadditemtolist"
+                android:orientation="horizontal"
+                android:layout_below="@+id/button_create_item_set_date_layout"
+                >
+
+
 
                 <android.support.v7.widget.SearchView
                     android:paddingLeft="@dimen/activity_horizontal_margin"
                     android:paddingRight="@dimen/activity_horizontal_margin"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="5"
                     android:id="@+id/actionbarsearch_add_item_to_list"
-
+                    android:layout_gravity="right"
                     />
 
             </LinearLayout>

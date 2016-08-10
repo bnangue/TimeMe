@@ -75,8 +75,11 @@ public class MainActivity extends AppCompatActivity {
             sqlFinanceAccount.reInitializeFinanceSqliteTable();
             mySQLiteHelper.reInitializeSqliteTable();
             sqLiteShoppingList.reInitializeShoppingListSqliteTable();
+            loadprogressBar.setIndeterminate(false);
+            loadprogressBar.setVisibility(View.INVISIBLE);
+            startActivity(new Intent(MainActivity.this,LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
 
-            getEventsfromMySQL();
+            //getEventsfromMySQL();
 
         }else{
             showSnackBar();

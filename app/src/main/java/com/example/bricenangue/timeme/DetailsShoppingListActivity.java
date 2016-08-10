@@ -1,5 +1,6 @@
 package com.example.bricenangue.timeme;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
@@ -52,6 +53,7 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
     private Snackbar snackbar;
     private CoordinatorLayout coordinatorLayout;
     private static boolean somethingChanged=false;
+    private boolean isToUpdate=false;
     private MySQLiteHelper mySQLiteHelper;
     private SQLFinanceAccount sqlFinanceAccount;
     private FinanceAccount financeAccount=new FinanceAccount(this);
@@ -82,6 +84,10 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
         Bundle extras=getIntent().getExtras();
         if(extras!=null && extras.containsKey("GroceryList")){
             groceryList= extras.getParcelable("GroceryList");
+            if(extras.containsKey("isFromDetails")){
+                somethingChanged=extras.getBoolean("isFromDetails");
+                isToUpdate=somethingChanged;
+            }
         }
 
         if(groceryList!=null){
@@ -169,6 +175,12 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
         if (id == R.id.action_items_added_done) {
            onBackPressed();
 
+            return true;
+        }
+        if (id== R.id.action_items_added_edit){
+            //open add item to list an edit
+            startActivity(new Intent(this,AddItemToListActivity.class).putExtra("ListToChange",groceryList).putExtra("isFromDetails",true)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             return true;
         }
 
@@ -409,79 +421,129 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
     public void onBackPressed() {
 
         if(somethingChanged){
-            SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm");
-            formatter.setLenient(false);
+            if(isToUpdate){
 
-            Date currentDate = new Date();
+                SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd, HH:mm");
+                formatter.setLenient(false);
+
+                Date currentDate = new Date();
 
 
-            String currentTime = formatter.format(currentDate);
-            CalendarCollection    calendarCollection=new CalendarCollection(groceryList.getDatum(),groceryList.getListcontain(),
-                    groceryList.getCreatorName(),groceryList.getDatum(), groceryList.getDatum() + " 17:00",
-                    groceryList.getDatum() +" 20:00",groceryList.getList_unique_id(),getString(R.string.Event_Category_Category_Shopping),"0","0",currentTime);
+                String currentTime = formatter.format(currentDate);
+                CalendarCollection    calendarCollection=new CalendarCollection(groceryList.getDatum(),groceryList.getListcontain(),
+                        groceryList.getCreatorName(),groceryList.getDatum(), groceryList.getDatum() + " 17:00",
+                        groceryList.getDatum() +" 20:00",groceryList.getList_unique_id(),
+                        getString(R.string.Event_Category_Category_Shopping),"0","0",currentTime);
 
-            if(groceryList.allItemsbought()){
 
-                FinanceRecords financeRecords=new FinanceRecords(getString(R.string.textInitialize_create_account_grocery_note),currentTime.split(" ")[0],
-                        getString(R.string.textInitialize_create_account_grocery_note),groceryList.getGroceryListTotalPriceToPayString().replace(",",".")
-                        ,groceryList.getList_unique_id(),
-                        getString(R.string.textInitialize_create_account_grocery_category),currentTime.split(" ")[0],userLocalStore.getUserfullname(),0,true,false);
-
+                //update finance record and lsi to server
 
                 ArrayList<FinanceAccount> financeAccountArrayList= sqlFinanceAccount.getAllFinanceAccount();
                 if(financeAccountArrayList.size()!=0){
                     financeAccount=financeAccountArrayList.get(0);
-
-                }
-                ArrayList<FinanceRecords> recordses=financeAccount.getRecords();
-                for(int i=0;i<recordses.size();i++){
-                    if(recordses.get(i).getRecordUniquesId().equals(financeRecords.getRecordUniquesId())){
-                        recordses.set(i,financeRecords);
+                    ArrayList<FinanceRecords> recordsArrayList=new ArrayList<>();
+                    FinanceRecords financeRecords1=null;
+                    recordsArrayList=financeAccount.getRecords();
+                    for (int i =0; i<recordsArrayList.size();i++){
+                        if(recordsArrayList.get(i).getRecordUniquesId().equals(groceryList.getList_unique_id())){
+                            financeRecords1=recordsArrayList.get(i);
+                            financeRecords1.setRecordAmount(groceryList.getGroceryListTotalPriceToPayString().replace(",","."));
+                            recordsArrayList.set(i,financeRecords1);
+                        }
                     }
+                    financeAccount.setAccountsRecord(recordsArrayList);
+                    financeAccount.getAccountrecordsAmountUpdateBalance();
+
+                    financeAccount.getAccountRecordsString();
+                    financeAccount.setLastchangeToAccount();
+
+
+                    updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
+
+
                 }
 
-                financeAccount.setAccountsRecord(recordses);
-                financeAccount.getAccountrecordsAmountUpdateBalance();
-                financeAccount.setLastchangeToAccount();
 
 
-                if(financeAccount.getAccountRecordsString().isEmpty()){
-                    updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
-                }else {
-                    updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
-                }
+
             }else {
-                FinanceRecords financeRecords=new FinanceRecords(getString(R.string.textInitialize_create_account_grocery_note),currentTime.split(" ")[0],
-                        getString(R.string.textInitialize_create_account_grocery_note),groceryList.getGroceryListTotalPriceToPayString().replace(",",".")
-                        ,groceryList.getList_unique_id(),
-                        getString(R.string.textInitialize_create_account_grocery_category),groceryList.getDatum(),userLocalStore.getUserfullname(),0,false,false);
+
+                SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm");
+                formatter.setLenient(false);
+
+                Date currentDate = new Date();
 
 
-                ArrayList<FinanceAccount> financeAccountArrayList= sqlFinanceAccount.getAllFinanceAccount();
-                if(financeAccountArrayList.size()!=0){
-                    financeAccount=financeAccountArrayList.get(0);
+                String currentTime = formatter.format(currentDate);
+                CalendarCollection    calendarCollection=new CalendarCollection(groceryList.getDatum(),groceryList.getListcontain(),
+                        groceryList.getCreatorName(),groceryList.getDatum(), groceryList.getDatum() + " 17:00",
+                        groceryList.getDatum() +" 20:00",groceryList.getList_unique_id(),getString(R.string.Event_Category_Category_Shopping),"0","0",currentTime);
 
-                }
-                ArrayList<FinanceRecords> recordses=financeAccount.getRecords();
-                for(int i=0;i<recordses.size();i++){
-                    if(recordses.get(i).getRecordUniquesId().equals(financeRecords.getRecordUniquesId())){
-                        recordses.set(i,financeRecords);
+                if(groceryList.allItemsbought()){
+
+                    FinanceRecords financeRecords=new FinanceRecords(getString(R.string.textInitialize_create_account_grocery_note),currentTime.split(" ")[0],
+                            getString(R.string.textInitialize_create_account_grocery_note),groceryList.getGroceryListTotalPriceToPayString().replace(",",".")
+                            ,groceryList.getList_unique_id(),
+                            getString(R.string.textInitialize_create_account_grocery_category),currentTime.split(" ")[0],userLocalStore.getUserfullname(),0,true,false);
+
+
+                    ArrayList<FinanceAccount> financeAccountArrayList= sqlFinanceAccount.getAllFinanceAccount();
+                    if(financeAccountArrayList.size()!=0){
+                        financeAccount=financeAccountArrayList.get(0);
+
+                    }
+                    ArrayList<FinanceRecords> recordses=financeAccount.getRecords();
+                    for(int i=0;i<recordses.size();i++){
+                        if(recordses.get(i).getRecordUniquesId().equals(financeRecords.getRecordUniquesId())){
+                            recordses.set(i,financeRecords);
+                        }
+                    }
+
+                    financeAccount.setAccountsRecord(recordses);
+                    financeAccount.getAccountrecordsAmountUpdateBalance();
+                    financeAccount.setLastchangeToAccount();
+
+
+                    if(financeAccount.getAccountRecordsString().isEmpty()){
+                        updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
+                    }else {
+                        updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
+                    }
+                }else {
+                    FinanceRecords financeRecords=new FinanceRecords(getString(R.string.textInitialize_create_account_grocery_note),currentTime.split(" ")[0],
+                            getString(R.string.textInitialize_create_account_grocery_note),groceryList.getGroceryListTotalPriceToPayString().replace(",",".")
+                            ,groceryList.getList_unique_id(),
+                            getString(R.string.textInitialize_create_account_grocery_category),groceryList.getDatum(),userLocalStore.getUserfullname(),0,false,false);
+
+
+                    ArrayList<FinanceAccount> financeAccountArrayList= sqlFinanceAccount.getAllFinanceAccount();
+                    if(financeAccountArrayList.size()!=0){
+                        financeAccount=financeAccountArrayList.get(0);
+
+                    }
+                    ArrayList<FinanceRecords> recordses=financeAccount.getRecords();
+                    for(int i=0;i<recordses.size();i++){
+                        if(recordses.get(i).getRecordUniquesId().equals(financeRecords.getRecordUniquesId())){
+                            recordses.set(i,financeRecords);
+                        }
+                    }
+
+                    financeAccount.setAccountsRecord(recordses);
+                    financeAccount.getAccountrecordsAmountUpdateBalance();
+                    financeAccount.setLastchangeToAccount();
+
+
+                    if(financeAccount.getAccountRecordsString().isEmpty()){
+                        // updateGroceryListOnServer(groceryList,calendarCollection,null);
+                        updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
+                    }else {
+                        updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
+                        // updateGroceryListOnServer(groceryList,calendarCollection,financeAccount);
                     }
                 }
 
-                financeAccount.setAccountsRecord(recordses);
-                financeAccount.getAccountrecordsAmountUpdateBalance();
-                financeAccount.setLastchangeToAccount();
-
-
-                if(financeAccount.getAccountRecordsString().isEmpty()){
-                   // updateGroceryListOnServer(groceryList,calendarCollection,null);
-                    updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
-                }else {
-                    updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
-                   // updateGroceryListOnServer(groceryList,calendarCollection,financeAccount);
-                }
             }
+
 
         }else {
 
@@ -502,9 +564,39 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
             @Override
             public void setServerResponse(String serverResponse) {
                 if(serverResponse.contains("Account and Grocery list successfully updated")){
-                    updateEvent(calendarCollection,groceryList,financeAccount);
+                    if(groceryList.allItemsbought()){
+
+                        deleteEvent(calendarCollection,groceryList,financeAccount);
+                    }else {
+                        updateEvent(calendarCollection,groceryList,financeAccount);
+                    }
+
                 }else {
                     showSnackBar(groceryList,calendarCollection,financeAccount);
+                }
+            }
+        });
+    }
+    void deleteEvent(final CalendarCollection calendarCollection, final GroceryList groceryList, final FinanceAccount financeAccount){
+        final ServerRequests serverRequests= new ServerRequests(this);
+        serverRequests.deleteCalenderEventInBackgroung(calendarCollection, new GetEventsCallbacks() {
+            @Override
+            public void done(ArrayList<CalendarCollection> returnedeventobject) {
+
+            }
+
+            @Override
+            public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
+
+            }
+
+            @Override
+            public void updated(String reponse) {
+                if (reponse.contains("Event successfully deleted")) {
+                    mySQLiteHelper.deleteIncomingNotification(calendarCollection.incomingnotifictionid);
+                    updateFinanceAccountLocally(financeAccount,groceryList);
+                    
+
                 }
             }
         });
@@ -524,6 +616,7 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
                     updateEvent(calendarCollection,groceryList,financeAccount);
 
 
+
                 }else{
                     showSnackBar(groceryList,calendarCollection,financeAccount);
                 }
@@ -535,6 +628,7 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
 
         groceryList.allItemsbought();
         if (sqLiteShoppingList.updateShoppingList(groceryList)==1){
+
             somethingChanged=false;
             super.onBackPressed();
         }else {

@@ -46,6 +46,7 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
     private UserLocalStore userLocalStore;
     private boolean isListwithDoneList;
     private SQLiteShoppingList sqLiteShoppingList;
+    private SQLFinanceAccount sqlFinanceAccount;
 
 
     public class OnExpandDetailsClickListener implements View.OnClickListener {
@@ -124,6 +125,7 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
         mySQLiteHelper=new MySQLiteHelper(context);
         manager=((Activity)context).getFragmentManager();
         userLocalStore=new UserLocalStore(context);
+        sqlFinanceAccount=new SQLFinanceAccount(context);
 
     }
 
@@ -199,7 +201,27 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
                         groceryList.getCreatorName(),groceryList.getDatum(), groceryList.getDatum() + " 17:00",
                         groceryList.getDatum() +" 20:00",groceryList.getList_unique_id(),context.getString(R.string.Event_Category_Category_Shopping),"0","0",currentTime);
 
-                deleteGroceryOnServer(groceryList,position,calendarCollection);
+                ArrayList<FinanceAccount> financeAccountArrayList= sqlFinanceAccount.getAllFinanceAccount();
+                if(financeAccountArrayList.size()!=0) {
+                    FinanceAccount financeAccount = financeAccountArrayList.get(0);
+                    ArrayList<FinanceRecords> recordsArrayList = new ArrayList<>();
+                    recordsArrayList = financeAccount.getRecords();
+                    for (int i = 0; i < recordsArrayList.size(); i++) {
+                        if (!groceryList.allItemsbought() && recordsArrayList.get(i).getRecordUniquesId().equals(groceryList.getList_unique_id())) {
+                            recordsArrayList.remove(recordsArrayList.get(i));
+                        }
+                    }
+                    financeAccount.setAccountsRecord(recordsArrayList);
+                    financeAccount.getAccountrecordsAmountUpdateBalance();
+
+                    financeAccount.getAccountRecordsString();
+                    financeAccount.setLastchangeToAccount();
+
+                    deleteGroceryOnServer(groceryList,position,calendarCollection,financeAccount);
+                }else {
+
+                }
+
 
                 alertDialog.dismiss();
             }
@@ -211,9 +233,9 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
     }
 
 
-    private void deleteGroceryOnServer(final GroceryList groceryList, final int position, final CalendarCollection calendarCollection){
+    private void deleteGroceryOnServer(final GroceryList groceryList, final int position, final CalendarCollection calendarCollection, final FinanceAccount financeAccount){
         ServerRequests serverRequests=new ServerRequests(context);
-        serverRequests.deleteGroceryListInBackgroung(groceryList, new GroceryListCallBacks() {
+        serverRequests.deleteGroceryListInBackgroung(groceryList,financeAccount, calendarCollection,new GroceryListCallBacks() {
             @Override
             public void fetchDone(ArrayList<GroceryList> returnedGroceryLists) {
 
@@ -221,9 +243,10 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
 
             @Override
             public void setServerResponse(String serverResponse) {
-                if (serverResponse.contains("Grocery list successfully deleted")){
+                if (serverResponse.contains("Grocery list successfully deleted, account updated,Event deleted")){
 
-                    deleteFromSQLITEAndSERver(calendarCollection,groceryList,position);
+                    mySQLiteHelper.deleteIncomingNotification(calendarCollection.incomingnotifictionid);
+                    deleteGroceryListLocally(groceryList,position,financeAccount);
 
 
                 }else{
@@ -234,7 +257,7 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
 
     }
 
-    private void deleteFromSQLITEAndSERver(final CalendarCollection collection, final GroceryList groceryList,final int position){
+    private void deleteFromSQLITEAndSERver(final CalendarCollection collection, final GroceryList groceryList, final int position, final FinanceAccount financeAccount){
         ServerRequests serverRequests= new ServerRequests(context);
         serverRequests.deleteCalenderEventInBackgroung(collection, new GetEventsCallbacks() {
             @Override
@@ -251,7 +274,7 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
             public void updated(String reponse) {
                 if (reponse.contains("Event successfully deleted")) {
                     mySQLiteHelper.deleteIncomingNotification(collection.incomingnotifictionid);
-                    deleteGroceryListLocally(groceryList,position);
+                    deleteGroceryListLocally(groceryList,position,financeAccount);
 
                 }else{
                     Toast.makeText(context,"An error ont event occured during the connection to the server",Toast.LENGTH_SHORT).show();
@@ -260,15 +283,21 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
         });
     }
 
-    private void deleteGroceryListLocally(GroceryList groceryList, int position){
+    private void deleteGroceryListLocally(GroceryList groceryList, int position,FinanceAccount financeAccount){
 
-        if(sqLiteShoppingList.deleteShoppingList(groceryList.getList_unique_id())!=0){
-            deleteItem(position);
-            Toast.makeText(context,"List succesffully deleted",Toast.LENGTH_SHORT).show();
+        if (sqlFinanceAccount.updateFinanceAccount(financeAccount)!=0){
+            if(sqLiteShoppingList.deleteShoppingList(groceryList.getList_unique_id())!=0){
+                deleteItem(position);
+                Toast.makeText(context,"List succesffully deleted",Toast.LENGTH_SHORT).show();
 
+            }else {
+                Toast.makeText(context,"Error deleting grocery list",Toast.LENGTH_SHORT).show();
+            }
         }else {
-            Toast.makeText(context,"Error deleting grocery list",Toast.LENGTH_SHORT).show();
+            Toast.makeText(context,"Error updating account locally",Toast.LENGTH_SHORT).show();
         }
+
+
     }
 
     public void addItem(GroceryList dataObj) {

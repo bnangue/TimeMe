@@ -11,7 +11,12 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.RotateAnimation;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,6 +36,8 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
     private String mParam2;
     private TextView textBalance;
     private Button add_List;
+    private boolean isExpanded = false;
+    private float mCurrentRotation = 360.0f;
 
     private RecyclerAdapterSmallCards.MyRecyclerAdaptaterCreateShoppingListClickListener myClickListener;
     private RecyclerAdapterSmallCards.MyRecyclerAdaptaterCreateShoppingListDoneClickListener myDoneClickListener;
@@ -50,6 +57,9 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
     private boolean isShown=false;
     private OnCalendarEventsChanged calendarEventsChanged;
     private UserLocalStore userLocalStore;
+    private TextView textshowHide;
+    private LinearLayout linearLayout;
+
 
     private void prepareRecyclerView(Context context,ArrayList<GroceryList> arrayList){
         mRecyclerView.setVisibility(View.VISIBLE);
@@ -109,8 +119,12 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
         userLocalStore=new UserLocalStore(getContext());
         View v = inflater.inflate(R.layout.fragment_grocery_list, container, false);
         textBalance = (TextView) v.findViewById(R.id.grocery_fragment_balance_amount);
+        textshowHide = (TextView) v.findViewById(R.id.text_grocery_fragment_show);
+
         add_List = (Button) v.findViewById(R.id.grocery_fragment_add_recently_button);
 
+
+       // linearLayout=(LinearLayout)v.findViewById(R.id.text_grocery_fragment_done_hide_layout);
         mRecyclerViewdone = (RecyclerView) v.findViewById(R.id.shoppingrecycleViewfragment_grocery_list_done_lists);
         mRecyclerView = (RecyclerView) v.findViewById(R.id.shoppingrecycleViewfragöment_grocery_list_recentlityl_added);
 
@@ -132,6 +146,43 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
         };
 
 
+       final ImageView arrow = (ImageView) v.findViewById(R.id.arrow_grocery_fragment_done_hide_text);
+
+
+        arrow.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+
+                if (isExpanded) {
+                    RotateAnimation anim = new RotateAnimation(mCurrentRotation, mCurrentRotation + 180.0f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+                    mCurrentRotation = (mCurrentRotation + 180.0f) % 360.0f;
+                    anim.setInterpolator(new LinearInterpolator());
+                    anim.setFillAfter(true);
+                    anim.setFillEnabled(true);
+                    anim.setDuration(300);
+                    assert arrow != null;
+                    arrow.startAnimation(anim);
+                    isExpanded = false;
+                    textshowHide.setText(getContext().getString(R.string.grocery_fragment_list_hide));
+                    mRecyclerViewdone.setVisibility(View.VISIBLE);
+                } else {
+                    RotateAnimation anim = new RotateAnimation(mCurrentRotation, mCurrentRotation - 180.0f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+                    mCurrentRotation = (mCurrentRotation - 180.0f) % 360.0f;
+                    anim.setInterpolator(new LinearInterpolator());
+                    anim.setFillAfter(true);
+                    anim.setFillEnabled(true);
+                    anim.setDuration(300);
+                    assert arrow != null;
+                    arrow.startAnimation(anim);
+                    isExpanded = true;
+                    textshowHide.setText(getContext().getString(R.string.grocery_fragment_list_show));
+                    mRecyclerViewdone.setVisibility(View.GONE);
+
+                }
+
+            }
+        });
         add_List.setOnClickListener(this);
         if(userLocalStore.getUserAccountBalance().contains("-")){
             textBalance.setText(userLocalStore.getUserAccountBalance()+" €");
@@ -141,11 +192,14 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
         }
 
 
+
+
         return v;
     }
 
     private void startGroceryListOverview(GroceryList item) {
-        startActivity(new Intent(getActivity(),DetailsShoppingListActivity.class).putExtra("GroceryList",item).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK));
+        startActivity(new Intent(getActivity(),DetailsShoppingListActivity.class)
+                .putExtra("GroceryList",item).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK));
 
     }
 
@@ -197,6 +251,8 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
                 //Create new shopping list
                 startActivity(new Intent(getActivity(),CreateNewShoppingListActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
                 break;
+
+
         }
     }
 

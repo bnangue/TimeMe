@@ -222,30 +222,33 @@ public class FragmentMyEvent extends Fragment implements  FragmentCommunicator ,
         ArrayList<CalendarCollection> a =new ArrayList<>();
         for (int i=0;i<incomingNotifications.size();i++){
             JSONObject jo_inside = null;
-            try {
-                jo_inside = new JSONObject(incomingNotifications.get(i).body);
+            if(incomingNotifications.get(i).type==1){
+                try {
+                    jo_inside = new JSONObject(incomingNotifications.get(i).body);
 
-                String titel = jo_inside.getString("title");
-                String infotext = jo_inside.getString("description");
-                String creator = jo_inside.getString("creator");
-                String creationTime = jo_inside.getString("datetime");
-                String category = jo_inside.getString("category");
-                String startingtime = jo_inside.getString("startingtime");
-                String endingtime = jo_inside.getString("endingtime");
-                String alldayevent = jo_inside.getString("alldayevent");
-                String eventHash = jo_inside.getString("hashid");
-                String everymonth = jo_inside.getString("everymonth");
-                String creationdatetime = jo_inside.getString("defaulttime");
+                    String titel = jo_inside.getString("title");
+                    String infotext = jo_inside.getString("description");
+                    String creator = jo_inside.getString("creator");
+                    String creationTime = jo_inside.getString("datetime");
+                    String category = jo_inside.getString("category");
+                    String startingtime = jo_inside.getString("startingtime");
+                    String endingtime = jo_inside.getString("endingtime");
+                    String alldayevent = jo_inside.getString("alldayevent");
+                    String eventHash = jo_inside.getString("hashid");
+                    String everymonth = jo_inside.getString("everymonth");
+                    String creationdatetime = jo_inside.getString("defaulttime");
 
-                CalendarCollection  object =new CalendarCollection(titel,infotext,creator,creationTime,startingtime,endingtime,eventHash,category,alldayevent,everymonth,creationdatetime);
-                object.incomingnotifictionid = incomingNotifications.get(i).id;
-                if(object.creator.contains(userLocalStore.getLoggedInUser().getfullname())){
-                    a.add(object);
+                    CalendarCollection  object =new CalendarCollection(titel,infotext,creator,creationTime,startingtime,endingtime,eventHash,category,alldayevent,everymonth,creationdatetime);
+                    object.incomingnotifictionid = incomingNotifications.get(i).id;
+                    if(object.creator.contains(userLocalStore.getLoggedInUser().getfullname())){
+                        a.add(object);
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
-
-            } catch (JSONException e) {
-                e.printStackTrace();
             }
+
 
 
         }

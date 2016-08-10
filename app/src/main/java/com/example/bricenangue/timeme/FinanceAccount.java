@@ -59,13 +59,7 @@ public class FinanceAccount implements Parcelable {
         getRecords();
     }
 
-    public ArrayList<FinanceRecords> getAccountsRecords() {
-        return accountsRecords;
-    }
 
-    public void setAccountsRecords(ArrayList<FinanceRecords> accountsRecords) {
-        this.accountsRecords = accountsRecords;
-    }
 
     public String getLastChangeDateToAccount(){
         return lastchangeToAccount;
@@ -442,7 +436,7 @@ public class FinanceAccount implements Parcelable {
             }
         }
 
-        setAccountsRecords(items);
+        setAccountsRecord(items);
         return items;
     }
 

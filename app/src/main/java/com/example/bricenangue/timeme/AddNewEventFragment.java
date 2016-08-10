@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -116,10 +117,20 @@ public class AddNewEventFragment extends AppCompatActivity implements DialogFrag
             btnendtime.setText(builder.toString());
 
         }else {
+            long hourOne = TimeUnit.MINUTES.toMillis(60);
+            long now = new Date().getTime();
+            long hourPlusOne=now + hourOne;
+
+            // add 60 minutes to the currrent time
+
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(hourPlusOne);
+            String d=formatter.format(calendar.getTime());
+
             btnstartdate.setText(dgdh[0]);
             btnstarttime.setText(dgdh[1]);
             btnenddate.setText(dgdh[0]);
-            btnendtime.setText(dgdh[1]);
+            btnendtime.setText(d.split(",")[1]);
         }
 
         if(!btnstartdate.getText().toString().equals(btnenddate.getText().toString())){

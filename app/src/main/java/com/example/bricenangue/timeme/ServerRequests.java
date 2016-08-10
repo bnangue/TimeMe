@@ -151,13 +151,13 @@ public class ServerRequests {
         new DeleteEventsAsynckTasks(calendarCollection,callbacks).execute();
     }
 
-    public void deleteGroceryListInBackgroung(GroceryList groceryList,GroceryListCallBacks callbacks){
+    public void deleteGroceryListInBackgroung(GroceryList groceryList,FinanceAccount financeAccount,CalendarCollection collection,GroceryListCallBacks callbacks){
         progressDialog.setCancelable(false);
         progressDialog.setTitle(activity.getSupportFragmentManager(),activity.getString(R.string.AsyncTsk_Deleting_Grocery_List_In_Backgroung));
 
         progressDialog.show(activity.getSupportFragmentManager(), "task_progress");
         lockScreenOrientation(activity);
-        new DeleteGroceryListAsynckTasks(groceryList,callbacks).execute();
+        new DeleteGroceryListAsynckTasks(groceryList,financeAccount,collection,callbacks).execute();
     }
 
 
@@ -1623,10 +1623,14 @@ public class ServerRequests {
     public class DeleteGroceryListAsynckTasks extends AsyncTask<Void,Void,String>{
 
         GroceryList groceryList;
+        CalendarCollection collection;
+        FinanceAccount financeAccount;
         GroceryListCallBacks groceryListCallBacks;
 
-        public DeleteGroceryListAsynckTasks(GroceryList groceryList, GroceryListCallBacks groceryListCallBacks){
+        public DeleteGroceryListAsynckTasks(GroceryList groceryList, FinanceAccount financeAccount,CalendarCollection collection,GroceryListCallBacks groceryListCallBacks){
             this.groceryList=groceryList;
+            this.collection=collection;
+            this.financeAccount=financeAccount;
             this.groceryListCallBacks=groceryListCallBacks;
 
         }
@@ -1642,6 +1646,15 @@ public class ServerRequests {
         protected String doInBackground(Void... params) {
 
             ArrayList<Pair<String,String>> data=new ArrayList<>();
+
+            data.add(new Pair<String, String>("creator", collection.creator));
+            data.add(new Pair<String, String>("hashid",collection.hashid));
+
+            data.add(new Pair<String, String>("account_owner", financeAccount.getAccountOwnersToString()));
+            data.add(new Pair<String, String>("account_balance",financeAccount.getAccountBlanceTostring()));
+            data.add(new Pair<String, String>("account_uniqueId", financeAccount.getAccountUniqueId()));
+            data.add(new Pair<String, String>("account_lastchange", financeAccount.getLastChangeDateToAccount()));
+            data.add(new Pair<String, String>("account_records", financeAccount.getAccountRecordsString()));
 
             data.add(new Pair<String, String>("list_creator", groceryList.getCreatorName()));
             data.add(new Pair<String, String>("list_uniqueId",groceryList.getList_unique_id()));

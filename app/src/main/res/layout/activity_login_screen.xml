@@ -1,118 +1,125 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/coordinateLayout_login_screen"
     tools:context="com.example.bricenangue.timeme.LoginScreenActivity">
-
-    <ImageView
-        android:layout_width="130dp"
-        android:layout_height="130dp"
-        android:id="@+id/imageViewloginlogo"
-        android:layout_centerHorizontal="true"
-        android:src="@mipmap/ic_launcherclock"
-        android:scaleType="fitXY"
-        android:layout_marginTop="10dp"/>
-
-    <Button
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Register"
-        android:id="@+id/buttonregisterReg"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        android:textColor="@color/primary_dark"
-        style="@style/Base.Widget.AppCompat.Button.Borderless"
-        android:layout_below="@+id/imageViewloginlogo"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="24dp" />
+        android:layout_height="match_parent">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:id="@+id/separator"
-        android:orientation="horizontal"
-        android:background="@color/accent"
-        android:layout_below="@+id/buttonregisterReg"
-        android:layout_marginTop="70dp"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        />
-    <android.support.design.widget.TextInputLayout
-        android:id="@+id/editTextemaillayout"
+        <ImageView
+            android:layout_width="130dp"
+            android:layout_height="130dp"
+            android:id="@+id/imageViewloginlogo"
+            android:layout_centerHorizontal="true"
+            android:src="@mipmap/ic_launcherclock"
+            android:scaleType="fitXY"
+            android:layout_marginTop="10dp"/>
 
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/separator"
-        android:layout_alignLeft="@+id/buttonregisterReg"
-        android:layout_alignStart="@+id/buttonregisterReg"
-        android:layout_marginBottom="121dp"
-        android:layout_alignRight="@+id/buttonregisterReg"
-        android:layout_alignEnd="@+id/buttonregisterReg"
-        android:layout_marginTop="51dp"
-        android:background="@drawable/roundspinner">
-
-        <EditText
-            android:hint="@string/emailloggin"
-            android:id="@+id/editTextemailloggin"
+        <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="textEmailAddress"
-            android:maxLines="1"
-            android:singleLine="true"
+            android:text="Register"
+            android:id="@+id/buttonregisterReg"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:textColor="@color/primary_dark"
+            style="@style/Base.Widget.AppCompat.Button.Borderless"
+            android:layout_below="@+id/imageViewloginlogo"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="24dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:id="@+id/separator"
+            android:orientation="horizontal"
+            android:background="@color/accent"
+            android:layout_below="@+id/buttonregisterReg"
+            android:layout_marginTop="70dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
             />
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/editTextemaillayout"
 
-    </android.support.design.widget.TextInputLayout>
-
-    <android.support.design.widget.TextInputLayout
-        android:id="@+id/editTextpasswordlayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/editTextemaillayout"
-        android:layout_alignLeft="@+id/editTextemaillayout"
-        android:layout_alignStart="@+id/editTextemaillayout"
-        android:layout_alignRight="@+id/editTextemaillayout"
-        android:layout_alignEnd="@+id/editTextemaillayout"
-        android:layout_marginTop="51dp"
-        android:background="@drawable/roundpassword">
-
-        <EditText
-            android:hint="@string/passwordlogin"
-            android:id="@+id/editTextpasswordloggin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:imeActionId="@+id/login"
-            android:imeOptions="actionUnspecified"
-            android:inputType="textPassword"
-            android:maxLines="1"
-            android:singleLine="true"
-            />
+            android:layout_below="@+id/separator"
+            android:layout_alignLeft="@+id/buttonregisterReg"
+            android:layout_alignStart="@+id/buttonregisterReg"
+            android:layout_marginBottom="121dp"
+            android:layout_alignRight="@+id/buttonregisterReg"
+            android:layout_alignEnd="@+id/buttonregisterReg"
+            android:layout_marginTop="51dp"
+            android:background="@drawable/roundspinner">
 
-    </android.support.design.widget.TextInputLayout>
+            <EditText
+                android:hint="@string/emailloggin"
+                android:id="@+id/editTextemailloggin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textEmailAddress"
+                android:maxLines="1"
+                android:singleLine="true"
+                />
+
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/editTextpasswordlayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/editTextemaillayout"
+            android:layout_alignLeft="@+id/editTextemaillayout"
+            android:layout_alignStart="@+id/editTextemaillayout"
+            android:layout_alignRight="@+id/editTextemaillayout"
+            android:layout_alignEnd="@+id/editTextemaillayout"
+            android:layout_marginTop="51dp"
+            android:background="@drawable/roundpassword">
+
+            <EditText
+                android:hint="@string/passwordlogin"
+                android:id="@+id/editTextpasswordloggin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:imeActionId="@+id/login"
+                android:imeOptions="actionUnspecified"
+                android:inputType="textPassword"
+                android:maxLines="1"
+                android:singleLine="true"
+                />
+
+        </android.support.design.widget.TextInputLayout>
 
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Login"
-        android:id="@+id/buttonlogin"
-        android:textColor="@color/primary"
-        android:layout_below="@+id/editTextpasswordlayout"
-        style="@style/Base.Widget.AppCompat.Button.Borderless"
-        android:layout_alignRight="@+id/textView"
-        android:layout_alignEnd="@+id/textView"
-        android:layout_alignLeft="@+id/textView"
-        android:layout_alignStart="@+id/textView" />
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Login"
+            android:id="@+id/buttonlogin"
+            android:textColor="@color/primary"
+            android:layout_below="@+id/editTextpasswordlayout"
+            style="@style/Base.Widget.AppCompat.Button.Borderless"
+            android:layout_alignRight="@+id/textView"
+            android:layout_alignEnd="@+id/textView"
+            android:layout_alignLeft="@+id/textView"
+            android:layout_alignStart="@+id/textView" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="Already have an account?"
-        android:layout_marginBottom="5dp"
-        android:id="@+id/textView"
-        android:layout_above="@+id/editTextemaillayout"
-        android:layout_centerHorizontal="true" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Already have an account?"
+            android:layout_marginBottom="5dp"
+            android:id="@+id/textView"
+            android:layout_above="@+id/editTextemaillayout"
+            android:layout_centerHorizontal="true" />
+
+    </RelativeLayout>
 
 
-</RelativeLayout>
+
+</android.support.design.widget.CoordinatorLayout>

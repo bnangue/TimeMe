@@ -1,6 +1,8 @@
 package com.example.bricenangue.timeme;
 
+import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
@@ -18,6 +20,7 @@ import android.widget.Toast;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
@@ -37,6 +40,9 @@ public class DetailsFinanceAccountActivity extends AppCompatActivity implements 
     private SearchView searchViewfinanceDetails;
 
     private android.support.v7.app.AlertDialog alertDialog;
+    private ArrayList<FinanceRecords> productResults = new ArrayList<FinanceRecords>();
+    //Based on the search string, only filtered products will be moved here from productResults
+    private ArrayList<FinanceRecords> filteredProductResults = new ArrayList<FinanceRecords>();
     private Menu menu;
 
 
@@ -46,6 +52,7 @@ public class DetailsFinanceAccountActivity extends AppCompatActivity implements 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details_finance_account);
 
+        sqlFinanceAccount=new SQLFinanceAccount(this);
         alertDialog = new android.support.v7.app.AlertDialog.Builder(this).create();
         accountNameTextView=(TextView)findViewById(R.id.textView_grocery_list_item_title_activity_details_shopping_detail_fiannce_account);
         accountBalanceTextView=(TextView)findViewById(R.id.finance_fragment_balance_amount_detail_fiannce_account);
@@ -65,6 +72,28 @@ public class DetailsFinanceAccountActivity extends AppCompatActivity implements 
 
     }
 
+    void refresh(){
+       ArrayList<FinanceAccount> financeAccounts=sqlFinanceAccount.getAllFinanceAccount();
+        if(financeAccounts.size()==1){
+            if(financeAccounts.get(0).getAccountUniqueId().equals(financeAccount.getAccountUniqueId())){
+                assert financeAccounts.get(0) != null;
+                accountName=financeAccounts.get(0).getAccountName();
+                financeRecordses=financeAccounts.get(0).getRecords();
+            }
+        }else {
+            for(int i=0;i<financeAccounts.size();i++){
+                if(financeAccounts.get(i).getAccountUniqueId().equals(financeAccount.getAccountUniqueId())){
+                    assert financeAccounts.get(i) != null;
+                    accountName=financeAccounts.get(i).getAccountName();
+                    financeRecordses=financeAccounts.get(i).getRecords();
+                    return;
+                }
+            }
+        }
+
+
+    }
+
     private void populateListViewFinanceRecords() {
         String nameAcc=getString(R.string.View_account_accountName) + " " + accountName;
         accountNameTextView.setText(nameAcc);
@@ -72,6 +101,7 @@ public class DetailsFinanceAccountActivity extends AppCompatActivity implements 
         DetailsFinanceAccountAdapter accountAdapter=new DetailsFinanceAccountAdapter(this,financeRecordses);
         listViewAccountdetails.setAdapter(accountAdapter);
         listViewAccountdetails.setOnItemClickListener(this);
+        sort();
     }
 
     private void callSearchView(){
@@ -103,6 +133,12 @@ public class DetailsFinanceAccountActivity extends AppCompatActivity implements 
     @Override
     public boolean onQueryTextChange(String newText) {
 
+        if(newText.length()>1){
+            //search
+            new SearchDetailsAsyncTask().execute(newText);
+        }else {
+            populateListViewFinanceRecords();
+        }
         return false;
     }
 
@@ -143,6 +179,7 @@ public class DetailsFinanceAccountActivity extends AppCompatActivity implements 
             return true;
         }else if (id == R.id.action_account_details_refresh){
             //refresh
+          new RefreshDetailsFianceAccountAsyncTask().execute();
             return true;
         }
 
@@ -154,4 +191,158 @@ public class DetailsFinanceAccountActivity extends AppCompatActivity implements 
         removeSearchview();
         return false;
     }
+
+
+
+    class RefreshDetailsFianceAccountAsyncTask extends AsyncTask<Void ,Void, Void> {
+
+        private FragmentProgressBarLoading progressDialog;
+
+        public RefreshDetailsFianceAccountAsyncTask(){
+        }
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            //start progressBar
+            progressDialog = new FragmentProgressBarLoading();
+            progressDialog.setCancelable(false);
+            progressDialog.show(getSupportFragmentManager(), "task_progress");
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+
+            refresh();
+           return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void params) {
+            //end progressBar
+            progressDialog.dismiss(getSupportFragmentManager());
+            populateListViewFinanceRecords();
+
+        }
+    }
+
+
+
+    //in this myAsyncTask, we are fetching data from server for the search string entered by user.
+    class SearchDetailsAsyncTask extends AsyncTask<String, Void, String> {
+        ArrayList<FinanceRecords>  productList;
+        String textSearch;
+
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            productList =new ArrayList<>();
+        }
+
+        @Override
+        protected String doInBackground(String... sText) {
+
+            // url="http://lawgo.in/lawgo/products/user/1/search/"+sText[0];
+            String returnResult = getProductList();
+            this.textSearch = sText[0];
+            return returnResult;
+
+        }
+
+        public String getProductList() {
+
+            FinanceRecords object;
+            String matchFound = "N";
+
+
+            try {
+
+                productList=financeRecordses;
+                //parse date for dateList
+                for (int i = 0; i < productList.size(); i++) {
+
+                    object=productList.get(i);
+
+
+                    //check if this product is already there in productResults, if yes, then don't add it again.
+                    matchFound = "N";
+
+                    for (int j = 0; j < productResults.size(); j++) {
+
+                        if (productResults.get(j).getRecordNAme().equals(object.getRecordNAme())) {
+                            matchFound = "Y";
+                        }
+                    }
+
+                    if (matchFound == "N") {
+                        productResults.add(object);
+                    }
+
+                }
+
+
+                return ("OK");
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                return ("Exception Caught");
+            }
+
+
+
+
+        }
+
+        @Override
+        protected void onPostExecute (String result){
+
+            super.onPostExecute(result);
+
+            if (result.equalsIgnoreCase("Exception Caught")) {
+                Toast.makeText(getApplicationContext(), "Unable to connect to database,please try later", Toast.LENGTH_LONG).show();
+
+            } else {
+                //calling this method to filter the search results from productResults and move them to
+                //filteredProductResults
+                filterProductArray(textSearch);
+
+                prepareListviewall(filteredProductResults);
+
+            }
+        }
+
+
+    }
+
+    public void sort(){
+        Collections.sort(financeRecordses, new ComparatorSortFinanceDetailsBookingDate());
+    }
+    void prepareListviewall(ArrayList<FinanceRecords> financeRecordsArrayList){
+
+
+        DetailsFinanceAccountAdapter accountAdapter=new DetailsFinanceAccountAdapter(this,financeRecordsArrayList);
+        listViewAccountdetails.setAdapter(accountAdapter);
+        listViewAccountdetails.setOnItemClickListener(this);
+
+    }
+
+    public void filterProductArray(String newText) {
+
+        String pName;
+        String pDate;
+
+        filteredProductResults.clear();
+        for (int i = 0; i < productResults.size(); i++) {
+            pName = productResults.get(i).getRecordNAme().toLowerCase();
+            pDate=productResults.get(i).getRecordBookingDate();
+
+            if (pDate.contains(newText) || pName.contains(newText.toLowerCase())) {
+                filteredProductResults.add(productResults.get(i));
+
+            }
+        }
+
+    }
+
+
 }
