@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/coordinateLayout__creatList_add_item_to_list"
-    tools:context="com.example.bricenangue.timeme.AddItemToListActivity">
+    tools:context="com.app.bricenangue.timeme.AddItemToListActivity">
 
 
     <RelativeLayout
@@ -24,7 +24,7 @@
                 android:orientation="horizontal"
                 android:id="@+id/button_create_item_set_date_layout"
                 android:layout_marginTop="5dp"
-                android:layout_marginBottom="3dp">
+               >
 
                 <Button
                     android:layout_width="0dp"
@@ -32,7 +32,8 @@
                     android:hint="22-07-2016"
                     android:id="@+id/dateaddeventstart_creatList_add_item_to_list"
                     android:textSize="15sp"
-                    android:drawableLeft="@drawable/tearcalendar"
+                    android:drawableLeft="@mipmap/ic_calendar_customized"
+                    android:drawableStart="@mipmap/ic_calendar_customized"
                     style="@style/Widget.AppCompat.Button.Borderless"
                     android:layout_weight="1"
                     android:layout_gravity="center_vertical"/>
@@ -44,8 +45,8 @@
                     android:layout_weight="1"
                     android:layout_height="wrap_content"
                     style="@style/Base.Widget.AppCompat.Button.Borderless"
-                    android:drawableLeft="@mipmap/ic_add_time_me"
-                    android:drawableStart="@mipmap/ic_add_time_me"
+                    android:drawableLeft="@mipmap/ic_add_custom"
+                    android:drawableStart="@mipmap/ic_add_custom"
                     android:text="@string/text_add_item_to_list_createnewItem_button"
                     android:textColor="@color/create_new_ShoppingList"
                     />
@@ -82,11 +83,10 @@
                 android:paddingLeft="3dp"
                 android:paddingRight="3dp"
                 android:layout_width="match_parent"
-                android:layout_height="30dp"
+                android:layout_height="50dp"
                 android:orientation="horizontal"
                 android:id="@+id/linearLayout_activity_add_item_to_list"
                 android:layout_below="@+id/secondlinearelaoutadditemtolist"
-                android:layout_marginTop="10dp"
                 android:layout_marginBottom="5dp">
                 <TextView
                     android:layout_width="0dp"
@@ -97,23 +97,19 @@
                     android:id="@+id/textView_add_item_to_list_List_empty"
 
                     />
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/activity_details_shopping_list_text_sort_by"
-                    android:layout_gravity="bottom"
-                    android:layout_weight="1"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:gravity="end"
-                    />
 
-                <Spinner
+
+                <Button
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:id="@+id/spinner_activity_add_item_to_list"
+                    android:id="@+id/button_sort_activity_add_item_to_list"
                     android:layout_gravity="bottom"
                     android:layout_weight="2"
+                    android:text="@string/activity_details_shopping_list_text_sort_by"
+                    android:textAllCaps="false"
+                    style="@style/Base.Widget.AppCompat.Button.Borderless"
+                    android:drawableRight="@mipmap/ic_sort_items"
+                    android:drawableEnd="@mipmap/ic_sort_items"
                     />
             </LinearLayout>
             <LinearLayout

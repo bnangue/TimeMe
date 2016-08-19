@@ -7,7 +7,7 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.example.bricenangue.timeme.CreateFinanceRecordsActivity">
+    tools:context="com.app.bricenangue.timeme.CreateFinanceRecordsActivity">
 
 
     <RadioGroup
@@ -159,22 +159,13 @@
         android:layout_marginBottom="15dp"/>
 
 
-    <RadioGroup
+    <Spinner
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:id="@+id/activity_Create_Finance_Records_radioGroup"
-        android:layout_below="@+id/textView_activity_Create_Finance_Records_use_Account" >
+        android:id="@+id/spinner_activity_Create_Finance_Record_which_account"
+        android:background="@drawable/round"
+        android:layout_below="@+id/textView_activity_Create_Finance_Records_use_Account"
+        />
 
-        <RadioButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/radiobutton_activity_Create_Finance_Records_Account1"
-            android:layout_marginBottom="10dp"/>
-        <RadioButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/radiobutton_activity_Create_Finance_Records_Account2"/>
-    </RadioGroup>
 
 </RelativeLayout>

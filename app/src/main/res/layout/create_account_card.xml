@@ -17,7 +17,7 @@
             android:id="@+id/card_view_create_shopping_list_card"
             android:layout_gravity="center"
             android:layout_width="fill_parent"
-            android:layout_height="100dp"
+            android:layout_height="110dp"
             android:layout_marginTop="5dp"
             android:layout_marginBottom="5dp"
             card_view:cardCornerRadius="2dp"
@@ -30,7 +30,7 @@
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
                 android:id="@+id/re_create_shopping_list_card"
-                android:padding="10dp">
+                android:padding="5dp">
 
                 <TextView
                     android:id="@+id/textView_AccountName_create_account_finance_card"
@@ -40,6 +40,14 @@
                     android:text="@string/title"
                     android:layout_alignParentTop="true"
                     android:textAllCaps="true"/>
+                <TextView
+                    android:id="@+id/textView_AccountID_create_account_finance_card"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/title"
+                    android:layout_below="@+id/textView_AccountName_create_account_finance_card"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true" />
 
                 <TextView
                     android:id="@+id/textView_AccountOwner_create_account_finance_card"
@@ -47,9 +55,10 @@
                     android:layout_height="wrap_content"
                     android:textStyle="bold"
                     android:text="@string/title"
-                    android:layout_below="@+id/textView_AccountName_create_account_finance_card"
+                    android:layout_below="@+id/textView_AccountID_create_account_finance_card"
                     android:layout_alignParentLeft="true"
-                    android:layout_alignParentStart="true" />
+                    android:layout_alignParentStart="true"
+                    />
 
                 <TextView
                     android:id="@+id/textView_last_changeOnAccount_create_account_finance_card"
@@ -58,7 +67,8 @@
                     android:text="@string/eventDescription"
                     android:layout_alignParentBottom="true"
                     android:layout_alignParentLeft="true"
-                    android:layout_alignParentStart="true" />
+                    android:layout_alignParentStart="true"
+                    />
                 <TextView
                     android:id="@+id/textView_AccountBalance_create_account_finance_card"
                     android:layout_width="wrap_content"

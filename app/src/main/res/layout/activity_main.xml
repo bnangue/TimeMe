@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/coordinateLayoutmainactivity"
-    tools:context="com.example.bricenangue.timeme.MainActivity"
+    tools:context="com.app.bricenangue.timeme.MainActivity"
     android:background="@color/primary_dark">
 
     <RelativeLayout

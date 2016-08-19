@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:id="@+id/coordinateLayout_activity_details_shoppping_list"
 
-    tools:context="com.example.bricenangue.timeme.DetailsShoppingListActivity">
+    tools:context="com.app.bricenangue.timeme.DetailsShoppingListActivity">
 
 
 

@@ -4,29 +4,23 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/coordinateLayoutcreateItem"
-    android:paddingBottom="@dimen/activity_vertical_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.example.bricenangue.timeme.CreatANewItemActivity">
+    android:paddingTop="8dp"
+    tools:context="com.app.bricenangue.timeme.CreatANewItemActivity">
 
 
-    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingBottom="@dimen/activity_vertical_margin"
-        android:paddingLeft="@dimen/activity_horizontal_margin"
-        android:paddingRight="@dimen/activity_horizontal_margin"
-        android:paddingTop="@dimen/activity_vertical_margin"
-        tools:context="com.example.bricenangue.timeme.CreatANewItemActivity">
+       >
 
 
         <android.support.design.widget.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/editText_create_new_item_namelayout"
-            android:layout_marginBottom="15dp">
+            android:layout_marginBottom="5dp">
 
             <EditText
                 android:id="@+id/editText_create_new_item_name"
@@ -45,7 +39,7 @@
             android:layout_height="wrap_content"
             android:id="@+id/editText_create_new_item_pricelayout"
             android:layout_below="@+id/editText_create_new_item_namelayout"
-            android:layout_marginBottom="15dp">
+            android:layout_marginBottom="5dp">
 
             <EditText
                 android:id="@+id/editText_create_new_item_price"
@@ -65,7 +59,7 @@
             android:layout_height="wrap_content"
             android:id="@+id/editText_create_new_item_descriptionlayput"
             android:layout_below="@+id/editText_create_new_item_pricelayout"
-            android:layout_marginBottom="20dp">
+            android:layout_marginBottom="5dp">
 
             <EditText
                 android:id="@+id/editText_create_new_item_description"
@@ -78,12 +72,31 @@
 
         </android.support.design.widget.TextInputLayout>
 
+
+        <Spinner
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/spinner_item_market_activity_create_anew_item"
+            android:layout_below="@+id/spinner_item_category_activity_create_anew_item"
+            android:layout_gravity="center_vertical"
+            android:background="@drawable/roundpassword"/>
+
+
+        <Spinner
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/spinner_item_category_activity_create_anew_item"
+            android:layout_gravity="center_vertical"
+            android:layout_below="@+id/editText_create_new_item_descriptionlayput"
+            android:background="@drawable/roundspinner"/>
+
         <TextView
             android:id="@+id/textView_new_item_activity_specification"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/text_new_item_activity_specification"
-            android:layout_below="@+id/editText_create_new_item_descriptionlayput"/>
+            android:layout_below="@+id/spinner_item_market_activity_create_anew_item"
+            android:layout_marginTop="10dp"/>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -91,7 +104,7 @@
             android:orientation="horizontal"
             android:id="@+id/linearLayout_create_new_item_radioButton"
             android:layout_below="@+id/textView_new_item_activity_specification"
-            android:layout_marginTop="20dp">
+            android:layout_marginTop="5dp">
             <RadioGroup
                 android:id="@+id/radiogroupcreate_item"
                 android:layout_width="match_parent"
@@ -130,7 +143,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:id="@+id/relative_fragment_grocery2"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="5dp"
             >
             <LinearLayout
                 android:layout_width="match_parent"
@@ -143,6 +156,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/btn_grocery_create_new_item_cancle"
                     android:layout_weight="1"
+                    android:textColor="@color/warning_color"
                     style="@style/Widget.AppCompat.Button.Borderless"/>
                 <Button
                     android:id="@+id/button_create_item_create"
@@ -150,6 +164,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/btn_grocery_fragment_create_new_item_create"
                     android:layout_weight="1"
+                    android:textColor="@color/create_new_ShoppingList"
                     style="@style/Base.Widget.AppCompat.Button.Borderless"/>
             </LinearLayout>
 

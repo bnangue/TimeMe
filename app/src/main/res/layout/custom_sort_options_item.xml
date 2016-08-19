@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="10dp">
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="4"
+        android:id="@+id/textView_sort_options_items"
+        android:text="@string/A_Day_Ago_Text"/>
+
+    <RadioButton
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginLeft="15dp"
+       android:id="@+id/radioButton_sort_options_items"
+        android:focusable="false"/>
+
+</LinearLayout>

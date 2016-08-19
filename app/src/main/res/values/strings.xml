@@ -74,7 +74,7 @@
     <string name="btn_grocery_fragment_create_new_item_create">Create</string>
     <string name="error_field_required_price">The price is missing</string>
     <string name="error_field_required_name">The name is missing</string>
-    <string name="null_item_total_price">0,00€</string>
+    <string name="null_item_total_price">0,00 €</string>
     <string name="null_item_selected">0</string>
     <string name="grocery_add_item_to_list_to_pay_text">To spend :</string>
     <string name="grocery_list_item_title_text">From :</string>
@@ -86,6 +86,26 @@
     <string name="action_shared_shopping_List">Share</string>
     <string name="action_delete_shopping_List">Delete</string>
     <string name="grocery_add_item_to_list_already_spent_text">already spent :</string>
+
+    //Shopping Item Category
+
+    <string name="household">Household</string>
+    <string name="fruit">Fruit</string>
+    <string name="vegetables">Vegetables</string>
+    <string name="grain_products">Grain products</string>
+    <string name="technology">Technology</string>
+    <string name="drinks">Drinks</string>
+    <string name="fats_and_oils">Fats and oils</string>
+    <string name="milk_products">Milk products</string>
+    <string name="spices">Spices</string>
+    <string name="drugstore">Drugstore</string>
+    <string name="others">Others</string>
+    <string name="meat">Meat</string>
+    <string name="sweets">Sweets</string>
+    <string name="alphabetic">Alphabetic</string>
+    <string name="rewe_Market">Rewe</string>
+    <string name="dm_Market">DM</string>
+    <string name="norma_Market">Norma</string>
 
 
     //months
@@ -220,5 +240,19 @@
     <string name="menu_edit">Edit</string>
     <string name="grocery_fragment_list_hide">hide all</string>
     <string name="grocery_fragment_list_show">show all</string>
+    <string name="Invite_Partner_text">CHAT</string>
+    <string name="text_invite_friend_activity_button_add_a_new_friend">Invite your Partner</string>
+    <string name="editText_enter_friend_email_address">Enter your partner email here</string>
+    <string name="text_editText_enter_friend_email_address">Enter your partner email address</string>
+    <string name="text_button_send_request_to_partner">Send request</string>
+    <string name="text_button_search_for_request_to_partner">Search</string>
+    <string name="app_name_request_handler_app_activity">Friend Request</string>
+    <string name="activity_details_options_list_text_sort_by">SORT BY</string>
+    <string name="market_Rewe">from REWE</string>
+    <string name="market_DM">from DM</string>
+    <string name="market_Norma">from Norma</string>
+    <string name="fcm_Notification_message_groceryList_created">new grocery list created by</string>
+    <string name="fcm_Notification_title_groceryList_created">New grocery list</string>
+    <string name="textInitialize_account_AccountName">Account name (optional)</string>
 
 </resources>

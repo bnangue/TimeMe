@@ -28,6 +28,22 @@
                 android:textStyle="bold"
                 android:paddingTop="4dp"/>
 
+            <TextView
+                android:id="@+id/TextView_list_item_category"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="11sp"
+                android:text="Drugstore"
+
+               />
+            <TextView
+                android:id="@+id/TextView_list_item_market"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:text="Rewe"
+                android:paddingLeft="3dp"
+                />
 
             <TextView
                 android:id="@+id/TextView_list_item_price_item"
@@ -35,8 +51,9 @@
                 android:layout_height="wrap_content"
                 android:textSize="13sp"
                 android:text="2,35€"
-                android:padding="3dp"
-                android:layout_marginTop="20dp"/>
+                android:paddingLeft="3dp"
+                android:paddingBottom="3dp"
+                android:layout_marginTop="5dp"/>
 
         </LinearLayout>
 

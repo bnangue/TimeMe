@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
 
-    tools:context="com.example.bricenangue.timeme.ViewFinanceRecordsDetailsActivity">
+    tools:context="com.app.bricenangue.timeme.ViewFinanceRecordsDetailsActivity">
 
     <RelativeLayout
         android:layout_width="match_parent"

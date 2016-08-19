@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.app.bricenangue.timeme.InviteFriendActivity">
+
+
+    <Button
+        android:id="@+id/button_invite_friend_activity_add_a_new_friend"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+
+        style="@style/Base.Widget.AppCompat.Button.Borderless"
+        android:drawableLeft="@drawable/add_user_male_big"
+        android:drawableStart="@drawable/add_user_male_big"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="5dp"
+        android:text="@string/text_invite_friend_activity_button_add_a_new_friend"
+        android:textSize="10sp"
+        android:textColor="@color/create_new_ShoppingList"/>
+
+    <android.support.design.widget.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/editText_enter_friend_email_address_layout"
+        android:layout_marginBottom="15dp"
+        android:layout_below="@+id/button_invite_friend_activity_add_a_new_friend"
+        android:visibility="gone">
+
+        <EditText
+            android:id="@+id/editText_enter_friend_email_address"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/text_editText_enter_friend_email_address"
+            android:inputType="textAutoCorrect"
+            android:maxLines="1"
+            android:singleLine="true"
+            />
+
+    </android.support.design.widget.TextInputLayout>
+
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/text_button_search_for_request_to_partner"
+        android:id="@+id/button_search_for_request_to_partner"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:textColor="@color/create_new_ShoppingList"
+        style="@style/Base.Widget.AppCompat.Button.Borderless"
+        android:layout_below="@+id/editText_enter_friend_email_address_layout"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="24dp"
+       android:visibility="gone" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/text_button_send_request_to_partner"
+        android:id="@+id/button_send_request_to_partner"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:textColor="@color/create_new_ShoppingList"
+        style="@style/Base.Widget.AppCompat.Button.Borderless"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="24dp"
+        android:layout_alignParentBottom="true"
+        android:visibility="gone"/>
+
+
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/activity_invite_friend_listView"
+        android:layout_below="@+id/button_search_for_request_to_partner"
+        android:layout_above="@+id/button_send_request_to_partner"
+        android:layout_marginTop="40dp"
+        android:visibility="gone"/>
+
+</RelativeLayout>
