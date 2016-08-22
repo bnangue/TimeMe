@@ -294,7 +294,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                 itemstoShopListFromSorting=new ArrayList<>();
             }
             for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(sortname)){
+                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.household))){
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
@@ -306,7 +306,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                 itemstoShopListFromSorting=new ArrayList<>();
             }
             for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(sortname)){
+                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.fruit))){
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
@@ -319,7 +319,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                 itemstoShopListFromSorting=new ArrayList<>();
             }
             for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(sortname)){
+                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.vegetables))){
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
@@ -333,7 +333,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                 itemstoShopListFromSorting=new ArrayList<>();
             }
             for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(sortname)){
+                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.grain_products))){
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
@@ -346,7 +346,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                 itemstoShopListFromSorting=new ArrayList<>();
             }
             for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(sortname)){
+                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.technology))){
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
@@ -359,7 +359,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                 itemstoShopListFromSorting=new ArrayList<>();
             }
             for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(sortname)){
+                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.drinks))){
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
@@ -372,7 +372,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                 itemstoShopListFromSorting=new ArrayList<>();
             }
             for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(sortname)){
+                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.fats_and_oils))){
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
@@ -385,7 +385,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                 itemstoShopListFromSorting=new ArrayList<>();
             }
             for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(sortname)){
+                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.milk_products))){
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
@@ -398,7 +398,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                 itemstoShopListFromSorting=new ArrayList<>();
             }
             for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(sortname)){
+                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.spices))){
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
@@ -411,7 +411,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                 itemstoShopListFromSorting=new ArrayList<>();
             }
             for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(sortname)){
+                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.drugstore))){
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
@@ -424,7 +424,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                 itemstoShopListFromSorting=new ArrayList<>();
             }
             for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(sortname)){
+                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.others))){
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
@@ -437,7 +437,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                 itemstoShopListFromSorting=new ArrayList<>();
             }
             for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(sortname)){
+                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.meat))){
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
@@ -450,7 +450,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                 itemstoShopListFromSorting=new ArrayList<>();
             }
             for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(sortname)){
+                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.sweets))){
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }

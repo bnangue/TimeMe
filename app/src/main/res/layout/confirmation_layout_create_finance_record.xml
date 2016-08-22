@@ -53,31 +53,12 @@
                 android:id="@+id/editText_View_Finance_records_Categoriy_confirm_record"
                 />
         </android.support.design.widget.TextInputLayout>
+
         <android.support.design.widget.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:layout_below="@+id/editText_View_Finance_records_details_Category_layout"
-            android:id="@+id/editText_View_Finance_records_details_Value_DAte_layout"
-            android:layout_gravity="bottom"
-            >
-
-            <EditText
-                android:enabled="false"
-
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="text"
-                android:ems="10"
-                android:hint="@string/text_View_Finance_records_details_VAlue_DAte"
-                android:id="@+id/_editText_View_Finance_records_details_VAlue_DAte_confirm_record"
-                />
-        </android.support.design.widget.TextInputLayout>
-        <android.support.design.widget.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:layout_below="@+id/editText_View_Finance_records_details_Value_DAte_layout"
 
             android:id="@+id/editText_View_Finance_records_details_Booking_Date_layout"
             android:layout_gravity="bottom"
@@ -85,6 +66,7 @@
 
             <EditText
                 android:enabled="false"
+
 
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

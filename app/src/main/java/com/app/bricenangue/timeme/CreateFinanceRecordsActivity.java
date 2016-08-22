@@ -121,14 +121,12 @@ public class CreateFinanceRecordsActivity extends AppCompatActivity implements V
         alertDialog.setView(convertView);
         alertDialog.setTitle(getString(R.string.activity_create_finance_record_dialog_title));
         EditText editTextName=(EditText)convertView.findViewById(R.id.editText_View_Finance_records_details_NAme_confirm_record) ;
-        EditText editTextValueDate=(EditText)convertView.findViewById(R.id._editText_View_Finance_records_details_VAlue_DAte_confirm_record) ;
         EditText editTextBookingDate=(EditText)convertView.findViewById(R.id.editText_View_Finance_records_details_Booking_Date_confirm_record) ;
         EditText editTextAmount=(EditText)convertView.findViewById(R.id.editText_View_Finance_records_details_Amount_confirm_record) ;
         EditText editTextCategory=(EditText)convertView.findViewById(R.id.editText_View_Finance_records_Categoriy_confirm_record) ;
         EditText   editTextNote=(EditText)convertView.findViewById(R.id.editText_View_Finance_records_note_confirm_record) ;
 
         editTextName.setText(recordName);
-        editTextValueDate.setText(recordName);
         editTextBookingDate.setText(bookingDate);
         editTextAmount.setText(recordAmount);
         editTextCategory.setText(recordCategory);
