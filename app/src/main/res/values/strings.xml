@@ -254,5 +254,7 @@
     <string name="fcm_Notification_message_groceryList_created">new grocery list created by</string>
     <string name="fcm_Notification_title_groceryList_created">New grocery list</string>
     <string name="textInitialize_account_AccountName">Account name (optional)</string>
+    <string name="activity_choose_account_for_grocery_list">Choose an account for this grocery list</string>
+    <string name="activity_create_finance_record_dialog_title">Do you really want to create this record?</string>
 
 </resources>

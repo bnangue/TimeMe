@@ -1,5 +1,7 @@
 package com.app.bricenangue.timeme;
 
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.support.design.widget.CoordinatorLayout;
@@ -12,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -47,7 +50,6 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
     private Spinner spinner;
     private Menu menu;
     String [] userAccArray={"standard","most used","price ascending","price descending","selected first","selected last"};
-
 
     private SQLiteShoppingList sqLiteShoppingList;
     private Snackbar snackbar;
@@ -775,6 +777,8 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
             onBackPressed();
         }
     }
+
+
 
     public void showSnackBar(final GroceryList groceryList, final CalendarCollection collection, final FinanceAccount financeAccount){
         snackbar = Snackbar

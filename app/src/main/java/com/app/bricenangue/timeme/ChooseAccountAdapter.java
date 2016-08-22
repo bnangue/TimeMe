@@ -8,6 +8,8 @@ import android.widget.BaseAdapter;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
+import org.apache.poi.ss.formula.functions.T;
+
 import java.util.ArrayList;
 
 /**
@@ -73,11 +75,12 @@ public class ChooseAccountAdapter extends BaseAdapter {
 
         final holder viewHolder;
         if (convertView == null) {
-            convertView = inflater.inflate(R.layout.custom_sort_options_item, null);
+            convertView = inflater.inflate(R.layout.custom_account_to_choose, null);
             viewHolder = new holder();
 
 
             viewHolder.sortName = (TextView) convertView.findViewById(R.id.textView_sort_options_items);
+            viewHolder.balance=(TextView)convertView.findViewById(R.id.textView_sort_options_items_amount);
 
             viewHolder.buttonisChecked = (RadioButton) convertView.findViewById(R.id.radioButton_sort_options_items);
 
@@ -89,6 +92,16 @@ public class ChooseAccountAdapter extends BaseAdapter {
         }
 
         viewHolder.sortName.setText(accountsNames.get(position).getAccountName());
+        String balance=accountsNames.get(position).getAccountBlanceTostring()+" €";
+        if(balance.contains("-")){
+            viewHolder.balance.setText(balance);
+            viewHolder.balance.setTextColor(context.getResources().getColor(R.color.warning_color));
+        }else {
+            viewHolder.balance.setText(balance);
+            viewHolder.balance.setTextColor(context.getResources().getColor(R.color.color_account_balance_positive));
+        }
+
+
 
         viewHolder.buttonisChecked.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -121,6 +134,7 @@ public class ChooseAccountAdapter extends BaseAdapter {
 
     static class holder {
         public TextView sortName;
+        public TextView balance;
 
         public RadioButton buttonisChecked;
 

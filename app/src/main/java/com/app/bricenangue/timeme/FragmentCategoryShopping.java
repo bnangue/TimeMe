@@ -63,7 +63,6 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
     private UserLocalStore userLocalStore;
     private TextView textshowHide;
     private LinearLayout linearLayout;
-    private ArrayList<FinanceAccount> accountsforshopping=new ArrayList<>();
     private SQLFinanceAccount sqlFinanceAccount;
     private String sortName;
 
@@ -133,7 +132,7 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
 
         add_List = (Button) v.findViewById(R.id.grocery_fragment_add_recently_button);
 
-        accountsforshopping=sqlFinanceAccount.getAllFinanceAccount();
+
 
 
        // linearLayout=(LinearLayout)v.findViewById(R.id.text_grocery_fragment_done_hide_layout);
@@ -261,7 +260,9 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
         switch (id){
             case R.id.grocery_fragment_add_recently_button:
                 //Create new shopping list
-               showDialogChoosingAccount();
+               //showDialogChoosingAccount();
+                startActivity(new Intent(getActivity(),CreateNewShoppingListActivity.class)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
                 break;
 
 
@@ -269,54 +270,7 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
     }
 
 
-    void showDialogChoosingAccount(){
 
-
-
-        LayoutInflater inflater =  (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View convertView = (View) inflater.inflate(R.layout.custom_sort_options, null);
-        alertDialog.setView(convertView);
-        alertDialog.setTitle(getString(R.string.activity_details_options_list_text_sort_by));
-        ListView listView = (ListView) convertView.findViewById(R.id.listView_addItmeListActivity_sort_options);
-
-        if(selectedOnRows==null){
-            selectedOnRows=new boolean[accountsforshopping.size()];
-        }
-        final ChooseAccountAdapter chooseAccountAdapter=new ChooseAccountAdapter(getContext(), accountsforshopping, new ChooseAccountAdapter.OnAccountChooseListener() {
-            @Override
-            public void onAccountChoosed(FinanceAccount financeAccount, boolean[] selected) {
-                alertDialog.dismiss();
-                sortName=financeAccount.getAccountName();
-                selectedOnRows=selected;
-                startActivity(new Intent(getActivity(),CreateNewShoppingListActivity.class)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra("account",financeAccount));
-            }
-        });
-
-        listView.setAdapter(chooseAccountAdapter);
-
-        listView.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                if(accountsforshopping.get(i)!=null){
-                    alertDialog.dismiss();
-                    sortName=accountsforshopping.get(i).getAccountName();
-
-                    for(int j=0;j<selectedOnRows.length;j++){
-                        selectedOnRows[j]=false;
-                    }
-                    selectedOnRows[i]=true;
-                    chooseAccountAdapter.setNumberSelectedOnrow(selectedOnRows);
-                    startActivity(new Intent(getActivity(),CreateNewShoppingListActivity.class)
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra("account",accountsforshopping.get(i)));
-                }
-            }
-        });
-
-        alertDialog.setCancelable(true);
-        alertDialog.show();
-    }
 
     /**
      * This interface must be implemented by activities that contain this

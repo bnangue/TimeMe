@@ -104,7 +104,6 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
     private Snackbar snackbar;
     private CoordinatorLayout coordinatorLayout;
     private MySQLiteHelper mySQLiteHelper;
-    private FinanceAccount financeAccount=new FinanceAccount(this);
 
 
     private boolean isFromDetails=false;
@@ -121,6 +120,8 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
     private Button buttonSort;
     private android.support.v7.app.AlertDialog alertDialog;
     private boolean[] selectedOnRows;
+    private ArrayList<FinanceAccount> accountsforshopping=new ArrayList<>();
+
 
 
     @Override
@@ -133,6 +134,8 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
 
         sqlFinanceAccount=new SQLFinanceAccount(this);
         alertDialog = new android.support.v7.app.AlertDialog.Builder(this).create();
+
+        accountsforshopping=sqlFinanceAccount.getAllFinanceAccount();
 
         coordinatorLayout=(CoordinatorLayout)findViewById(R.id.coordinateLayout__creatList_add_item_to_list);
         setDateButtuon=(Button)findViewById(R.id.dateaddeventstart_creatList_add_item_to_list);
@@ -158,9 +161,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
               isFromDetails=extras.getBoolean("isFromDetails");
                 groceryListFromDetails=extras.getParcelable("ListToChange");
             }
-            if(extras.containsKey("account")){
-                financeAccount=extras.getParcelable("account");
-            }
+
         }
 
          search=(SearchView)findViewById(R.id.actionbarsearch_add_item_to_list);
@@ -176,7 +177,13 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
 
 
         if(savedInstanceState==null){
-            initializeDatePicker();
+            if(groceryListFromDetails!=null){
+                setDateButtuon.setText(groceryListFromDetails.getDatum());
+                listName=groceryListFromDetails.getDatum();
+            }else {
+                initializeDatePicker();
+            }
+
              if(itemsDB.size()==0 || itemsDB==null){
 
                  new LoadItemDBAsyncTask().execute();
@@ -584,6 +591,71 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         item.setVisible(true);
     }
 
+    private void createGrocerylistAndSave(FinanceAccount financeAccount,ArrayList<ShoppingItem> list){
+
+            Calendar c=new GregorianCalendar();
+            Date dat=c.getTime();
+            //String day= String.valueOf(dat.getDay());
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.GERMAN);
+
+            String date = (String) android.text.format.DateFormat.format("dd-MM-yyyy", dat);
+            GroceryList groceryList=new GroceryList();
+            groceryList.setItemsOftheList(list);
+            groceryList.getListcontain();
+            int hashid=(userLocalStore.getUserfullname() + format.format(dat)).hashCode();
+            groceryList.setList_unique_id(String.valueOf(hashid));
+            groceryList.setCreatorName(userLocalStore.getUserfullname());
+
+            listName=setDateButtuon.getText().toString();
+            if(!listName.isEmpty()){
+                groceryList.setDatum(listName);
+            }
+
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd, HH:mm");
+            formatter.setLenient(false);
+
+            Date currentDate = new Date();
+
+
+            String currentTime = formatter.format(currentDate);
+            CalendarCollection    calendarCollection=new CalendarCollection(listName,groceryList.getListcontain(),
+                    groceryList.getCreatorName(),listName, listName + " 17:00",
+                    listName +" 20:00",String.valueOf(hashid),getString(R.string.Event_Category_Category_Shopping),"0","0",currentTime);
+
+            SimpleDateFormat formatterr = new SimpleDateFormat("dd-MM-yyy HH:mm:ss");
+            String currentTimer = formatterr.format(currentDate);
+            FinanceRecords financeRecords=new FinanceRecords(getString(R.string.textInitialize_create_account_grocery_note),currentTimer.split(" ")[0],
+                    getString(R.string.textInitialize_create_account_grocery_note),groceryList.getGroceryListTotalPriceToPayString().replace(",",".")
+                    ,String.valueOf(hashid),
+                    getString(R.string.textInitialize_create_account_grocery_category),groceryList.getDatum(),userLocalStore.getUserfullname(),0,false,false);
+
+
+            if(financeAccount==null){
+                ArrayList<FinanceAccount> financeAccountArrayList= sqlFinanceAccount.getAllFinanceAccount();
+                if(financeAccountArrayList.size()!=0){
+                    financeAccount=financeAccountArrayList.get(0);
+                    financeAccount.addRecordToAccount(financeRecords);
+                    financeAccount.setLastchangeToAccount();
+                    groceryList.setAccountid(financeAccount.getAccountUniqueId());
+                }
+            }else {
+                financeAccount.addRecordToAccount(financeRecords);
+                financeAccount.setLastchangeToAccount();
+                groceryList.setAccountid(financeAccount.getAccountUniqueId());
+
+            }
+
+
+            if(financeAccount.getAccountRecordsString().isEmpty()){
+                createGroceryAndUpdateFinance(financeAccount,groceryList,calendarCollection);
+                // saveGroceryListToServer(groceryList,calendarCollection,null);
+            }else {
+                createGroceryAndUpdateFinance(financeAccount,groceryList,calendarCollection);
+
+                // saveGroceryListToServer(groceryList,calendarCollection,financeAccount);
+            }
+
+    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -595,6 +667,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         if (id == R.id.action_items_added_done) {
 
             if(isFromDetails){
+
                 ArrayList<ShoppingItem> list=new ArrayList<>();
                 for(int i=0;i<itemstoShoparray.length;i++){
                     if(itemstoShoparray[i]!=null && itemstoShoparray[i].getNumberofItemsetForList()>0){
@@ -621,85 +694,23 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                 }
 
             }else {
-                ArrayList<ShoppingItem> list=new ArrayList<>();
-                for(int i=0;i<itemstoShoparray.length;i++){
-                    if(itemstoShoparray[i]!=null){
+                final ArrayList<ShoppingItem> list=new ArrayList<>();
+                for(int j=0;j<itemstoShoparray.length;j++){
+                    if(itemstoShoparray[j]!=null){
 
-                        list.add(itemstoShoparray[i]);
+                        list.add(itemstoShoparray[j]);
                     }
 
                 }
-
                 if(list.size()!=0){
-                    Calendar c=new GregorianCalendar();
-                    Date dat=c.getTime();
-                    //String day= String.valueOf(dat.getDay());
-                    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.GERMAN);
-
-                    String date = (String) android.text.format.DateFormat.format("dd-MM-yyyy", dat);
-                    GroceryList groceryList=new GroceryList();
-                    groceryList.setItemsOftheList(list);
-                    groceryList.getListcontain();
-                    int hashid=(userLocalStore.getUserfullname() + format.format(dat)).hashCode();
-                    groceryList.setList_unique_id(String.valueOf(hashid));
-                    groceryList.setCreatorName(userLocalStore.getUserfullname());
-
-                    listName=setDateButtuon.getText().toString();
-                    if(!listName.isEmpty()){
-                        groceryList.setDatum(listName);
-                    }
-
-                    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd, HH:mm");
-                    formatter.setLenient(false);
-
-                    Date currentDate = new Date();
-
-
-                    String currentTime = formatter.format(currentDate);
-                    CalendarCollection    calendarCollection=new CalendarCollection(listName,groceryList.getListcontain(),
-                            groceryList.getCreatorName(),listName, listName + " 17:00",
-                            listName +" 20:00",String.valueOf(hashid),getString(R.string.Event_Category_Category_Shopping),"0","0",currentTime);
-
-                    SimpleDateFormat formatterr = new SimpleDateFormat("dd-MM-yyy HH:mm:ss");
-                    String currentTimer = formatterr.format(currentDate);
-                    FinanceRecords financeRecords=new FinanceRecords(getString(R.string.textInitialize_create_account_grocery_note),currentTimer.split(" ")[0],
-                            getString(R.string.textInitialize_create_account_grocery_note),groceryList.getGroceryListTotalPriceToPayString().replace(",",".")
-                            ,String.valueOf(hashid),
-                            getString(R.string.textInitialize_create_account_grocery_category),groceryList.getDatum(),userLocalStore.getUserfullname(),0,false,false);
-
-
-                    if(financeAccount==null){
-                        ArrayList<FinanceAccount> financeAccountArrayList= sqlFinanceAccount.getAllFinanceAccount();
-                        if(financeAccountArrayList.size()!=0){
-                            financeAccount=financeAccountArrayList.get(0);
-                            financeAccount.addRecordToAccount(financeRecords);
-                            financeAccount.setLastchangeToAccount();
-                            groceryList.setAccountid(financeAccount.getAccountUniqueId());
-                        }
-                    }else {
-                        financeAccount.addRecordToAccount(financeRecords);
-                        financeAccount.setLastchangeToAccount();
-                        groceryList.setAccountid(financeAccount.getAccountUniqueId());
-
-                    }
-
-
-                    if(financeAccount.getAccountRecordsString().isEmpty()){
-                        createGroceryAndUpdateFinance(financeAccount,groceryList,calendarCollection);
-                        // saveGroceryListToServer(groceryList,calendarCollection,null);
-                    }else {
-                        createGroceryAndUpdateFinance(financeAccount,groceryList,calendarCollection);
-
-                        // saveGroceryListToServer(groceryList,calendarCollection,financeAccount);
-                    }
-
-
+                    showDialogChoosingAccount(list);
                 }else {
 
                     Toast.makeText(getApplicationContext(),"No items added",Toast.LENGTH_SHORT).show();
                     startActivity(new Intent(this, CreateNewShoppingListActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
                     finish();
                 }
+
             }
 
 
@@ -1839,6 +1850,61 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
             }
         });
 
+    }
+
+    void showDialogChoosingAccount(final ArrayList<ShoppingItem> list){
+
+
+
+
+        alertDialog = new android.support.v7.app.AlertDialog.Builder(this).create();
+        LayoutInflater inflater =  (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View convertView = (View) inflater.inflate(R.layout.custom_sort_options, null);
+        alertDialog.setView(convertView);
+        alertDialog.setTitle(getString(R.string.activity_choose_account_for_grocery_list));
+        ListView listView = (ListView) convertView.findViewById(R.id.listView_addItmeListActivity_sort_options);
+
+        if(selectedOnRows==null){
+            selectedOnRows=new boolean[accountsforshopping.size()];
+        }
+        final ChooseAccountAdapter chooseAccountAdapter=new ChooseAccountAdapter(this, accountsforshopping, new ChooseAccountAdapter.OnAccountChooseListener() {
+            @Override
+            public void onAccountChoosed(FinanceAccount financeAccount, boolean[] selected) {
+                alertDialog.dismiss();
+                sortName=financeAccount.getAccountName();
+                selectedOnRows=selected;
+                createGrocerylistAndSave(financeAccount
+                        ,list);
+
+
+
+            }
+        });
+
+        listView.setAdapter(chooseAccountAdapter);
+
+        listView.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                if(accountsforshopping.get(i)!=null){
+                    alertDialog.dismiss();
+                    sortName=accountsforshopping.get(i).getAccountName();
+
+                    for(int j=0;j<selectedOnRows.length;j++){
+                        selectedOnRows[j]=false;
+                    }
+                    selectedOnRows[i]=true;
+                    chooseAccountAdapter.setNumberSelectedOnrow(selectedOnRows);
+                    createGrocerylistAndSave(accountsforshopping.get(i)
+                            ,list);
+
+                }
+            }
+        });
+
+        alertDialog.setCancelable(true);
+        alertDialog.show();
     }
     private void saveeventtoSQl(CalendarCollection calendarCollections) {
 

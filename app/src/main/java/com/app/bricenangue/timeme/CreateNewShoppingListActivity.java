@@ -43,7 +43,6 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
     private ArrayList<GroceryList> grocerylistSqlDB=new ArrayList<>();
     private SQLiteShoppingList sqLiteShoppingList;
     private GroceryList groceryList;
-    private FinanceAccount financeAccount;
 
     private TextView textViewlistIsempty;
     private StateActivitiesPreference stateActivitiesPreference;
@@ -78,9 +77,6 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
         Bundle extras=getIntent().getExtras();
         if(extras!=null && extras.containsKey("GroceryshoppingList")){
             groceryList= extras.getParcelable("GroceryshoppingList");
-            financeAccount=extras.getParcelable("account");
-        }else if(extras!=null && extras.containsKey("account")){
-            financeAccount=extras.getParcelable("account");
         }
 
 /**
@@ -109,7 +105,6 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
         if(savedInstanceState!=null){
 
                 populateRecyclerView();
-            financeAccount=savedInstanceState.getParcelable("account");
 
         }else{
 
@@ -282,9 +277,7 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        if(financeAccount!=null){
-            outState.putParcelable("account",financeAccount);
-        }
+
 
 
     }
@@ -295,11 +288,8 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
         switch (id){
             case R.id.grocery_create_list_add_item_button:
                 //add item return shopping list to show here
-                if(financeAccount!=null){
-                    startActivity(new Intent(CreateNewShoppingListActivity.this,AddItemToListActivity.class).putExtra("account",financeAccount));
-                }else{
+
                     startActivity(new Intent(CreateNewShoppingListActivity.this,AddItemToListActivity.class));
-                }
 
                 break;
         }

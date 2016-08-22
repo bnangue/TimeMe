@@ -1,10 +1,13 @@
 package com.app.bricenangue.timeme;
 
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -41,6 +44,8 @@ public class CreateFinanceRecordsActivity extends AppCompatActivity implements V
     private String [] categoryArray={"Grocery","Leisure","Traveling","Personal"};
     private String [] nameAccArray;
     private String [] idAccArray;
+    private android.support.v7.app.AlertDialog alertDialog;
+
 
 
 
@@ -101,6 +106,101 @@ public class CreateFinanceRecordsActivity extends AppCompatActivity implements V
         }
     }
 
+    void showDialogConfirmCreationRecord(){
+
+
+        String recordName = editTextRecordName.getText().toString();
+        String recordAmount=editTextRecordAmount.getText().toString();
+        String recordCategory=spinnerSelectCategory.getSelectedItem().toString();
+        String bookingDate=buttonBookingDate.getText().toString();
+        String recordNote=editTextRecordNote.getText().toString();
+
+        alertDialog = new android.support.v7.app.AlertDialog.Builder(this).create();
+        LayoutInflater inflater =  (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View convertView = (View) inflater.inflate(R.layout.confirmation_layout_create_finance_record, null);
+        alertDialog.setView(convertView);
+        alertDialog.setTitle(getString(R.string.activity_create_finance_record_dialog_title));
+        EditText editTextName=(EditText)convertView.findViewById(R.id.editText_View_Finance_records_details_NAme_confirm_record) ;
+        EditText editTextValueDate=(EditText)convertView.findViewById(R.id._editText_View_Finance_records_details_VAlue_DAte_confirm_record) ;
+        EditText editTextBookingDate=(EditText)convertView.findViewById(R.id.editText_View_Finance_records_details_Booking_Date_confirm_record) ;
+        EditText editTextAmount=(EditText)convertView.findViewById(R.id.editText_View_Finance_records_details_Amount_confirm_record) ;
+        EditText editTextCategory=(EditText)convertView.findViewById(R.id.editText_View_Finance_records_Categoriy_confirm_record) ;
+        EditText   editTextNote=(EditText)convertView.findViewById(R.id.editText_View_Finance_records_note_confirm_record) ;
+
+        editTextName.setText(recordName);
+        editTextValueDate.setText(recordName);
+        editTextBookingDate.setText(bookingDate);
+        editTextAmount.setText(recordAmount);
+        editTextCategory.setText(recordCategory);
+        editTextNote.setText(recordNote);
+
+        alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.alert_dialog_changed_not_saved_shopping_list_done_buttoncancel),
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+
+                        alertDialog.dismiss();
+                    }
+                });
+
+        alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, getString(R.string.alert_dialog_changed_not_saved_shopping_list_done_buttonok)
+                , new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+
+                        String recordName = editTextRecordName.getText().toString();
+                        String recordAmount=editTextRecordAmount.getText().toString();
+                        String recordCategory=spinnerSelectCategory.getSelectedItem().toString();
+                        String bookingDate=buttonBookingDate.getText().toString();
+                        String recordNote=editTextRecordNote.getText().toString();
+
+                        Calendar c=new GregorianCalendar();
+                        Date dat=c.getTime();
+
+                        String dateForid= (String) android.text.format.DateFormat.format("dd-MM-yyyy HH:mm:ss", dat);
+
+                        String valueDate = dateForid.split(" ")[0];
+                        String creator=userLocalStore.getUserfullname();
+                        int hashID=(dateForid + creator).hashCode();
+
+                        if(TextUtils.isEmpty(recordName)){
+                            editTextRecordName.setError("this field cannot be empty");
+                        }else if(TextUtils.isEmpty(recordAmount)){
+                            editTextRecordAmount.setError("set an amount for this record");
+
+                        }else{
+                            //save to server
+                            FinanceRecords financeRecord=new FinanceRecords();
+                            financeRecord.setRecordNAme(recordName);
+                            financeRecord.setRecordCategorie(recordCategory);
+                            financeRecord.setRecordValueDate(valueDate);
+                            financeRecord.setRecordBookingDate(bookingDate);
+                            financeRecord.setRecordCreator(creator);
+                            financeRecord.setRecordUniquesId(String.valueOf(hashID));
+                            financeRecord.setRecordAmount(recordAmount);
+                            financeRecord.setRecordUpdateVersion(0);
+                            financeRecord.setSecured(true);
+                            if(radioGroupexpInc.getCheckedRadioButtonId()==R.id.radiobutton_activity_Create_Finance_Records_Account_expenditure){
+                                financeRecord.setIncome(false);
+                            }else if(radioGroupexpInc.getCheckedRadioButtonId()==R.id.radiobutton_activity_Create_Finance_Records_Account_income) {
+                                financeRecord.setIncome(true);
+                            }
+                            if(recordNote.isEmpty()){
+                                financeRecord.setRecordNote("");
+                            }else {
+                                financeRecord.setRecordNote(recordNote);
+                            }
+
+                            saveRecords(financeRecord);
+                            alertDialog.dismiss();
+
+                        }
+                    }
+                });
+        alertDialog.setCancelable(true);
+        alertDialog.show();
+    }
+
     @Override
     public void dateSet(String date, boolean isstart) {
         buttonBookingDate.setText(date);
@@ -138,20 +238,8 @@ public class CreateFinanceRecordsActivity extends AppCompatActivity implements V
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_items_added_done) {
-
-           String recordName = editTextRecordName.getText().toString();
+            String recordName = editTextRecordName.getText().toString();
             String recordAmount=editTextRecordAmount.getText().toString();
-            String recordCategory=spinnerSelectCategory.getSelectedItem().toString();
-            String bookingDate=buttonBookingDate.getText().toString();
-            String recordNote=editTextRecordNote.getText().toString();
-            Calendar c=new GregorianCalendar();
-            Date dat=c.getTime();
-
-            String dateForid= (String) android.text.format.DateFormat.format("dd-MM-yyyy HH:mm:ss", dat);
-
-            String valueDate = dateForid.split(" ")[0];
-            String creator=userLocalStore.getUserfullname();
-            int hashID=(dateForid + creator).hashCode();
 
             if(TextUtils.isEmpty(recordName)){
                 editTextRecordName.setError("this field cannot be empty");
@@ -159,31 +247,10 @@ public class CreateFinanceRecordsActivity extends AppCompatActivity implements V
                 editTextRecordAmount.setError("set an amount for this record");
 
             }else{
-                //save to server
-                FinanceRecords financeRecord=new FinanceRecords();
-                financeRecord.setRecordNAme(recordName);
-                financeRecord.setRecordCategorie(recordCategory);
-                financeRecord.setRecordValueDate(valueDate);
-                financeRecord.setRecordBookingDate(bookingDate);
-                financeRecord.setRecordCreator(creator);
-                financeRecord.setRecordUniquesId(String.valueOf(hashID));
-                financeRecord.setRecordAmount(recordAmount);
-                financeRecord.setRecordUpdateVersion(0);
-                financeRecord.setSecured(true);
-                if(radioGroupexpInc.getCheckedRadioButtonId()==R.id.radiobutton_activity_Create_Finance_Records_Account_expenditure){
-                    financeRecord.setIncome(false);
-                }else if(radioGroupexpInc.getCheckedRadioButtonId()==R.id.radiobutton_activity_Create_Finance_Records_Account_income) {
-                    financeRecord.setIncome(true);
-                }
-                if(recordNote.isEmpty()){
-                    financeRecord.setRecordNote("");
-                }else {
-                    financeRecord.setRecordNote(recordNote);
-                }
+                showDialogConfirmCreationRecord();
+            }
 
-                saveRecords(financeRecord);
 
-           }
 
             return true;
         }

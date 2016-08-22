@@ -254,6 +254,9 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
             item.setDetailstoItem(itemdescription);
             item.setItemName(itemname);
             item.setPrice(itemprice);
+            if(itemcatgory.isEmpty()){
+                item.setItemcategory(getString(R.string.household));
+            }
             item.setItemcategory(itemcatgory);
             item.setItemmarket(itemmarket);
             item.setItemSpecification(itemSpecification);

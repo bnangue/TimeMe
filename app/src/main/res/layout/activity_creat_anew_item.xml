@@ -47,7 +47,7 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/editText_create_new_item_price"
 
-                android:inputType="textAutoCorrect"
+                android:inputType="numberDecimal"
                 android:maxLines="1"
                 android:singleLine="true"
                 />
