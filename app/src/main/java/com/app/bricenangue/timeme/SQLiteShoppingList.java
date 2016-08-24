@@ -64,7 +64,14 @@ public class SQLiteShoppingList extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put(LIST_LISTNAME, groceryList.getDatum());
         values.put(LIST_CREATOR, groceryList.getCreatorName());
-        values.put(LIST_CONTAIN, groceryList.getListcontain().replace("\\",""));
+
+        String contain=groceryList.getListcontain();
+        if(contain.contains("\\")){
+            values.put(LIST_CONTAIN,contain.replace("\\","") );
+        }else {
+            values.put(LIST_CONTAIN,contain);
+        }
+
         values.put(LIST_STATUS, groceryList.isListdone() ? 1 : 0);
         values.put(LIST_ID, groceryList.getList_unique_id());
         values.put(LIST_IS_SHARE_STATUS, groceryList.isToListshare() ? 1 : 0);

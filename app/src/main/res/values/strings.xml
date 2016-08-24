@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">TimeMe</string>
+    <string name="app_name" translatable="false">TimeMe</string>
     <string name="emailloggin">E-Mail Address</string>
     <string name="passwordlogin">Password</string>
     <string name="registerbtn">Register</string>
@@ -103,9 +103,9 @@
     <string name="meat">Meat</string>
     <string name="sweets">Sweets</string>
     <string name="alphabetic">Alphabetic</string>
-    <string name="rewe_Market">Rewe</string>
-    <string name="dm_Market">DM</string>
-    <string name="norma_Market">Norma</string>
+    <string name="rewe_Market" translatable="false">Rewe</string>
+    <string name="dm_Market" translatable="false">DM</string>
+    <string name="norma_Market" translatable="false">Norma</string>
 
 
     //months
@@ -132,12 +132,18 @@
     <string name="About_text">ABOUT</string>
     <string name="Chat_text">CHATROOM</string>
 
+    //ViewPager Fragment
+    <string name="ViewPager_Fragment_FRAGMENTOVERVIEW">Overview</string>
+    <string name="ViewPager_Fragment_FRAGMENTEVENTS">My Events</string>
+    <string name="ViewPager_Fragment_FRAGMENTFINANCE">My Finance</string>
+    <string name="ViewPager_Fragment_FRAGMENTSHOPPING">My Grocery</string>
+
     //
     <string name="app_name_main_activity" />
     <string name="app_name_login_screen_activity">Loging</string>
     <string name="app_name_create_user_activity">Register</string>
     <string name="app_name_open_user_profile_activity">My Profile</string>
-    <string name="app_name_newcalendar_activity">TimeMe</string>
+    <string name="app_name_newcalendar_activity" translatable="false">TimeMe</string>
     <string name="app_name_add_new_event_activity">Add New Event</string>
     <string name="app_name_add_new_event_fragment">Add New Event</string>
     <string name="app_name_base_activity">My Calendar</string>
@@ -182,7 +188,7 @@
     <string name="alertdialog_change_grocery_list_name_button_change_text">Change</string>
     <string name="alertdialog_change_grocery_list_name_button_cancel_text">Cancel</string>
     <string name="Event_Category_Category_Shopping">Grocery</string>
-    <string name="Event_Category_Category_Normal">Normal</string>
+    <string name="Event_Category_Category_Normal" translatable="false">Normal</string>
     <string name="Event_Category_Category_Business">Business</string>
     <string name="Event_Category_Category_Birthdays">Birthdays</string>
     <string name="Event_Category_Category_Work_Plans">Work Plans</string>
@@ -233,7 +239,7 @@
     <string name="text_View_Finance_records_details_creator">Created by</string>
     <string name="text_View_Finance_records_details_Booking_Date">Booking date</string>
     <string name="text_View_Finance_records_details_VAlue_DAte">Value date</string>
-    <string name="textView_Finance_records_details_NAme">Name</string>
+    <string name="textView_Finance_records_details_NAme" translatable="false">Name</string>
     <string name="text_View_Finance_records_ID_Amount">Identifier</string>
     <string name="text_View_Finance_records_Categoriy_Amount">Category</string>
     <string name="text_View_Finance_records_note">Note</string>

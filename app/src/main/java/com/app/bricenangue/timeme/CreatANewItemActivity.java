@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 
 public class CreatANewItemActivity extends AppCompatActivity implements View.OnClickListener, RadioGroup.OnCheckedChangeListener {
@@ -204,7 +205,49 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
             c.setCellValue(item.getItemmarket());
 
             c = row.createCell(4);
-            c.setCellValue(item.getItemcategory());
+            String  sortName=item.getItemcategory();
+
+            if(sortName.equals(getString(R.string.household))){
+                c.setCellValue("Haushalt");
+
+            }else if(sortName.equals(getString(R.string.fruit))){
+                c.setCellValue("Obst");
+
+            }else if(sortName.equals(getString(R.string.vegetables))){
+                c.setCellValue("Gemüse");
+
+            }else if(sortName.equals(getString(R.string.grain_products))){
+                c.setCellValue("Getreideprodukte");
+
+            }else if(sortName.equals(getString(R.string.technology))){
+                c.setCellValue("Technik");
+
+            }else if(sortName.equals(getString(R.string.drinks))){
+                c.setCellValue("Getränke");
+
+            }else if(sortName.equals(getString(R.string.fats_and_oils))){
+                c.setCellValue("Fette&Öle");
+
+            }else if(sortName.equals(getString(R.string.milk_products))){
+                c.setCellValue("Milchprodukte");
+
+            }else if(sortName.equals(getString(R.string.spices))){
+                c.setCellValue("Gewürze");
+
+            }else if(sortName.equals(getString(R.string.drugstore))){
+                c.setCellValue("Drogerie");
+
+            }else if(sortName.equals(getString(R.string.others))){
+                c.setCellValue("Sonstiges");
+
+            }else if(sortName.equals(getString(R.string.meat))){
+                c.setCellValue("Fleisch");
+
+            }else if(sortName.equals(getString(R.string.sweets))){
+                c.setCellValue("Süßigkeiten");
+
+            }
+
 
             os = new FileOutputStream(file);
             wb.write(os);
@@ -232,6 +275,7 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
         String itemcatgory=spinnerItemCategory.getSelectedItem().toString();
         String itemmarket=spinnerItemMarket.getSelectedItem().toString();
 
+
       int id= radioGroup.getCheckedRadioButtonId();
 
         switch (id){
@@ -249,14 +293,11 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
 
         if((itemprice.replace(",",".").equals("0.00"))||
                 (itemprice.replace(",",".").equals("0.0"))  || (itemprice.replace(",",".").equals("0"))){
-            Toast.makeText(getApplicationContext(),"The price cannot be 0,00€",Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(),"The price cannot be 0,00 €",Toast.LENGTH_SHORT).show();
         }else {
             item.setDetailstoItem(itemdescription);
             item.setItemName(itemname);
             item.setPrice(itemprice);
-            if(itemcatgory.isEmpty()){
-                item.setItemcategory(getString(R.string.household));
-            }
             item.setItemcategory(itemcatgory);
             item.setItemmarket(itemmarket);
             item.setItemSpecification(itemSpecification);
@@ -378,7 +419,7 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
                 AddItemToListActivity.newItem=true;
                 clearEditTextContain();
             }else{
-                Toast.makeText(getApplicationContext(),"error",Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(),"error saving item to file",Toast.LENGTH_SHORT).show();
             }
 
         }

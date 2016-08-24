@@ -374,7 +374,9 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
         formatter.setLenient(false);
 
         Date currentDate = new Date();
-
+        if(groceryList==null){
+            groceryList=grocerylistSqlDB.get(position);
+        }
 
         String currentTime = formatter.format(currentDate);
         CalendarCollection calendarCollection = new CalendarCollection(groceryList.getDatum(), groceryList.getListcontain(),

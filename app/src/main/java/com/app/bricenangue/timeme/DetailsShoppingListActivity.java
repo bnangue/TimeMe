@@ -524,12 +524,8 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
                     financeAccount.getAccountrecordsAmountUpdateBalance();
                     financeAccount.setLastchangeToAccount();
 
+                    updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
 
-                    if(financeAccount.getAccountRecordsString().isEmpty()){
-                        updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
-                    }else {
-                        updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
-                    }
                 }else {
                     FinanceRecords financeRecords=new FinanceRecords(getString(R.string.textInitialize_create_account_grocery_note),currentTime.split(" ")[0],
                             getString(R.string.textInitialize_create_account_grocery_note),groceryList.getGroceryListTotalPriceToPayString().replace(",",".")
@@ -562,15 +558,8 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
                     financeAccount.setAccountsRecord(recordses);
                     financeAccount.getAccountrecordsAmountUpdateBalance();
                     financeAccount.setLastchangeToAccount();
+                    updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
 
-
-                    if(financeAccount.getAccountRecordsString().isEmpty()){
-                        // updateGroceryListOnServer(groceryList,calendarCollection,null);
-                        updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
-                    }else {
-                        updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
-                        // updateGroceryListOnServer(groceryList,calendarCollection,financeAccount);
-                    }
                 }
 
             }
@@ -594,7 +583,7 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
 
             @Override
             public void setServerResponse(String serverResponse) {
-                if(serverResponse.contains("Account and Grocery list successfully updated")){
+                if(serverResponse!=null && serverResponse.contains("Account and Grocery list successfully updated")){
                     if(groceryList.allItemsbought()){
 
                         deleteEvent(calendarCollection,groceryList,financeAccount);

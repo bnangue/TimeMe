@@ -1,6 +1,7 @@
 package com.app.bricenangue.timeme;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -15,12 +16,15 @@ import android.support.v7.widget.Toolbar;
 import android.telephony.SmsManager;
 import android.util.Log;
 import android.util.Pair;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
+import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
@@ -63,10 +67,7 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
 
     ViewPager viewPager;
     private NavigationDrawerFragment mNavigationDrawerFragment;
-    public final static String FRAGMENTOVERVIEW="Overview";
-    public final static String FRAGMENTEVENTS="My Events";
-    public final static String FRAGMENTFINANCE="My Finance";
-    public final static String FRAGMENTSHOPPING="My Grocery";
+
     private SQLiteShoppingList sqLiteShoppingList;
 
     private FragmentOverview fragmentOverview;
@@ -94,6 +95,7 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
     private UserLocalStore userLocalStore;
     public static ArrayList<CalendarCollection> calendarCollectionArrayList;
     public FragmentCommunicator fragmentCommunicator;
+
 
 
 
@@ -199,6 +201,7 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
 
         }
 
+        fab.setVisibility(View.GONE);
 
         initViewPagerAndTabs();
         // Set current date to today
@@ -248,12 +251,12 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
         viewPager.setOffscreenPageLimit(1);
         SlidingTabLayout tabLayout = (SlidingTabLayout) findViewById(R.id.tabLayout);
 
-        final ViewPagerAdapter pagerAdapter=new ViewPagerAdapter(getSupportFragmentManager());
+        final ViewPagerAdapter pagerAdapter=new ViewPagerAdapter(this,getSupportFragmentManager());
 
-        pagerAdapter.addFragment(fragmentOverview,FRAGMENTOVERVIEW);
-        pagerAdapter.addFragment(fragmentMyEvent,FRAGMENTEVENTS);
-        pagerAdapter.addFragment(fragmentCategoryFinance,FRAGMENTFINANCE);
-        pagerAdapter.addFragment(fragmentCategoryShopping,FRAGMENTSHOPPING);
+        pagerAdapter.addFragment(fragmentOverview,getString(R.string.ViewPager_Fragment_FRAGMENTOVERVIEW));
+        pagerAdapter.addFragment(fragmentMyEvent,getString(R.string.ViewPager_Fragment_FRAGMENTEVENTS));
+        pagerAdapter.addFragment(fragmentCategoryFinance,getString(R.string.ViewPager_Fragment_FRAGMENTFINANCE));
+        pagerAdapter.addFragment(fragmentCategoryShopping,getString(R.string.ViewPager_Fragment_FRAGMENTSHOPPING));
 
         viewPager.setAdapter(pagerAdapter);
 
@@ -283,7 +286,7 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
                 }else {
                    // fragmentOverview.onResume();
 
-                    fab.setVisibility(View.VISIBLE);
+                    fab.setVisibility(View.GONE);
                 }
 
 
@@ -710,6 +713,8 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
 
 
     }
+
+
     private void showErrordialog(String message) {
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
         alert.setMessage(message);

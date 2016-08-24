@@ -127,7 +127,7 @@ public class ListAdapterCreateShopList extends BaseAdapter {
             viewHolder.totalPrice.setTextSize(17f);
             viewHolder.totalPrice.setText(priceStr+" €");
         }else if(priceStr.length()>5){
-            viewHolder.totalPrice.setTextSize(15f);
+            viewHolder.totalPrice.setTextSize(14f);
             viewHolder.totalPrice.setText(priceStr+ " €");
         }else {
             viewHolder.totalPrice.setText(priceStr+" €");

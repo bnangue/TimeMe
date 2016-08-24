@@ -32,9 +32,9 @@ public class ShoppingItem implements Parcelable{
         numberoftimeAddedAnyToList = in.readInt();
         unique_item_id = in.readString();
         itemSpecification = in.readString();
-        itemcategory = in.readString();
         itemmarket = in.readString();
         itemIsBought = in.readByte() != 0;
+        itemcategory = in.readString();
     }
 
     public static final Creator<ShoppingItem> CREATOR = new Creator<ShoppingItem>() {
@@ -62,11 +62,13 @@ public class ShoppingItem implements Parcelable{
 
             obj.put("unique_item_id", unique_item_id);
             obj.put("itemSpecification", itemSpecification);
+
+            obj.put("itemmarket", itemmarket);
             obj.put("numberofItemsetForList", numberofItemsetForList);
             obj.put("numberoftimeAddedAnyToList", numberoftimeAddedAnyToList);
-            obj.put("itemcategory", itemcategory);
-            obj.put("itemmarket", itemmarket);
+
             obj.put("itemIsBought", itemIsBought);
+            obj.put("itemcategory", itemcategory);
 
 
         } catch (JSONException e) {
@@ -85,10 +87,11 @@ public class ShoppingItem implements Parcelable{
             item.setItemSpecification(obj.getString("itemSpecification"));
 
             item.setItemmarket(obj.getString("itemmarket"));
-            item.setItemcategory(obj.getString("itemcategory"));
+
             item.setNumberofItemsetForList( obj.optInt("numberofItemsetForList"));
             item.setNumberoftimeAddedAnyToList( obj.optInt("numberoftimeAddedAnyToList"));
             item.setItemIsBought(obj.getBoolean("itemIsBought"));
+            item.setItemcategory(obj.getString("itemcategory"));
 
 
         } catch (JSONException e) {
@@ -199,8 +202,8 @@ public class ShoppingItem implements Parcelable{
         dest.writeInt(numberoftimeAddedAnyToList);
         dest.writeString(unique_item_id);
         dest.writeString(itemSpecification);
-        dest.writeString(itemcategory);
         dest.writeString(itemmarket);
         dest.writeByte((byte) (itemIsBought ? 1 : 0));
+        dest.writeString(itemcategory);
     }
 }

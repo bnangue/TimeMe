@@ -4,6 +4,7 @@ package com.app.bricenangue.timeme;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
@@ -13,20 +14,28 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.RadioButton;
+import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 
+import org.apache.poi.ss.formula.functions.T;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 
-public class FragmentOverview extends Fragment implements FragmentCommunicator,FragmentLife,ShareWithFriendAdapter.OnEventSelected {
-
-    private TextView eventpriode, creatorname, createdtime, notes, descriptionexpand;
+public class FragmentOverview extends Fragment{
 
     private AndroidListAdapter list_adapter;
     private MySQLiteHelper mySQLiteHelper;
@@ -40,37 +49,22 @@ public class FragmentOverview extends Fragment implements FragmentCommunicator,F
     private ArrayList<CalendarCollection> newItems = new ArrayList<>();
     private ArrayList<CalendarCollection> collectionArrayList = new ArrayList<>();
     private UserLocalStore userLocalStore;
+    private SQLFinanceAccount sqlFinanceAccount;
+    private SQLiteShoppingList sqLiteShoppingList;
+    private Spinner spinnerAccounts;
+    private String [] nameAccArray;
+    private String [] idAccArray;
 
-    private boolean isShown = false;
+
+    private ArrayList<FinanceAccount> financeAccountsArrayList = new ArrayList<>();
+    private ArrayList<GroceryList> groceryListArrayList = new ArrayList<>();
+
+
     private AlertDialog alertDialog;
 
-    private void prepareRecyclerView(Context context, ArrayList<CalendarCollection> arrayList) {
+    private ListView listViewShopping, listViewFinance;
+    private boolean isShown;
 
-        mAdapter = new MyRecyclerViewAdapter(((NewCalendarActivty)getActivity()), arrayList, myClickListener);
-        mRecyclerView.setHasFixedSize(true);
-        mLayoutManager = new LinearLayoutManager(getContext());
-        mRecyclerView.setLayoutManager(mLayoutManager);
-        mRecyclerView.setAdapter(mAdapter);
-
-    }
-
-    private void prepareRecyclerView(ArrayList<CalendarCollection> arrayList) {
-
-        mAdapter = new MyRecyclerViewAdapter(((NewCalendarActivty)getActivity()), arrayList, myClickListener);
-        mRecyclerView.setHasFixedSize(true);
-        mLayoutManager = new LinearLayoutManager(getContext());
-        mRecyclerView.setLayoutManager(mLayoutManager);
-        mRecyclerView.setAdapter(mAdapter);
-
-    }
-
-    @Override
-    public void passDataToFragment(ArrayList<CalendarCollection> someValue) {
-        collectionArrayList = someValue;
-    }
-
-
-    private OnCalendarEventsChanged calendarEventsChanged;
 
     public FragmentOverview() {
 
@@ -79,9 +73,6 @@ public class FragmentOverview extends Fragment implements FragmentCommunicator,F
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-
-        calendarEventsChanged = (OnCalendarEventsChanged) getActivity();
-        ((NewCalendarActivty) getActivity()).fragmentCommunicator = this;
     }
 
     @Override
@@ -90,67 +81,38 @@ public class FragmentOverview extends Fragment implements FragmentCommunicator,F
 
         // Inflate the layout for this fragment
         userLocalStore=new UserLocalStore(getContext());
+        sqlFinanceAccount=new SQLFinanceAccount(getContext());
+        sqLiteShoppingList=new SQLiteShoppingList(getContext());
 
-        View rootView = inflater.inflate(R.layout.fragment_fragment_all_events, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_fragment_overview_layout, container, false);
+        listViewShopping=(ListView)rootView.findViewById(R.id.listView_overview_fragment_shopping_list);
+        listViewFinance=(ListView)rootView.findViewById(R.id.listView_overview_fragment_finance_records);
 
-        mRecyclerView = (RecyclerView) rootView.findViewById(R.id.my_recycler_view);
-
-        myClickListener = new MyRecyclerViewAdapter.MyClickListener() {
-            @Override
-            public void onItemClick(int position, View v) {
-                setViews(v, position);
-            }
-
-        };
-
-        // Code to Add an item with default animation
-        //((MyRecyclerViewAdapter) mAdapter).addItem(obj, index);
-
-        // Code to remove an item with default animation
-        //((MyRecyclerViewAdapter) mAdapter).deleteItem(index);
+        spinnerAccounts=(Spinner)rootView.findViewById(R.id.spinner_overview_fragment_which_account);
 
 
         return rootView;
 
     }
+    private void populateSpinner(){
+        if(nameAccArray!=null){
+            SpinnerAdapter adapter = new ArrayAdapter<>(getContext(), R.layout.spinnerlayout, nameAccArray);
+            spinnerAccounts.setAdapter(adapter);
+            spinnerAccounts.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
 
+                        populauteFinanceList(financeAccountsArrayList.get(i).getRecords());
 
-    void showDialogsharewithfriend(ArrayList<User> users){
+                }
 
-
-
-        LayoutInflater inflater = getLayoutInflater(null);
-        View convertView = (View) inflater.inflate(R.layout.share_friend_layout, null);
-        alertDialog.setView(convertView);
-        alertDialog.setTitle("Share with ");
-        ListView listView=(ListView)convertView.findViewById(R.id.listviewsharefriend);
-        ShareWithFriendAdapter friendAdapter=new ShareWithFriendAdapter(getContext(), users,this);
-        Button btncancel = (Button) convertView.findViewById(R.id.buttonCancelsharewithfriend);
-
-        Button btnok = (Button) convertView.findViewById(R.id.buttonOKsharewithfriend);
-        listView.setAdapter(friendAdapter);
-        listView.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE);
-
-
-        btncancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                alertDialog.dismiss();
-            }
-        });
-        btnok.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                alertDialog.dismiss();
-
-                //pass data
-            }
-        });
-
-
-        alertDialog.show();
+                @Override
+                public void onNothingSelected(AdapterView<?> adapterView) {
+                    populauteFinanceList(financeAccountsArrayList.get(0).getRecords());
+                }
+            });
+        }
     }
-
 
     void showFriendstosharewith() {
         // Intialize  readable sequence of char values
@@ -215,49 +177,51 @@ public class FragmentOverview extends Fragment implements FragmentCommunicator,F
         alert.show();
     }
 
-
-    private void setViews(View v, int position){
-        creatorname = (TextView) v.findViewById(R.id.textViewexpandcreator);
-        createdtime = (TextView) v.findViewById(R.id.textViewexpandcreationtime);
-        eventpriode = (TextView) v.findViewById(R.id.textViewexpandperiode);
-        descriptionexpand = (TextView) v.findViewById(R.id.textViewexpanddescription);
-        TextView descriptionTitle=(TextView)v.findViewById(R.id.textViewexpanddescriptionheader);
-
-        notes = (TextView) v.findViewById(R.id.textViewexpandnote);
-
-
-
-        if(collectionArrayList.size()!=0){
-            CalendarCollection ecollection=collectionArrayList.get(position);
-            creatorname.setText(ecollection.creator);
-            createdtime.setText(ecollection.creationdatetime);
-            if(ecollection.description.contains("list_contain")){
-                descriptionTitle.setText(getContext().getString(R.string.Frangment_Oveview_textView_Description_title_CardView));
-                descriptionexpand.setText(new GroceryList().getListItemsAsDescription(ecollection.description));
-            }else {
-                descriptionexpand.setText(ecollection.description);
+    public void populauteShoppingList(final ArrayList<GroceryList> groceryLists){
+        ShowShoopingListAdapter showShoopingListAdapter=new ShowShoopingListAdapter(getContext(),groceryLists);
+        listViewShopping.setAdapter(showShoopingListAdapter);
+        listViewShopping.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                startGroceryListOverview(groceryLists.get(i));
             }
-
-
-            String[] sttime=ecollection.startingtime.split(" ");
-            String[] edtime=ecollection.endingtime.split(" ");
-
-            eventpriode.setText(sttime[0]+"  -  "+edtime[0]);
-            StringBuilder builder=new StringBuilder();
-            if(ecollection.alldayevent.equals("1")){
-                builder.append("All day €");
-            }
-            if(ecollection.alldayevent.equals("1")){
-                builder.append(",").append(" repeat every month");
-            }
-            if(builder.toString().isEmpty()){
-                notes.setText("");
-            }else{
-                notes.setText(builder.toString());
-            }
-
-        }
+        });
     }
+
+
+    private void startGroceryListOverview(GroceryList item) {
+        startActivity(new Intent(getActivity(),DetailsShoppingListActivity.class)
+                .putExtra("GroceryList",item).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+
+    }
+    public void populauteFinanceList(final ArrayList<FinanceRecords> financeRecordses){
+        Calendar c=new GregorianCalendar();
+        Date dat=c.getTime();
+        String date = (String) android.text.format.DateFormat.format("dd-MM-yyyy", dat);
+        ArrayList<FinanceRecords> recordses=new ArrayList<>();
+        for (int k=0;k<financeRecordses.size();k++){
+            if(financeRecordses.get(k).getRecordValueDate().equals(date)){
+                recordses.add(financeRecordses.get(k));
+            }
+        }
+        ShowFinanceAdapter financeAdapter=new ShowFinanceAdapter(getContext(),recordses);
+        listViewFinance.setAdapter(financeAdapter);
+        listViewFinance.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                startFinanceRecordOverview(financeRecordses,i);
+            }
+        });
+    }
+
+    private void startFinanceRecordOverview(ArrayList<FinanceRecords> financeRecordses,int position) {
+        FinanceRecords financeRecords=financeRecordses.get(position);
+        startActivity(new Intent(getActivity(),ViewFinanceRecordsDetailsActivity.class)
+                .putExtra("financeRecord",financeRecords)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+
+    }
+
     void showDialogListCalendarEvent(CalendarCollection collectionsevent){
 
 
@@ -287,6 +251,8 @@ public class FragmentOverview extends Fragment implements FragmentCommunicator,F
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
+
+        /**
         mySQLiteHelper=new MySQLiteHelper(getContext());
         mAdapter = new MyRecyclerViewAdapter(((NewCalendarActivty)getActivity()), collectionArrayList, myClickListener);
         mRecyclerView.setHasFixedSize(true);
@@ -294,7 +260,7 @@ public class FragmentOverview extends Fragment implements FragmentCommunicator,F
         mRecyclerView.setLayoutManager(mLayoutManager);
         mRecyclerView.setAdapter(mAdapter);
         alertDialog = new android.support.v7.app.AlertDialog.Builder(getActivity()).create();
-
+**/
 
     }
 
@@ -315,22 +281,36 @@ public class FragmentOverview extends Fragment implements FragmentCommunicator,F
     public void onResume() {
         super.onResume();
 
+        financeAccountsArrayList=sqlFinanceAccount.getAllFinanceAccount();
+        groceryListArrayList=sqLiteShoppingList.getAllShoppingList()[0];
 
+        if(financeAccountsArrayList!=null &&financeAccountsArrayList.size()!=0){
+            nameAccArray=new String[financeAccountsArrayList.size()];
+            idAccArray=new String[financeAccountsArrayList.size()];
+            for(int i=0;i<financeAccountsArrayList.size();i++){
+                nameAccArray[i]= getContext().getString(R.string.View_account_accountName)+"  "+financeAccountsArrayList.get(i).getAccountName();
+                idAccArray[i]=financeAccountsArrayList.get(i).getAccountUniqueId();
+            }
+        }
+
+
+        populauteShoppingList(groceryListArrayList);
+        populateSpinner();
+
+
+
+/**
             collectionArrayList=getCalendarEvents(mySQLiteHelper.getAllIncomingNotification());
                 prepareRecyclerView(getContext(),collectionArrayList);
 
         ((MyRecyclerViewAdapter) mAdapter).setOnItemClickListener(myClickListener);
-
+**/
 
     }
 
-    public void updateUi(Context context,ArrayList<CalendarCollection> arrayList){
-        prepareRecyclerView(context,arrayList);
-    }
     @Override
     public void onPause() {
         super.onPause();
-        ((MyRecyclerViewAdapter) mAdapter).setOnItemClickListener(null);
 
     }
 
@@ -368,15 +348,169 @@ public class FragmentOverview extends Fragment implements FragmentCommunicator,F
         return a;
     }
 
-    @Override
-    public void onUpdateUi(ArrayList<CalendarCollection> arrayList,String uName) {
-        prepareRecyclerView(arrayList);
-    }
 
-
-
-    @Override
-    public void selected(int count, boolean[] events, int position) {
-
-    }
 }
+ class ShowShoopingListAdapter extends BaseAdapter {
+
+    private Context context;
+
+
+    private static LayoutInflater inflater=null;
+    private ArrayList<GroceryList> groceryLists;
+
+    public ShowShoopingListAdapter(Context oldContext, ArrayList<GroceryList> groceryLists)
+    {
+        context = oldContext;
+        this.groceryLists = groceryLists;
+        if(null != groceryLists) {
+            inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+        }
+
+    }
+
+    @Override
+    public int getCount() {
+        int i = 0;
+        if(groceryLists != null)
+            i = groceryLists.size();
+
+        return i;
+    }
+
+
+    @Override
+    public Object getItem(int position) {
+        return groceryLists.get(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    @Override
+    public View getView(final int position, View convertView, final ViewGroup parent) {
+
+        final holder viewHolder;
+        if (convertView == null) {
+            convertView = inflater.inflate(R.layout.custom_overview_shopping, null);
+            viewHolder = new holder();
+
+
+            viewHolder.sortName = (TextView) convertView.findViewById(R.id.textView_sort_options_items_overview_shopping);
+            viewHolder.balance=(TextView)convertView.findViewById(R.id.textView_sort_options_items_amount_overview_shopping);
+            viewHolder.status=(TextView)convertView.findViewById(R.id.textView_sort_options_items_status_overview_shopping);
+
+            convertView.setTag(viewHolder);
+
+        } else {
+            viewHolder = (holder) convertView.getTag();
+        }
+
+        String name=context.getResources().getString(R.string.grocery_list_item_title_text ).toLowerCase() + " " +groceryLists.get(position).getDatum();
+        viewHolder.sortName.setText(name);
+        String balance=groceryLists.get(position).getGroceryListTotalPriceToPayString()+" €";
+
+            viewHolder.balance.setText(balance);
+            viewHolder.balance.setTextColor(context.getResources().getColor(R.color.warning_color));
+        if(!groceryLists.get(position).isListdone()){
+            viewHolder.status.setText(context.getString(R.string.grocery_list_status__not_done_text));
+        }
+
+        return convertView;
+    }
+
+
+
+    static class holder {
+        public TextView sortName;
+        public TextView balance;
+        public TextView status;
+
+    }
+
+}
+
+ class ShowFinanceAdapter extends BaseAdapter {
+
+     private Context context;
+
+
+    private static LayoutInflater inflater=null;
+    private ArrayList<FinanceRecords> accountsRecords;
+
+    public ShowFinanceAdapter(Context oldContext, ArrayList<FinanceRecords> accountsRecords)
+    {
+        context = oldContext;
+        this.accountsRecords = accountsRecords;
+        if(null != accountsRecords) {
+            inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        }
+
+    }
+
+
+    @Override
+    public int getCount() {
+        int i = 0;
+        if(accountsRecords != null)
+            i = accountsRecords.size();
+
+        return i;
+    }
+
+
+    @Override
+    public Object getItem(int position) {
+        return accountsRecords.get(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    @Override
+    public View getView(final int position, View convertView, final ViewGroup parent) {
+
+        final holder viewHolder;
+        if (convertView == null) {
+            convertView = inflater.inflate(R.layout.custom_overview_finance, null);
+            viewHolder = new holder();
+
+
+            viewHolder.sortName = (TextView) convertView.findViewById(R.id.textView_sort_options_items_overview_finance);
+            viewHolder.balance=(TextView)convertView.findViewById(R.id.textView_sort_options_items_amount_overview_finance);
+
+            convertView.setTag(viewHolder);
+
+        } else {
+            viewHolder = (holder) convertView.getTag();
+        }
+
+        viewHolder.sortName.setText(accountsRecords.get(position).getRecordNAme());
+        String balance=accountsRecords.get(position).getRecordAmount()+" €";
+        if(!accountsRecords.get(position).isIncome()){
+            balance="-"+balance;
+            viewHolder.balance.setText(balance);
+            viewHolder.balance.setTextColor( context.getResources().getColor(R.color.warning_color));
+        }else {
+            viewHolder.balance.setText(balance);
+            viewHolder.balance.setTextColor(context.getResources().getColor(R.color.color_account_balance_positive));
+        }
+
+
+        return convertView;
+    }
+
+
+
+    static class holder {
+        public TextView sortName;
+        public TextView balance;
+
+    }
+
+}
+

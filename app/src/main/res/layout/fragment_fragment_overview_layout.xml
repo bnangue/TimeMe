@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginRight="5dp"
+    android:layout_marginLeft="5dp"
+    android:padding="10dp"
+    >
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+
+            android:layout_marginTop="5dp"
+            android:id="@+id/relative_fragment_grocery1"
+            >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Events"
+                android:id="@+id/text_overview_fragment_next_events"
+                android:layout_marginBottom="2dp"
+                android:layout_marginLeft="5dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_below="@+id/separator_overview_fragment_next_events"
+                android:background="@drawable/roundspinner"
+                android:padding="5dp"
+                android:layout_marginBottom="10dp"
+                android:id="@+id/linearLayout_overview_fragment_next_events">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="25. August"
+                    android:id="@+id/text_grocery_fragment_recently_created_1"
+                    android:layout_marginBottom="2dp"
+                    android:layout_weight="1"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="events"
+                    android:id="@+id/text_grocery_fragment_recently_created_2"
+                    android:layout_marginBottom="2dp"
+                    android:layout_weight="3"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:id="@+id/separator_overview_fragment_next_events"
+                android:orientation="horizontal"
+                android:background="@color/primary"
+                android:layout_alignStart="@+id/text_overview_fragment_next_events"
+                android:layout_alignEnd="@+id/text_overview_fragment_next_events"
+                android:layout_below="@+id/text_overview_fragment_next_events"
+                android:layout_alignLeft="@+id/text_overview_fragment_next_events"
+                android:layout_alignRight="@+id/text_overview_fragment_next_events"
+                android:layout_marginBottom="5dp"/>
+
+
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Shopping"
+                android:id="@+id/text_overview_fragment_shopping_lists"
+                android:layout_marginBottom="2dp"
+                android:layout_marginLeft="5dp"
+                android:layout_below="@id/linearLayout_overview_fragment_next_events"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_below="@+id/separator_overview_fragment_shopping_lists"
+                android:background="@drawable/round_rectangle"
+                android:padding="5dp"
+                android:id="@+id/linearLayout_text_overview_fragment_shopping_lists"
+
+                android:layout_marginBottom="10dp">
+                <ListView
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:id="@+id/listView_overview_fragment_shopping_list"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:id="@+id/separator_overview_fragment_shopping_lists"
+                android:orientation="horizontal"
+                android:background="@color/primary"
+                android:layout_alignStart="@+id/text_overview_fragment_shopping_lists"
+                android:layout_alignEnd="@+id/text_overview_fragment_shopping_lists"
+                android:layout_below="@+id/text_overview_fragment_shopping_lists"
+                android:layout_alignLeft="@+id/text_overview_fragment_shopping_lists"
+                android:layout_alignRight="@+id/text_overview_fragment_shopping_lists"
+                android:layout_marginBottom="5dp"/>
+
+
+
+
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:id="@+id/linearLayout_overview_fragment_spinner_and_textview"
+                android:layout_below="@+id/linearLayout_text_overview_fragment_shopping_lists"
+                android:layout_marginBottom="5dp">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_weight="1">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Finances"
+                        android:id="@+id/text_overview_fragment_finance_records"
+                        android:layout_marginBottom="2dp"
+                        android:layout_marginLeft="5dp"
+                        />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:id="@+id/separator_overview_fragment_finance"
+                        android:orientation="horizontal"
+                        android:background="@color/primary"
+                        android:layout_marginBottom="5dp"
+                        android:layout_marginLeft="5dp"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/Today_Text"
+                        android:textColor="@color/grey_light"
+                        android:id="@+id/text_overview_fragment_finance_records_today_text"
+                        android:layout_marginBottom="2dp"
+                        android:layout_marginLeft="5dp"
+                        />
+
+
+                </LinearLayout>
+                <Spinner
+                    android:layout_width="0dp"
+                    android:layout_height="35dp"
+                    android:id="@+id/spinner_overview_fragment_which_account"
+                    android:background="@drawable/round_clear"
+                    android:layout_weight="4"
+                    android:layout_marginLeft="10dp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_below="@+id/linearLayout_overview_fragment_spinner_and_textview"
+                android:background="@drawable/roundpassword"
+                android:padding="5dp"
+                >
+                <ListView
+                    android:layout_width="match_parent"
+                    android:layout_height="150dp"
+                    android:id="@+id/listView_overview_fragment_finance_records"
+                    />
+
+                <ImageButton
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/button_overview_fragment_show_finance_graphic"
+                    android:src="@drawable/ic_action_statistics"
+                    style="@style/Base.Widget.AppCompat.Button.Borderless"
+                   />
+            </LinearLayout>
+
+
+
+
+        </RelativeLayout>
+    </RelativeLayout>
+
+
+
+</RelativeLayout>

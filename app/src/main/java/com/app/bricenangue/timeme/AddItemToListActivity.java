@@ -133,7 +133,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         mySQLiteHelper=new MySQLiteHelper(this);
 
         sqlFinanceAccount=new SQLFinanceAccount(this);
-        alertDialog = new android.support.v7.app.AlertDialog.Builder(this).create();
+
 
         accountsforshopping=sqlFinanceAccount.getAllFinanceAccount();
 
@@ -538,6 +538,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         }
         if(itemstoShoparray==null){
             itemstoShoparray=new ShoppingItem[itemsDB.size()];
+            initArray();
         }
         ListViewAdapter listViewAdapter=new ListViewAdapter(this,itemsDB,this);
         addItemtolistListview.setVisibility(View.VISIBLE);
@@ -645,15 +646,8 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
 
             }
 
+        createGroceryAndUpdateFinance(financeAccount,groceryList,calendarCollection);
 
-            if(financeAccount.getAccountRecordsString().isEmpty()){
-                createGroceryAndUpdateFinance(financeAccount,groceryList,calendarCollection);
-                // saveGroceryListToServer(groceryList,calendarCollection,null);
-            }else {
-                createGroceryAndUpdateFinance(financeAccount,groceryList,calendarCollection);
-
-                // saveGroceryListToServer(groceryList,calendarCollection,financeAccount);
-            }
 
     }
     @Override
@@ -691,6 +685,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                 }else{
 
                     //error
+                    Toast.makeText(getApplicationContext(),"An Error occured updating list",Toast.LENGTH_SHORT).show();
                 }
 
             }else {
@@ -717,6 +712,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
             return true;
         }else if (id == R.id.action_item_list_refresh){
             new LoadItemDBAsyncTask().execute();
+            Toast.makeText(getApplicationContext(),"List updated",Toast.LENGTH_SHORT).show();
 
             return true;
         }
@@ -1132,6 +1128,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
 
 
 
+        alertDialog = new android.support.v7.app.AlertDialog.Builder(this).create();
         LayoutInflater inflater = getLayoutInflater();
         View convertView = (View) inflater.inflate(R.layout.custom_sort_options, null);
         alertDialog.setView(convertView);
@@ -1906,6 +1903,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         alertDialog.setCancelable(true);
         alertDialog.show();
     }
+
     private void saveeventtoSQl(CalendarCollection calendarCollections) {
 
 

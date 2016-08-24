@@ -1,5 +1,6 @@
 package com.app.bricenangue.timeme;
 
+import android.content.Context;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
  */
 public class ViewPagerAdapter extends FragmentStatePagerAdapter {
 
+    private  Context context;
     CharSequence Titles[]; // This will Store the Titles of the Tabs which are Going to be passed when ViewPagerAdapter is created
     int NumbOfTabs; // Store the number of tabs, this will also be passed when the ViewPagerAdapter is created
 
@@ -19,8 +21,9 @@ public class ViewPagerAdapter extends FragmentStatePagerAdapter {
     private final ArrayList<String> fragmentTitleList = new ArrayList<>();
 
     // Build a Constructor and assign the passed Values to appropriate values in the class
-    public ViewPagerAdapter(FragmentManager fm) {
+    public ViewPagerAdapter(Context context, FragmentManager fm) {
         super(fm);
+        this.context=context;
 
     }
 
@@ -55,16 +58,16 @@ public class ViewPagerAdapter extends FragmentStatePagerAdapter {
         String title=" ";
         switch (position){
             case 0:
-                title=NewCalendarActivty.FRAGMENTOVERVIEW;
+                title= context.getString(R.string.ViewPager_Fragment_FRAGMENTOVERVIEW);
                 break;
             case 1:
-                title=NewCalendarActivty.FRAGMENTEVENTS;
+                title=context.getString(R.string.ViewPager_Fragment_FRAGMENTEVENTS);
                 break;
             case 2:
-                title=NewCalendarActivty.FRAGMENTFINANCE;
+                title=context.getString(R.string.ViewPager_Fragment_FRAGMENTFINANCE);
                 break;
             case 3:
-                title=NewCalendarActivty.FRAGMENTSHOPPING;
+                title=context.getString(R.string.ViewPager_Fragment_FRAGMENTSHOPPING);
                 break;
         }
 

@@ -1202,6 +1202,7 @@ public class ServerRequests {
                 urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
                 urlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
                 urlConnection.setDoOutput(true);
+                urlConnection.setDoInput(true);
                 urlConnection.getOutputStream().write(postData);
 
                 BufferedReader in = new BufferedReader(
