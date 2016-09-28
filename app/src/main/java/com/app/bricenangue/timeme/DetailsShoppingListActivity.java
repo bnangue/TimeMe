@@ -1,9 +1,11 @@
 package com.app.bricenangue.timeme;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.DialogFragment;
@@ -24,6 +26,20 @@ import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.firebase.client.ChildEventListener;
+import com.firebase.client.Firebase;
+import com.firebase.client.FirebaseError;
+import com.google.android.gms.auth.api.signin.internal.SignInHubActivity;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
 import org.json.JSONObject;
 
 import java.text.DecimalFormat;
@@ -43,23 +59,22 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
     private ArrayList<ShoppingItem> itemsDB=new ArrayList<>();
     private ListAdapterCreateShopList listViewAdapter;
     private boolean[] itemsBought;
-    private GroceryList groceryList;
+   private GroceryList groceryList;
     private ListView shoppinglistview;
     private TextView textViewAlreadySpent,textViewgroceryListName;
     double totalpriceTopay;
     private Spinner spinner;
     private Menu menu;
-    String [] userAccArray={"standard","most used","price ascending","price descending","selected first","selected last"};
+    String [] userAccArray={"most used","price ascending","price descending","selected first","selected last"};
 
-    private SQLiteShoppingList sqLiteShoppingList;
     private Snackbar snackbar;
     private CoordinatorLayout coordinatorLayout;
-    private static boolean somethingChanged=false;
-    private boolean isToUpdate=false;
-    private MySQLiteHelper mySQLiteHelper;
-    private SQLFinanceAccount sqlFinanceAccount;
 
-    private UserLocalStore userLocalStore;
+    private DatabaseReference firebaseReference;
+    private String shoppingListid;
+    private FirebaseAuth auth;
+    private ValueEventListener valueEventListener;
+    private ProgressDialog progressBar;
 
 
     @Override
@@ -67,11 +82,9 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details_shopping_list);
 
-        sqLiteShoppingList=new SQLiteShoppingList(this);
-        mySQLiteHelper= new MySQLiteHelper(this);
-        sqlFinanceAccount=new SQLFinanceAccount(this);
+        auth=FirebaseAuth.getInstance();
+        firebaseReference= FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_GROCERYLISTS);
 
-        userLocalStore= new UserLocalStore(this);
         coordinatorLayout=(CoordinatorLayout)findViewById(R.id.coordinateLayout_activity_details_shoppping_list);
         shoppinglistview=(ListView)findViewById(R.id.listView_activity_details_shoppping_list);
         textViewAlreadySpent=(TextView)findViewById(R.id.grocery_fragment_balance_amount_activity_details_shopping_list);
@@ -84,45 +97,12 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
         spinner.setSelection(0);
 
         Bundle extras=getIntent().getExtras();
-        if(extras!=null && extras.containsKey("GroceryList")){
-            groceryList= extras.getParcelable("GroceryList");
-            if(extras.containsKey("isFromDetails")){
-                somethingChanged=extras.getBoolean("isFromDetails");
-                isToUpdate=somethingChanged;
-            }
-        }
+        if(extras!=null){
 
-        if(groceryList!=null){
-            itemsDB=groceryList.getListItems();
-        }
-
-        if(savedInstanceState!=null){
-            itemsDB=savedInstanceState.getParcelableArrayList("shoppinglist");
-            itemsBought=savedInstanceState.getBooleanArray("itemsBought");
-            totalpriceTopay=savedInstanceState.getDouble("totalpriceTopay");
-            groceryList=savedInstanceState.getParcelable("groceryList");
-
-            DecimalFormat df = new DecimalFormat("0.00");
-            df.setMaximumFractionDigits(2);
-            String priceStr = df.format(totalpriceTopay);
-
-            if(priceStr.equals("0.00")){
-                textViewAlreadySpent.setText(priceStr+" €");
-                textViewAlreadySpent.setTextColor(getResources().getColor(R.color.grey));
-            }else {
-                textViewAlreadySpent.setText("- "+priceStr+" €");
-                textViewAlreadySpent.setTextColor(getResources().getColor(R.color.warning_color));
-            }
-            prepareOrientationchange();
-        }else{
-
-                populateListview();
-
-
+                shoppingListid=extras.getString("GroceryListId");
 
         }
-        String groceryListName= getResources().getString(R.string.grocery_list_item_title_text )+ " " + groceryList.getDatum();
-        textViewgroceryListName.setText(groceryListName);
+
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -137,10 +117,73 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
 
             }
         });
-        sort(spinner.getSelectedItem().toString());
+
+        if(savedInstanceState!=null){
+            shoppingListid=savedInstanceState.getString("shoppingListid");
+
+        }
 
 
     }
+
+    private void fetchList(){
+        progressBar = new ProgressDialog(this);
+        progressBar.setCancelable(false);
+        progressBar.setTitle("Loading items");
+        progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressBar.show();
+        assert  auth.getCurrentUser()!=null;
+        final DatabaseReference shoopinglistItem=FirebaseDatabase
+                .getInstance().getReference().
+        child(Config.FIREBASE_APP_URL_GROCERYLISTS).child(auth.getCurrentUser().getUid());
+
+
+
+        shoopinglistItem.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.hasChild(shoppingListid)){
+                    GroceryListForFireBase groceryListForFireBase=dataSnapshot.child(shoppingListid).getValue(GroceryListForFireBase.class);
+                    GroceryList groceryList1=new GroceryList().getGrocerylistFromGLFirebase(groceryListForFireBase);
+                    groceryList=groceryList1;
+                    itemsDB=groceryList1.getItemsOftheList();
+                    String groceryListName= getResources().getString(R.string.grocery_list_item_title_text )+ " " + groceryList.getDatum();
+                    textViewgroceryListName.setText(groceryListName);
+                    populateListview();
+                    shoopinglistItem.removeEventListener(this);
+                    if(progressBar!=null){
+                        progressBar.dismiss();
+                    }
+
+                }
+
+
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                if(progressBar!=null){
+                    progressBar.dismiss();
+                }
+            }
+        });
+        /**
+         * final Firebase shoopinglistItem=firebaseReference.child(shoppingListid)
+         .child(Config.FIREBASE_APP_URL_SHARED_GROCERY_ITEMS_NODE);
+         **/
+        if(itemsDB.size()!=0){
+            populateListview();
+
+        }
+    }
+    @Override
+    protected void onStart() {
+        super.onStart();
+        fetchList();
+
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -192,17 +235,14 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putBooleanArray("itemsBought",itemsBought);
-        outState.putParcelableArrayList("shoppinglist",itemsDB);
-        outState.putDouble("totalpriceTopay",totalpriceTopay);
-        outState.putParcelable("groceryList",groceryList);
+        outState.putString("shoppingListid",shoppingListid);
+
     }
 
     @Override
-    public void onShoppingItemBought(ShoppingItem item, boolean[] positions) {
+    public void onShoppingItemBought(ShoppingItem item, boolean[] positions,int position) {
 
         showOption(R.id.action_items_added_done);
-        somethingChanged=true;
         itemsBought=positions;
         listViewAdapter.setSelectedItems(itemsBought,0);
        double totalspent=0;
@@ -215,6 +255,14 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
                 double price= Double.parseDouble(itemsDB.get(i).getPrice())*numb;
                 totalspent=totalspent+price;
             }
+
+        }
+        assert  auth.getCurrentUser()!=null;
+        DatabaseReference shoopinglistItem=firebaseReference.child(auth.getCurrentUser().getUid()).child(shoppingListid)
+                .child(Config.FIREBASE_APP_URL_SHARED_GROCERY_ITEMS_NODE);
+        shoopinglistItem.setValue(new GroceryList().getGrocerylistitemForGLFirebase(itemsDB));
+        if (!new ServerRequests(this).haveNetworkConnection()) {
+            showSnackBarNoInternet();
 
         }
         DecimalFormat df = new DecimalFormat("0.00");
@@ -238,9 +286,11 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
 
 
         groceryList.setItemsOftheList(itemsDB);
-        if(!spinner.getSelectedItem().toString().equals("standard")){
+        if(!spinner.getSelectedItem().toString().equals("most used")){
             sort(spinner.getSelectedItem().toString());
         }
+
+
 
         if(groceryList.allItemsbought()){
             //signalize user and save list
@@ -250,7 +300,7 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
                     ,getString(R.string.alert_dialog_changed_not_saved_shopping_list_done_buttonok
                     ),getString(R.string.alert_dialog_changed_not_saved_shopping_list_done_buttoncancel));
             fragment.setCancelable(false);
-            fragment.show(getSupportFragmentManager(), "SHOPPING LIST NOT COMPLETE");
+            fragment.show(getSupportFragmentManager(), "SHOPPING LIST IS COMPLETE");
         }
     }
 
@@ -258,9 +308,6 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
 
     void sort(String sortname){
         switch (sortname){
-            case "standard":
-                Collections.sort(itemsDB, new ComparatorShoppingItemName());
-                break;
             case "price ascending":
                 Collections.sort(itemsDB, new ComparatorShoppingItemPrice());
                 break;
@@ -297,9 +344,9 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
              textViewgroceryListName.setClickable(false);
          }
         listViewAdapter=new ListAdapterCreateShopList(this,itemsDB,this,isAllBought);
-        if(itemsBought==null){
+
         itemsBought=new boolean[itemsDB.size()];
-         }
+
          double totalspent=0.00;
          for(int i=0;i<itemsDB.size();i++){
              itemsBought[i]=itemsDB.get(i).isItemIsBought();
@@ -333,23 +380,13 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
 
          groceryList.setItemsOftheList(itemsDB);
 
+
          shoppinglistview.setVisibility(View.VISIBLE);
         shoppinglistview.setAdapter(listViewAdapter);
          shoppinglistview.setOnItemClickListener(this);
 
      }
 
-
-     private void prepareOrientationchange() {
-
-        if(itemsBought.length!=0){
-            populateListview();
-            listViewAdapter.setSelectedItems(itemsBought,0);
-            listViewAdapter.notifyDataSetChanged();
-        }else {
-            populateListview();
-        }
-     }
 
 
     @Override
@@ -412,362 +449,132 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
 
     @Override
     public void dateSet(String date, boolean isstart) {
-        somethingChanged=true;
         String groceryListName= getResources().getString(R.string.grocery_list_item_title_text )+ " " + date;
 
         textViewgroceryListName.setText(groceryListName);
+        assert auth.getCurrentUser()!=null;
+        DatabaseReference refdate=firebaseReference.child(auth.getCurrentUser().getUid())
+                .child(shoppingListid).child("datum");
+        refdate.setValue(date);
+        if (!new ServerRequests(this).haveNetworkConnection()) {
+            showSnackBarNoInternet();
+
+        }
         groceryList.setDatum(date);
     }
 
     @Override
     public void onBackPressed() {
 
-        if(somethingChanged){
-            if(isToUpdate){
-
-                SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd, HH:mm");
-                formatter.setLenient(false);
-
-                Date currentDate = new Date();
-
-
-                String currentTime = formatter.format(currentDate);
-                CalendarCollection    calendarCollection=new CalendarCollection(groceryList.getDatum(),groceryList.getListcontain(),
-                        groceryList.getCreatorName(),groceryList.getDatum(), groceryList.getDatum() + " 17:00",
-                        groceryList.getDatum() +" 20:00",groceryList.getList_unique_id(),
-                        getString(R.string.Event_Category_Category_Shopping),"0","0",currentTime);
-
-
-                //update finance record and lsi to server
-
-                ArrayList<FinanceAccount> financeAccountArrayList= sqlFinanceAccount.getAllFinanceAccount();
-                FinanceAccount financeAccount=null;
-                if(financeAccountArrayList.size()!=0){
-                    for (int i=0;i<financeAccountArrayList.size();i++){
-                        if(financeAccountArrayList.get(i).getAccountUniqueId().equals(groceryList.getAccountid())){
-                            financeAccount=financeAccountArrayList.get(i);
-                            break;
-                        }else if(groceryList.getAccountid().isEmpty()){
-                            financeAccount=financeAccountArrayList.get(0);
-                            break;
-                        }
-                    }
-
-                    ArrayList<FinanceRecords> recordsArrayList=new ArrayList<>();
-                    FinanceRecords financeRecords1=null;
-                    recordsArrayList=financeAccount.getRecords();
-                    for (int i =0; i<recordsArrayList.size();i++){
-                        if(recordsArrayList.get(i).getRecordUniquesId().equals(groceryList.getList_unique_id())){
-                            financeRecords1=recordsArrayList.get(i);
-                            financeRecords1.setRecordAmount(groceryList.getGroceryListTotalPriceToPayString().replace(",","."));
-                            recordsArrayList.set(i,financeRecords1);
-                        }
-                    }
-                    financeAccount.setAccountsRecord(recordsArrayList);
-                    financeAccount.getAccountrecordsAmountUpdateBalance();
-
-                    financeAccount.getAccountRecordsString();
-                    financeAccount.setLastchangeToAccount();
-
-
-                    updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
-
-
-                }
-
-
-
-
-            }else {
-
-                SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm");
-                formatter.setLenient(false);
-
-                Date currentDate = new Date();
-
-
-                String currentTime = formatter.format(currentDate);
-                CalendarCollection    calendarCollection=new CalendarCollection(groceryList.getDatum(),groceryList.getListcontain(),
-                        groceryList.getCreatorName(),groceryList.getDatum(), groceryList.getDatum() + " 17:00",
-                        groceryList.getDatum() +" 20:00",groceryList.getList_unique_id(),getString(R.string.Event_Category_Category_Shopping),"0","0",currentTime);
-
-                if(groceryList.allItemsbought()){
-
-                    FinanceRecords financeRecords=new FinanceRecords(getString(R.string.textInitialize_create_account_grocery_note),currentTime.split(" ")[0],
-                            getString(R.string.textInitialize_create_account_grocery_note),groceryList.getGroceryListTotalPriceToPayString().replace(",",".")
-                            ,groceryList.getList_unique_id(),
-                            getString(R.string.textInitialize_create_account_grocery_category),currentTime.split(" ")[0],userLocalStore.getUserfullname(),0,true,false);
-
-
-                    ArrayList<FinanceAccount> financeAccountArrayList= sqlFinanceAccount.getAllFinanceAccount();
-                    FinanceAccount financeAccount=null;
-                    if(financeAccountArrayList.size()!=0){
-                        for (int i=0;i<financeAccountArrayList.size();i++){
-                            if(financeAccountArrayList.get(i).getAccountUniqueId().equals(groceryList.getAccountid())){
-                                financeAccount=financeAccountArrayList.get(i);
-                                break;
-                            }else if(groceryList.getAccountid().isEmpty()){
-                                financeAccount=financeAccountArrayList.get(0);
-                                break;
-                            }
-                        }
-
-                    }
-                    ArrayList<FinanceRecords> recordses=financeAccount.getRecords();
-                    for(int i=0;i<recordses.size();i++){
-                        if(recordses.get(i).getRecordUniquesId().equals(financeRecords.getRecordUniquesId())){
-                            recordses.set(i,financeRecords);
-                        }
-                    }
-
-                    financeAccount.setAccountsRecord(recordses);
-                    financeAccount.getAccountrecordsAmountUpdateBalance();
-                    financeAccount.setLastchangeToAccount();
-
-                    updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
-
-                }else {
-                    FinanceRecords financeRecords=new FinanceRecords(getString(R.string.textInitialize_create_account_grocery_note),currentTime.split(" ")[0],
-                            getString(R.string.textInitialize_create_account_grocery_note),groceryList.getGroceryListTotalPriceToPayString().replace(",",".")
-                            ,groceryList.getList_unique_id(),
-                            getString(R.string.textInitialize_create_account_grocery_category),groceryList.getDatum(),userLocalStore.getUserfullname(),0,false,false);
-
-
-                    ArrayList<FinanceAccount> financeAccountArrayList= sqlFinanceAccount.getAllFinanceAccount();
-                    FinanceAccount financeAccount=null;
-                    if(financeAccountArrayList.size()!=0){
-                        for (int i=0;i<financeAccountArrayList.size();i++){
-                            if(financeAccountArrayList.get(i).getAccountUniqueId().equals(groceryList.getAccountid())){
-                                financeAccount=financeAccountArrayList.get(i);
-                                break;
-                            }else if(groceryList.getAccountid().isEmpty()){
-                                financeAccount=financeAccountArrayList.get(0);
-                                break;
-                            }
-                        }
-
-
-                    }
-                    ArrayList<FinanceRecords> recordses=financeAccount.getRecords();
-                    for(int i=0;i<recordses.size();i++){
-                        if(recordses.get(i).getRecordUniquesId().equals(financeRecords.getRecordUniquesId())){
-                            recordses.set(i,financeRecords);
-                        }
-                    }
-
-                    financeAccount.setAccountsRecord(recordses);
-                    financeAccount.getAccountrecordsAmountUpdateBalance();
-                    financeAccount.setLastchangeToAccount();
-                    updateGroceryAndFinance(groceryList,financeAccount,calendarCollection);
-
-                }
-
-            }
-
-
-        }else {
-
             super.onBackPressed();
-        }
-
-
-    }
-
-    private void updateGroceryAndFinance(final GroceryList groceryList, final FinanceAccount financeAccount, final CalendarCollection calendarCollection){
-        ServerRequests serverRequests= new ServerRequests(this);
-        serverRequests.updateGroceryAndFinanceAccountInBackgroung(groceryList, financeAccount, new FinanceAccountCallbacks() {
-            @Override
-            public void fetchDone(ArrayList<FinanceAccount> returnedAccounts) {
-
-            }
-
-            @Override
-            public void setServerResponse(String serverResponse) {
-                if(serverResponse!=null && serverResponse.contains("Account and Grocery list successfully updated")){
-                    if(groceryList.allItemsbought()){
-
-                        deleteEvent(calendarCollection,groceryList,financeAccount);
-                    }else {
-                        updateEvent(calendarCollection,groceryList,financeAccount);
-                    }
-
-                }else {
-                    showSnackBar(groceryList,calendarCollection,financeAccount);
-                }
-            }
-        });
-    }
-    void deleteEvent(final CalendarCollection calendarCollection, final GroceryList groceryList, final FinanceAccount financeAccount){
-        final ServerRequests serverRequests= new ServerRequests(this);
-        serverRequests.deleteCalenderEventInBackgroung(calendarCollection, new GetEventsCallbacks() {
-            @Override
-            public void done(ArrayList<CalendarCollection> returnedeventobject) {
-
-            }
-
-            @Override
-            public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
-
-            }
-
-            @Override
-            public void updated(String reponse) {
-                if (reponse.contains("Event successfully deleted")) {
-                    mySQLiteHelper.deleteIncomingNotification(calendarCollection.incomingnotifictionid);
-                    updateFinanceAccountLocally(financeAccount,groceryList);
-
-
-                }
-            }
-        });
-    }
-    private void updateGroceryListOnServer(final GroceryList groceryList, final CalendarCollection calendarCollection, final FinanceAccount financeAccount){
-        ServerRequests serverRequests=new ServerRequests(this);
-        serverRequests.updateGroceryListInBackgroung(groceryList, new GroceryListCallBacks() {
-            @Override
-            public void fetchDone(ArrayList<GroceryList> returnedGroceryLists) {
-
-            }
-
-            @Override
-            public void setServerResponse(String serverResponse) {
-                if(serverResponse.contains("Grocery list successfully updated")){
-
-                    updateEvent(calendarCollection,groceryList,financeAccount);
-
-
-
-                }else{
-                    showSnackBar(groceryList,calendarCollection,financeAccount);
-                }
-            }
-        });
-
-    }
-    private void updateGroceryListLocally(GroceryList groceryList){
-
-        groceryList.allItemsbought();
-        if (sqLiteShoppingList.updateShoppingList(groceryList)==1){
-
-            somethingChanged=false;
-            super.onBackPressed();
-        }else {
-            Toast.makeText(getApplicationContext()," Error: List not saved",Toast.LENGTH_SHORT).show();
-        }
-    }
-
-
-    void updateEvent(final CalendarCollection collection, final
-    GroceryList groceryList, final FinanceAccount financeAccount){
-        ServerRequests serverRequests=new ServerRequests(this);
-        serverRequests.saveCalenderEventInBackgroung(collection, new GetEventsCallbacks() {
-            @Override
-            public void done(ArrayList<CalendarCollection> returnedeventobject) {
-
-            }
-
-            @Override
-            public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
-
-            }
-
-            @Override
-            public void updated(String reponse) {
-                if (reponse.contains("Event added successfully")) {
-                    /**
-                    if(financeAccount!=null){
-                        updateeventtoSQl(collection);
-                        updateFinanceAccountToServer(financeAccount,groceryList);
-                    }else {
-                        updateeventtoSQl(collection);
-                        updateGroceryListLocally(groceryList);
-                    }
-
-                    **/
-                updateFinanceAccountLocally(financeAccount,groceryList);
-                updateeventtoSQl(collection);
-                  //  updateGroceryListLocally(groceryList);
-
-                }else {
-                    Toast.makeText(getApplicationContext()," Error: List not store as event",Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
 
     }
 
 
-    public void updateFinanceAccountToServer(final FinanceAccount financeAccount, final GroceryList groceryList){
-        ServerRequests serverRequests =new ServerRequests(this);
-        serverRequests.updateFinanceAccountInBackgroung(financeAccount, new FinanceAccountCallbacks() {
-            @Override
-            public void fetchDone(ArrayList<FinanceAccount> returnedAccounts) {
 
-            }
-
-            @Override
-            public void setServerResponse(String serverResponse) {
-
-                if(serverResponse.contains("Account successfully updated")){
-                    updateFinanceAccountLocally(financeAccount,groceryList);
-                }else {
-                    Toast.makeText(getApplicationContext(),"Error creating account "+ financeAccount.getAccountName(),Toast.LENGTH_SHORT).show();
-
-                }
-            }
-        });
-
-    }
-
-    public void updateFinanceAccountLocally(FinanceAccount financeAccount, GroceryList groceryList){
-
-        if (sqlFinanceAccount.updateFinanceAccount(financeAccount)!=0){
-            updateGroceryListLocally(groceryList);
-        }
-    }
-
-    private void updateeventtoSQl(CalendarCollection calendarCollections) {
-
-
-        try {
-            JSONObject jsonObject=new JSONObject();
-            jsonObject.put("title",calendarCollections.title);
-            jsonObject.put("description",calendarCollections.description);
-            jsonObject.put("datetime",calendarCollections.datetime);
-            jsonObject.put("creator",calendarCollections.creator);
-            jsonObject.put("category",calendarCollections.category);
-            jsonObject.put("startingtime",calendarCollections.startingtime);
-            jsonObject.put("endingtime",calendarCollections.endingtime);
-            jsonObject.put("hashid",calendarCollections.hashid);
-            jsonObject.put("alldayevent",calendarCollections.alldayevent);
-            jsonObject.put("everymonth",calendarCollections.everymonth);
-            jsonObject.put("defaulttime",calendarCollections.creationdatetime);
-            Calendar c=new GregorianCalendar();
-            Date dat=c.getTime();
-            //String day= String.valueOf(dat.getDay());
-            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-            String date = (String) android.text.format.DateFormat.format("yyyy-MM-dd", dat);
-            IncomingNotification incomingNotification=new IncomingNotification(1,0,jsonObject.toString(),date);
-            int incomingNotifiId =  mySQLiteHelper.updateIncomingNotification(incomingNotification);
-
-        }catch (Exception e){
-            e.printStackTrace();
-
-        }
-
-
-    }
     @Override
     public void changescanceled(boolean canceled) {
         if(!canceled){
 
         }else {
-            onBackPressed();
+            progressBar = new ProgressDialog(this);
+            progressBar.setCancelable(false);
+            progressBar.setTitle("Saving...");
+            progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            progressBar.show();
+            assert auth.getCurrentUser()!=null;
+            final DatabaseReference finRef=FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS)
+                    .child(auth.getCurrentUser().getUid());
+            final DatabaseReference grRef=firebaseReference.child(auth.getCurrentUser().getUid()).child(shoppingListid);
+          valueEventListener=new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if(dataSnapshot.hasChild(groceryList.getAccountid())){
+                        FinanceAccountForFireBase child=dataSnapshot.child(groceryList.getAccountid()).getValue(FinanceAccountForFireBase.class);
+                        FinanceAccount financeAccount=new FinanceAccount(getApplicationContext()).getFinanceAccountFromFirebase(child);
+                        ArrayList<FinanceRecords> list=financeAccount.getAccountsRecord();
+                        for(int i=0;i<list.size();i++){
+                            if(list.get(i).getRecordUniquesId()
+                                    .equals(groceryList.getList_unique_id())){
+                                FinanceRecords fr=list.get(i);
+                                fr.setSecured(true);
+
+                                list.set(i,fr);
+                            }
+                        }
+                        financeAccount.setAccountsRecords(list);
+                        financeAccount.setAccountsRecord(list);
+                        financeAccount.setLastchangeToAccount();
+                        financeAccount.getAccountrecordsAmountUpdateBalance(getApplicationContext());
+                        final DatabaseReference newRef=finRef.child(financeAccount.getAccountUniqueId());
+                        newRef.setValue(new FinanceAccount(getApplicationContext()).getFinanceAccountForFirebase(financeAccount))
+                                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<Void> task) {
+                                        if(task.isSuccessful()){
+                                            grRef.removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                @Override
+                                                public void onComplete(@NonNull Task<Void> task) {
+                                                    if(task.isSuccessful()){
+                                                        if(valueEventListener!=null){
+                                                            finRef.removeEventListener(valueEventListener);
+
+                                                        }
+                                                        if (progressBar != null) {
+                                                            progressBar.dismiss();
+                                                        }
+                                                        finish();
+                                                    }else {
+                                                        if (progressBar != null) {
+                                                            progressBar.dismiss();
+                                                        }
+                                                        Toast.makeText(getApplicationContext(),task.getException().getMessage(),Toast.LENGTH_SHORT).show();
+                                                    }
+                                                }
+                                            });
+                                        }else {
+                                            if (progressBar != null) {
+                                                progressBar.dismiss();
+                                            }
+                                            Toast.makeText(getApplicationContext(),task.getException().getMessage(),Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                });
+                    }
+
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    if (progressBar != null) {
+                        progressBar.dismiss();
+                    }
+                }
+            };
+            finRef.addValueEventListener(valueEventListener);
+
+            if (!new ServerRequests(this).haveNetworkConnection()) {
+                showSnackBarNoInternet();
+                if (progressBar != null) {
+                    progressBar.dismiss();
+                }
+            }
+            //onBackPressed();
         }
     }
 
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+    }
 
     public void showSnackBar(final GroceryList groceryList, final CalendarCollection collection, final FinanceAccount financeAccount){
         snackbar = Snackbar
@@ -775,9 +582,20 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
                 .setAction("RETRY", new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        updateGroceryAndFinance(groceryList,financeAccount,collection);
+                        //updateGroceryAndFinance(groceryList,financeAccount,collection);
                     }
                 });
+        snackbar.setActionTextColor(Color.WHITE);
+        View snackbarView = snackbar.getView();
+        snackbarView.setBackgroundColor(getResources().getColor(R.color.colorSnackbar));
+        TextView textView = (TextView) snackbarView.findViewById(android.support.design.R.id.snackbar_text);
+        textView.setTextColor(Color.WHITE);
+        snackbar.show();
+    }
+    public void showSnackBarNoInternet() {
+        snackbar = Snackbar
+                .make(coordinatorLayout, getString(R.string.internet_connection_error_message )+" " +
+                        getString(R.string.internet_connection_error_message_change_sycn_later ), Snackbar.LENGTH_INDEFINITE);
         snackbar.setActionTextColor(Color.WHITE);
         View snackbarView = snackbar.getView();
         snackbarView.setBackgroundColor(getResources().getColor(R.color.colorSnackbar));

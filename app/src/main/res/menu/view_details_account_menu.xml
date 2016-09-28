@@ -7,11 +7,5 @@
         app:showAsAction="never"
         android:title="@string/menu_search"
         />
-
-    <item
-        android:id="@+id/action_account_details_refresh"
-        android:orderInCategory="100"
-        app:showAsAction="never"
-        android:title="@string/menu_refresh"
-        android:icon="@mipmap/ic_save_ok"/>
+    
 </menu>

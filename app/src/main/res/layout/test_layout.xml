@@ -160,7 +160,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="end"
-                android:text="+ 230€"
+                android:text="@string/null_item_total_price"
                 android:textColor="@color/white"
                 android:layout_weight="8"/>
         </LinearLayout>

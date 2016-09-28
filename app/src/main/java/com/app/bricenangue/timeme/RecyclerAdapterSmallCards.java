@@ -16,6 +16,8 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.firebase.client.Firebase;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -81,7 +83,6 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
             delete = (Button) itemView.findViewById(R.id.buttondeletecardview_create_shopping_list_small_card);
 
 
-            Log.i(LOG_TAG, "Adding Listener");
             itemView.setOnClickListener(this);
 
         }
@@ -206,14 +207,14 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
                         }
                     }
                     ArrayList<FinanceRecords> recordsArrayList = new ArrayList<>();
-                    recordsArrayList = financeAccount.getRecords();
+                    recordsArrayList = financeAccount.getRecords(context);
                     for (int i = 0; i < recordsArrayList.size(); i++) {
                         if (!groceryList.allItemsbought() && recordsArrayList.get(i).getRecordUniquesId().equals(groceryList.getList_unique_id())) {
                             recordsArrayList.remove(recordsArrayList.get(i));
                         }
                     }
                     financeAccount.setAccountsRecord(recordsArrayList);
-                    financeAccount.getAccountrecordsAmountUpdateBalance();
+                    financeAccount.getAccountrecordsAmountUpdateBalance(context);
 
                     financeAccount.getAccountRecordsString();
                     financeAccount.setLastchangeToAccount();
@@ -247,6 +248,13 @@ public class RecyclerAdapterSmallCards  extends RecyclerView
                 if (serverResponse.contains("Grocery list successfully deleted, account updated,Event deleted")){
 
                     mySQLiteHelper.deleteIncomingNotification(calendarCollection.incomingnotifictionid);
+
+                        Firebase shoopinglistItem=new Firebase(Config.FIREBASE_APP_URL).
+                        child(Config.FIREBASE_APP_URL_SHARED_GROCERY).child(groceryList.getList_unique_id());
+                        shoopinglistItem.removeValue();
+
+
+                    deleteGroceryListLocally(groceryList,position,financeAccount);
                     deleteGroceryListLocally(groceryList,position,financeAccount);
 
 

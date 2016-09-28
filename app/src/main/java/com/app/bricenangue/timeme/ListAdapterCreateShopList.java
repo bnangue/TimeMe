@@ -18,7 +18,7 @@ public class ListAdapterCreateShopList extends BaseAdapter {
     private boolean isAllBought=false;
 
     public interface ShoppingItemBoughtListener{
-        void onShoppingItemBought(ShoppingItem item,boolean[] position);
+        void onShoppingItemBought(ShoppingItem item,boolean[] positions,int position);
     }
 
 
@@ -150,7 +150,7 @@ public class ListAdapterCreateShopList extends BaseAdapter {
                 }
 
                 if(shoppingItemSetListener!=null){
-                    shoppingItemSetListener.onShoppingItemBought(shoppingItemsList.get(position),numberSelectedOnrow);
+                    shoppingItemSetListener.onShoppingItemBought(shoppingItemsList.get(position),numberSelectedOnrow,position);
                 }
             }
         });

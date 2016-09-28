@@ -15,118 +15,59 @@
         android:id="@+id/relative_fragment_grocery1"
         android:layout_above="@+id/linearLayout_separator_activity_grocery_list">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/grocery_fragment_recently_created"
-            android:id="@+id/text_grocery_fragment_recently_created"
-            android:layout_marginBottom="7dp"/>
-
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/shoppingrecycleViewfragöment_grocery_list_recentlityl_added"
+        <Button
+            android:id="@+id/grocery_fragment_add_recently_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginRight="12dp"
-            android:layout_marginLeft="12dp"
-            android:scrollbars="vertical"
-            android:visibility="gone"
-            android:layout_above="@+id/text_grocery_fragment_done_hide_layout"
-            android:layout_below="@+id/separator_grocery_fragment"
-            />
+
+            style="@style/Base.Widget.AppCompat.Button.Borderless"
+            android:drawableLeft="@mipmap/ic_add_custom"
+            android:drawableStart="@mipmap/ic_add_custom"
+
+            android:text="@string/text_grocery_fragment_add_recently_button"
+            android:textSize="15sp"
+            android:textColor="@color/create_new_ShoppingList"/>
 
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="2dp"
-            android:id="@+id/separator_grocery_fragment"
-            android:orientation="horizontal"
-            android:background="@color/primary"
-            android:layout_below="@+id/text_grocery_fragment_recently_created"
-
-            />
-
-
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:id="@+id/text_grocery_fragment_done_hide_layout"
-            android:layout_marginBottom="7dp"
-            android:layout_centerVertical="true">
-            <Button
-                android:id="@+id/grocery_fragment_add_recently_button"
-                android:layout_width="match_parent"
+            android:layout_below="@+id/grocery_fragment_add_recently_button"
+            android:layout_marginTop="10dp"
+           >
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="@string/grocery_fragment_recently_created"
+                android:id="@+id/text_grocery_fragment_recently_created"
+                android:layout_marginBottom="7dp"/>
 
-                android:layout_above="@+id/text_grocery_fragment_done_hide_layout"
-                style="@style/Base.Widget.AppCompat.Button.Borderless"
-                android:drawableLeft="@mipmap/ic_add_custom"
-                android:drawableStart="@mipmap/ic_add_custom"
-                android:layout_marginTop="5dp"
-                android:layout_marginBottom="5dp"
-                android:text="@string/text_grocery_fragment_add_recently_button"
-                android:textSize="10sp"
-                android:textColor="@color/create_new_ShoppingList"/>
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/shoppingrecycleViewfragöment_grocery_list_recentlityl_added"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginRight="12dp"
+                android:layout_marginLeft="12dp"
+                android:scrollbars="vertical"
+                android:layout_below="@+id/separator_grocery_fragment"
+                />
+
+
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="2dp"
+                android:id="@+id/separator_grocery_fragment"
                 android:orientation="horizontal"
-                android:id="@+id/text_grocery_fragment_done_hide_layout_below_button"
-                android:layout_marginBottom="7dp"
-                android:layout_below="@+id/text_grocery_fragment_done_hide_layout">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/grocery_fragment_list_done"
-                    android:id="@+id/text_grocery_fragment_done"
-                    android:layout_weight="1"
-                    android:layout_gravity="center_vertical"
-                    />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/grocery_fragment_list_hide"
-                    android:id="@+id/text_grocery_fragment_show"
-                    android:layout_gravity="center_vertical"
-                    />
-                <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                android:background="@color/primary"
+                android:layout_below="@+id/text_grocery_fragment_recently_created"
 
-                    android:layout_gravity="center_vertical"
-                    android:src="@drawable/expand_arrow"
-                    style="@style/Base.Widget.AppCompat.Button.Borderless"
-                    android:id="@+id/arrow_grocery_fragment_done_hide_text"
-
-                    />
-
-            </LinearLayout>
-
-        </LinearLayout>
+                />
 
 
+        </RelativeLayout>
 
 
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/shoppingrecycleViewfragment_grocery_list_done_lists"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginRight="12dp"
-            android:layout_marginLeft="12dp"
-            android:scrollbars="vertical"
-            android:visibility="gone"
-            android:layout_below="@+id/separator_grocery_fragment_done"
-            />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="2dp"
-            android:id="@+id/separator_grocery_fragment_done"
-            android:orientation="horizontal"
-            android:background="@color/primary"
-            android:layout_below="@+id/text_grocery_fragment_done_hide_layout"
-
-            />
     </RelativeLayout>
 
     <LinearLayout
@@ -160,7 +101,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="end"
-                android:text="+ 230€"
+                android:text="@string/null_item_total_price"
                 android:textColor="@color/white"
                 android:layout_weight="8"/>
         </LinearLayout>

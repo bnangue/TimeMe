@@ -24,7 +24,7 @@ import java.util.ArrayList;
  * Created by bricenangue on 17/02/16.
  */
 public class RequestHandlerActivity extends ActionBarActivity implements View.OnClickListener {
-    private String senderRegId, receiverername,message,sendername,myemail,mypassword;
+    private String senderRegId, receiverername,message,sendername,myemail,mypassword,chatRoom;
     Button btnCancleRequest, btnAcceptRequest;
     TextView tvMessage;
     UserLocalStore userLocalStore;
@@ -69,7 +69,15 @@ public class RequestHandlerActivity extends ActionBarActivity implements View.On
             case R.id.btnacceptRequest:
                 userLocalStore.setUserPartnerEmail(sendername);
                 userLocalStore.setUserPartnerRegId(senderRegId);
+                chatRoom=userLocalStore.getLoggedInUser().email.replace(".","-")
+                        +sendername.replace(".","-");
+
+                userLocalStore.setChatRoom(chatRoom);
+
+                Toast.makeText(getApplicationContext(),userLocalStore.getChatRoom()+"\n"+
+                        userLocalStore.getUserPartnerEmail(),Toast.LENGTH_SHORT).show();
                 updateFriendLists(userLocalStore.getLoggedInUser(),sendername);
+
                 finish();
                 break;
             case R.id.btncancleRequest:
@@ -120,7 +128,6 @@ public class RequestHandlerActivity extends ActionBarActivity implements View.On
                         String sendertname=userLocalStore.getLoggedInUser().getfullname();
                         ArrayList<Pair<String,String>> data=new ArrayList<>();
 
-
                         data.add(new Pair<String, String>("message",sendertname +
                         " accepted your request."));
                         data.add(new Pair<String, String>("registrationReceiverIDs", senderRegId));
@@ -129,6 +136,8 @@ public class RequestHandlerActivity extends ActionBarActivity implements View.On
 
                         data.add(new Pair<String, String>("registrationSenderIDs", regid));
                         data.add(new Pair<String, String>("title",sendertname +" is now your friend." ));
+                        data.add(new Pair<String, String>("chatRoom",chatRoom ));
+
                         data.add(new Pair<String, String>("apiKey", Config.FIREBASESERVER_KEY));
 
                         byte[] bytes = getData(data).getBytes("UTF-8");

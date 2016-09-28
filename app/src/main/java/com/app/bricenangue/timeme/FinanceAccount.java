@@ -25,6 +25,7 @@ public class FinanceAccount implements Parcelable {
     private double accountBalance;
     private ArrayList<FinanceRecords> accountsRecords=new ArrayList<>();
     private ArrayList<String> accountOwners=new ArrayList<>();
+    private ArrayList<User> accountOwnersFirebase=new ArrayList<>();
     private ArrayList<FinanceAccount> myAccounts=new ArrayList<>();
     private String lastchangeToAccount,accountRecordsString,accountOwnersToString;
 
@@ -39,7 +40,9 @@ public class FinanceAccount implements Parcelable {
         lastchangeToAccount = in.readString();
         accountRecordsString = in.readString();
         accountOwnersToString = in.readString();
+        accountOwnersFirebase = in.createTypedArrayList(User.CREATOR);
     }
+
 
     public static final Creator<FinanceAccount> CREATOR = new Creator<FinanceAccount>() {
         @Override
@@ -55,10 +58,25 @@ public class FinanceAccount implements Parcelable {
 
     public void setAccountRecordsString(String accountRecordsString) {
         this.accountRecordsString = accountRecordsString;
-        getRecords();
+        getRecords(context);
     }
 
 
+    public ArrayList<User> getAccountOwnersFirebase() {
+        return accountOwnersFirebase;
+    }
+
+    public void setAccountOwnersFirebase(ArrayList<User> accountOwnersFirebase) {
+        this.accountOwnersFirebase = accountOwnersFirebase;
+    }
+
+    public ArrayList<FinanceRecords> getAccountsRecords() {
+        return accountsRecords;
+    }
+
+    public void setAccountsRecords(ArrayList<FinanceRecords> accountsRecords) {
+        this.accountsRecords = accountsRecords;
+    }
 
     public String getLastChangeDateToAccount(){
         return lastchangeToAccount;
@@ -202,7 +220,7 @@ public class FinanceAccount implements Parcelable {
 
         }else if(accountRecordsString!=null && !accountOwnersToString.isEmpty()){
 
-            return this.accountOwnersToString;
+            return this.accountOwnersToString.trim();
         }
         return "No owner";
     }
@@ -237,6 +255,15 @@ public class FinanceAccount implements Parcelable {
     public void setAccountOwners(ArrayList<String> accountOwners) {
         this.accountOwners = accountOwners;
     }
+
+    public Context getContext() {
+        return context;
+    }
+
+    public void setContext(Context context) {
+        this.context = context;
+    }
+
     public void addRecordToAccount(FinanceRecords records){
         accountsRecords.add(records);
 
@@ -247,7 +274,8 @@ public class FinanceAccount implements Parcelable {
             }
 
         }else {
-            if(records.getRecordNAme().equals("Grocery list")){
+            if(records.getRecordNAme().equals("Grocery list")||
+                    records.getRecordNAme().equals("Einkaufsliste")){
                 if(records.isSecured()){
                     double d=toDouble(records.getRecordAmount());
                     accountBalance = accountBalance - d;
@@ -265,7 +293,7 @@ public class FinanceAccount implements Parcelable {
 
     }
 
-    public void getAccountrecordsAmountUpdateBalance(){
+    public void getAccountrecordsAmountUpdateBalance(Context context){
         accountBalance=0;
         if(accountsRecords.size()!=0){
             for (int i=0; i<accountsRecords.size();i++){
@@ -277,7 +305,8 @@ public class FinanceAccount implements Parcelable {
                     }
 
                 }else {
-                    if(records.getRecordNAme().equals("Grocery list")){
+                    if(records.getRecordNAme().equals("Grocery list")||
+                            records.getRecordNAme().equals("Einkaufsliste")){
                         if(records.isSecured()){
                             double d=toDouble(records.getRecordAmount());
                             accountBalance = accountBalance - d;
@@ -419,7 +448,7 @@ public class FinanceAccount implements Parcelable {
         return accountRecordsString;
     }
 
-    public ArrayList<FinanceRecords> getRecords(){
+    public ArrayList<FinanceRecords> getRecords(Context context){
         ArrayList<FinanceRecords> items=new ArrayList<>();
 
         if(accountRecordsString!=null && !accountRecordsString.isEmpty()){
@@ -428,7 +457,7 @@ public class FinanceAccount implements Parcelable {
                 json = new JSONObject(accountRecordsString);
                 JSONArray array = json.getJSONArray("accountRecordsString");
                 for(int i =0; i <array.length();i++){
-                    items.add( new FinanceRecords().getFinanceRecordsFromJSONObject(array.getJSONObject(i)));
+                    items.add( new FinanceRecords(context).getFinanceRecordsFromJSONObject(array.getJSONObject(i)));
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -439,6 +468,69 @@ public class FinanceAccount implements Parcelable {
         return items;
     }
 
+    public int getNumberofMonthsSinceCreation(){
+        int count=0;
+        if(accountsRecords!=null && accountsRecords.size()!=0){
+            int[] months=new int[12];
+            for (int k = 0; k < accountsRecords.size(); k++) {
+                FinanceRecords financeRecord=accountsRecords.get(k);
+                String[] bookingDate=financeRecord.getRecordBookingDate().split("-");
+                String month=bookingDate[1];
+                switch (month){
+                    case "01":
+                            months[0]=1;
+                            break;
+                    case "02":
+                        months[1]=1;
+                            break;
+                    case "03":
+                        months[2]=1;
+                        break;
+                    case "04":
+                        months[3]=1;
+                            break;
+                    case "05":
+                        months[4]=1;
+                            break;
+                    case"06":
+                        months[5]=1;
+                            break;
+                    case"07":
+                        months[6]=1;
+                            break;
+                    case "08":
+                        months[7]=1;
+                            break;
+                    case "09":
+                        months[8]=1;
+                        break;
+
+                    case "10":
+                        months[9]=1;
+                        break;
+
+                    case "11":
+                        months[10]=1;
+                        break;
+
+                    case "12":
+                        months[11]=1;
+                        break;
+
+
+                }
+
+            }
+
+
+            for(int i=0;i<months.length;i++){
+                if (months[i]!=0){
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
 
     @Override
     public int describeContents() {
@@ -456,5 +548,68 @@ public class FinanceAccount implements Parcelable {
         parcel.writeString(lastchangeToAccount);
         parcel.writeString(accountRecordsString);
         parcel.writeString(accountOwnersToString);
+        parcel.writeTypedList(accountOwnersFirebase);
+    }
+
+    public FinanceAccount getFinanceAccountFromFirebase(FinanceAccountForFireBase financeAccountForFireBase){
+
+        FinanceAccount financeAccount=new FinanceAccount(context);
+        financeAccount.accountName=financeAccountForFireBase.getAccountName();
+        financeAccount.accountUniqueId=financeAccountForFireBase.getAccountUniqueId();
+        financeAccount.accountBalance=financeAccountForFireBase.getAccountBalance();
+        ArrayList<FinanceRecords> arrayList=new ArrayList<>();
+        for(int i=0; i<financeAccountForFireBase.getAccountsRecords().size();i++){
+            arrayList.add(new FinanceRecords(context).getRecordsFromFirebase(financeAccountForFireBase.getAccountsRecords().get(i)));
+        }
+
+        financeAccount.setAccountsRecords(arrayList);
+        financeAccount.setAccountsRecord(arrayList);
+        financeAccount.setAccountOwnersToString(financeAccountForFireBase.getAccountOwnersToString());
+        ArrayList<User> arrayListuser=new ArrayList<>();
+        for(int i=0; i<financeAccountForFireBase.getAccountOwners().size();i++){
+            arrayListuser.add(new User().getUserFromFireBase(financeAccountForFireBase.getAccountOwners().get(i)));
+        }
+
+        financeAccount.setAccountOwnersFirebase(arrayListuser);
+        financeAccount.setLastchangeToAccount(financeAccountForFireBase.getLastchangeToAccount());
+
+        return financeAccount;
+    }
+
+    public FinanceAccountForFireBase getFinanceAccountForFirebase(FinanceAccount financeAccount){
+
+        FinanceAccountForFireBase financeAccountForFireBase=new FinanceAccountForFireBase();
+        financeAccountForFireBase.setAccountName(financeAccount.getAccountName());
+        financeAccountForFireBase.setAccountUniqueId(financeAccount.getAccountUniqueId());
+        financeAccountForFireBase.setAccountBalance(financeAccount.getAccountBalance());
+        ArrayList<FinanceRecordsForFireBase> arrayList=new ArrayList<>();
+        for(int i=0; i<financeAccount.getAccountsRecords().size();i++){
+            arrayList.add(new FinanceRecords(context).getRecordsForFirebase(financeAccount.getAccountsRecords().get(i)));
+        }
+
+        financeAccountForFireBase.setAccountsRecords(arrayList);
+        financeAccountForFireBase.setAccountOwnersToString(financeAccount.getAccountOwnersToString());
+
+        ArrayList<UserForFireBase> arrayListuserfb=new ArrayList<>();
+        for(int i=0; i<financeAccount.getAccountOwnersFirebase().size();i++){
+            arrayListuserfb.add(new User().getUserForFireBase(financeAccount.getAccountOwnersFirebase().get(i)));
+        }
+
+        financeAccountForFireBase.setAccountOwners(arrayListuserfb);
+        financeAccountForFireBase.setLastchangeToAccount(financeAccount.getLastChangeDateToAccount());
+
+        return financeAccountForFireBase;
+    }
+
+    public FinanceRecords getAccountInitRecord() {
+        FinanceRecords financeRecords = new FinanceRecords(context);
+        if(accountsRecords.size()!=0){
+            for (FinanceRecords f : accountsRecords){
+                if(f.getRecordCategorie().equals("Init")){
+                    financeRecords=f;
+                }
+            }
+        }
+        return financeRecords;
     }
 }

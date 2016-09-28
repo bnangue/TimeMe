@@ -1,6 +1,7 @@
 package com.app.bricenangue.timeme;
 
 import android.content.Intent;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -14,6 +15,12 @@ import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -30,12 +37,18 @@ public class CreateFinanceAccountActivity extends AppCompatActivity implements T
     private UserLocalStore userLocalStore;
     private FinanceAccount financeAccount=new FinanceAccount(this);
     private String ownerName;
+    private DatabaseReference databaseReferenceToAccounts;
+    private DatabaseReference databaseReferenceToUsers;
+    private FirebaseAuth auth;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_finance_account);
+        auth= FirebaseAuth.getInstance();
+        databaseReferenceToAccounts= FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS);
+        databaseReferenceToUsers=FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_USERS);
         sqlFinanceAccount=new SQLFinanceAccount(this);
         userLocalStore=new UserLocalStore(this);
 
@@ -121,7 +134,7 @@ public class CreateFinanceAccountActivity extends AppCompatActivity implements T
             editTextAccBalnace.requestFocus();
 
         }else{
-            FinanceAccount financeAccount=new FinanceAccount(this);
+            final FinanceAccount financeAccount=new FinanceAccount(this);
             financeAccount.setAccountOwnersToString(accowners);
             // financeAccount.setAccountBalanceToString(accBalance);
             ArrayList<String> owners=new ArrayList<>();
@@ -145,16 +158,59 @@ public class CreateFinanceAccountActivity extends AppCompatActivity implements T
             }
 
             financeAccount.setLastchangeToAccount();
-            FinanceRecords financeRecords=new FinanceRecords(getString(R.string.textInitialize_create_account_record_name),dateForid.split(" ")[0],
-                    getString(R.string.textInitialize_create_account_record_note),accBalance,String.valueOf(hashid),
+            int hash=( dateForid +"Initial Records").hashCode();
+            final FinanceRecords financeRecords=new FinanceRecords(this,getString(R.string.textInitialize_create_account_record_name),dateForid.split(" ")[0],
+                    getString(R.string.textInitialize_create_account_record_note),accBalance,String.valueOf(hash),
                     getString(R.string.textInitialize_create_account_record_category),dateForid.split(" ")[0],owners.get(0),0,true,true);
+
+
 
             financeAccount.addRecordToAccount(financeRecords);
 
-
             this.financeAccount=financeAccount;
+           User user= userLocalStore.getLoggedInUser();
+            user.status=1;
+            user.regId=userLocalStore.getUserRegistrationId();
+            user.friendlist=userLocalStore.getUserfriendliststring();
+            user.pictureurl=userLocalStore.getUserPicturePath();
+            UserForFireBase userForFireBase=new User().getUserForFireBase(user);
+            assert auth.getCurrentUser()!=null;
+           final DatabaseReference data= databaseReferenceToAccounts.child(auth.getCurrentUser().getUid()).child(financeAccount.getAccountUniqueId());
+            FinanceAccountForFireBase financeAccountForFireBase=new FinanceAccount(this).getFinanceAccountForFirebase(financeAccount);
+            ArrayList<UserForFireBase> arrayList=new ArrayList<>();
+            arrayList.add(userForFireBase);
+            financeAccountForFireBase.setAccountOwners(arrayList);
+            data.setValue(financeAccountForFireBase)
+            .addOnCompleteListener(CreateFinanceAccountActivity.this, new OnCompleteListener<Void>() {
+                @Override
+                public void onComplete(@NonNull Task<Void> task) {
+                    if(task.isSuccessful()){
+                        finish();
+                        /**
+                        DatabaseReference ref =data.child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS_RECORDS)
+                                .child(financeRecords.getRecordUniquesId());
+                        ref.setValue(new FinanceRecords(getApplicationContext()).getRecordsForFirebase(financeRecords))
+                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                if(task.isSuccessful()){
 
-            saveFinanceAccountToServer(financeAccount);
+                                }else {
+                                    Toast.makeText(getApplicationContext(),task.getException().getMessage()
+                                            ,Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
+
+                        **/
+                    }else {
+                        Toast.makeText(getApplicationContext(),task.getException().getMessage()
+                                ,Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+
+           // saveFinanceAccountToServer(financeAccount);
         }
 
 

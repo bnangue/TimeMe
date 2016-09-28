@@ -16,6 +16,7 @@ public class User implements Parcelable {
             firstname,lastname,regId,friendlist;
     Bitmap picture;
     int status;
+     String pictureurl;
 
     public User( String email, String password){
         this.email=email;
@@ -95,6 +96,7 @@ public class User implements Parcelable {
         regId=in.readString();
         friendlist=in.readString();
         picture=in.readParcelable(getClass().getClassLoader());
+        pictureurl=in.readString();
 
 
     }
@@ -114,6 +116,7 @@ public class User implements Parcelable {
         dest.writeString(regId);
         dest.writeString(friendlist);
         dest.writeParcelable(picture,flags);
+        dest.writeString(pictureurl);
 
     }
     public static final Creator<User> CREATOR = new Creator<User>() {
@@ -125,6 +128,36 @@ public class User implements Parcelable {
             return new User[size];
         }
     };
+
+
+    public User getUserFromFireBase(UserForFireBase userForFireBase){
+        User user=new User();
+        user.email=userForFireBase.getEmail();
+        user.password=userForFireBase.getPassword();
+        user.firstname=userForFireBase.getFirstname();
+        user.lastname=userForFireBase.getLastname();
+        user.friendlist=userForFireBase.getFriendlist();
+        user.regId=userForFireBase.getRegId();
+        user.status=userForFireBase.getStatus();
+        user.pictureurl=userForFireBase.getPicturefirebaseUrl();
+
+        return user;
+
+    }
+    public UserForFireBase getUserForFireBase(User user){
+        UserForFireBase userForFireBase=new UserForFireBase();
+        userForFireBase.setEmail(user.email);
+        userForFireBase.setPassword(user.password);
+        userForFireBase.setFirstname(user.firstname);
+        userForFireBase.setLastname(user.lastname);
+        userForFireBase.setFriendlist(user.friendlist);
+        userForFireBase.setRegId(user.regId);
+        userForFireBase.setStatus(user.status);
+        userForFireBase.setPicturefirebaseUrl(user.pictureurl);
+
+        return userForFireBase;
+
+    }
 
 public String  genaretnumber(){
     Random r = new Random();

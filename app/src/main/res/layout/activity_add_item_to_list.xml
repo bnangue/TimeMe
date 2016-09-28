@@ -29,7 +29,6 @@
                 <Button
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:hint="22-07-2016"
                     android:id="@+id/dateaddeventstart_creatList_add_item_to_list"
                     android:textSize="15sp"
                     android:drawableLeft="@mipmap/ic_calendar_customized"

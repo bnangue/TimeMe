@@ -65,7 +65,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Event start:"
+            android:text="@string/event_start"
             android:layout_weight="1"/>
         <Button
             android:layout_width="wrap_content"
@@ -98,7 +98,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Event end: "
+            android:text="@string/event_end"
             android:layout_weight="1"/>
         <Button
             android:layout_width="wrap_content"
@@ -128,7 +128,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="All-day event:"
+            android:text="@string/all_day_event"
             />
 
 
@@ -154,7 +154,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Repeat every month:"
+            android:text="@string/repeat_every_month"
             />
 
 
@@ -181,7 +181,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Category:"
+            android:text="@string/category"
             android:layout_weight="2"
             />
 

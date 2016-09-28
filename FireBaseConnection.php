@@ -14,7 +14,7 @@ $registrationReceiverIDs = $_POST['registrationReceiverIDs'];
 
 $registrationSenderIDs = $_POST['registrationSenderIDs'];
 $title = $_POST["title"];
-
+$chatRoom = $_POST["chatRoom"];
 
 $apiKey = $_POST['apiKey'];
 
@@ -23,7 +23,7 @@ $url = 'https://fcm.googleapis.com/fcm/send';
 $fields = array(
                 'registration_ids'  => array( $registrationReceiverIDs ),
                 'data'              => array( "message" => $message ,"sender" => $sender,"receiver" => $receiver,
-                	"registrationSenderIDs"=>$registrationSenderIDs, "title" => $title)
+                	"registrationSenderIDs"=>$registrationSenderIDs, "title" => $title,"chatRoom" => $chatRoom)
                 );
  
 $headers = array( 

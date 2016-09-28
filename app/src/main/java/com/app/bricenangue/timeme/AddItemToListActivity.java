@@ -1,17 +1,24 @@
 package com.app.bricenangue.timeme;
 
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
+import android.text.format.DateFormat;
 import android.util.Base64;
 import android.util.Pair;
 import android.view.LayoutInflater;
@@ -23,6 +30,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.RadioButton;
 import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
 import android.widget.TextView;
@@ -77,96 +85,122 @@ import org.json.JSONObject;
 import android.content.Context;
 import android.util.Log;
 
+import com.firebase.client.Firebase;
+import com.firebase.client.FirebaseError;
+import com.firebase.ui.database.FirebaseListAdapter;
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.appindexing.Thing;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 
 public class AddItemToListActivity extends AppCompatActivity implements View.OnFocusChangeListener, SearchView.OnQueryTextListener,
-        View.OnClickListener,ListViewAdapter.ShoppingItemSetListener,DialogFragmentDatePicker.OnDateGet {
-    private  SearchView search;
-    private Button createnewitem,setDateButtuon;
+        View.OnClickListener, ListViewAdapter.ShoppingItemSetListener, DialogFragmentDatePicker.OnDateGet {
+    private SearchView search;
+    private Button createnewitem, setDateButtuon;
     private ListView addItemtolistListview;
     private TextView textViewNoDatainDB, textViewAmontToPay;
-    private  ArrayList<String> sortOptionslist=new ArrayList<>();
-    private  ArrayList<String> itemNamee=new ArrayList<>();
-    private ArrayList<String> itemPrice=new ArrayList<>();
-    private ArrayList<String> itemUsageFrequency=new ArrayList<>();
-    private ArrayList<ShoppingItem> itemsDB=new ArrayList<>();
-    private ArrayList<ShoppingItem> itemstoShopListFromSorting=new ArrayList<>();
-    private ShoppingItem []itemstoShoparray;
-    private  Menu menu;
-    private String listName="";
-    private String sortName="";
-    private boolean areItemsAdded=false;
+    private ArrayList<String> sortOptionslist = new ArrayList<>();
+    private ArrayList<String> itemNamee = new ArrayList<>();
+    private ArrayList<String> itemPrice = new ArrayList<>();
+    private ArrayList<String> itemUsageFrequency = new ArrayList<>();
+    private ArrayList<ShoppingItem> itemsDB = new ArrayList<>();
+    private ArrayList<ShoppingItem> itemstoShopListFromSorting = new ArrayList<>();
+    private ShoppingItem[] itemstoShoparray;
+    private Menu menu;
+    private String listName = "";
+    private String sortName = "";
+    private boolean areItemsAdded = false;
     private UserLocalStore userLocalStore;
-    private SQLiteShoppingList sqLiteShoppingList;
-    private int[] status ;
+    private int[] status;
 
 
     private Snackbar snackbar;
     private CoordinatorLayout coordinatorLayout;
-    private MySQLiteHelper mySQLiteHelper;
 
 
-    private boolean isFromDetails=false;
+    private boolean isFromDetails = false;
     private GroceryList groceryListFromDetails;
-    public static boolean newItem=false;
+    public static boolean newItem = false;
 
     //This arraylist will have data as pulled from server. This will keep cumulating.
-   private ArrayList<ShoppingItem> productResults = new ArrayList<ShoppingItem>();
+    private ArrayList<ShoppingItem> productResults = new ArrayList<ShoppingItem>();
     //Based on the search string, only filtered products will be moved here from productResults
     private ArrayList<ShoppingItem> filteredProductResults = new ArrayList<ShoppingItem>();
-    private SQLFinanceAccount sqlFinanceAccount;
-    private ArrayList<String> itemCategory=new ArrayList<>();
-    private ArrayList<String> itemMarket=new ArrayList<>();
+    private ArrayList<String> itemCategory = new ArrayList<>();
+    private ArrayList<String> itemMarket = new ArrayList<>();
     private Button buttonSort;
     private android.support.v7.app.AlertDialog alertDialog;
     private boolean[] selectedOnRows;
-    private ArrayList<FinanceAccount> accountsforshopping=new ArrayList<>();
-
+    private DatabaseReference firebaseReference;
+    private DatabaseReference databaseReference;
+    private FirebaseAuth auth;
+    private ProgressDialog progressBar;
+    private ValueEventListener valueEventListener;
+    private AlertDialog.Builder alert;
+    private ArrayList<ShoppingItem> listofchoosenItem=new ArrayList<>();
+    private DatabaseReference listofChossenReference;
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_item_to_list);
-        userLocalStore=new UserLocalStore(this);
-        sqLiteShoppingList=new SQLiteShoppingList(this);
-        mySQLiteHelper=new MySQLiteHelper(this);
+        userLocalStore = new UserLocalStore(this);
 
-        sqlFinanceAccount=new SQLFinanceAccount(this);
+        auth = FirebaseAuth.getInstance();
+        databaseReference = FirebaseDatabase.getInstance().getReference();
+        firebaseReference = FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_GROCERYLISTS);
+
+        listofChossenReference=FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_SHOPPING_ITEMS_XSL)
+                .child(auth.getCurrentUser().getUid()).child(Config.FIREBASE_APP_URL_SHOPPING_ITEMS_XSL_USER_LIST);
+
+        alert = new AlertDialog.Builder(this);
 
 
-        accountsforshopping=sqlFinanceAccount.getAllFinanceAccount();
-
-        coordinatorLayout=(CoordinatorLayout)findViewById(R.id.coordinateLayout__creatList_add_item_to_list);
-        setDateButtuon=(Button)findViewById(R.id.dateaddeventstart_creatList_add_item_to_list);
-        createnewitem=(Button) findViewById(R.id.grocery_activity_add_itemtoList_button);
-        addItemtolistListview=(ListView)findViewById(R.id.shoppinglistViewaddItemToListactivity);
-        textViewNoDatainDB=(TextView) findViewById(R.id.textView_add_item_to_list_List_empty);
-        textViewAmontToPay=(TextView)findViewById(R.id.grocery_fragment_balance_amount_activity_add_item_to_list);
+        coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinateLayout__creatList_add_item_to_list);
+        setDateButtuon = (Button) findViewById(R.id.dateaddeventstart_creatList_add_item_to_list);
+        createnewitem = (Button) findViewById(R.id.grocery_activity_add_itemtoList_button);
+        addItemtolistListview = (ListView) findViewById(R.id.shoppinglistViewaddItemToListactivity);
+        textViewNoDatainDB = (TextView) findViewById(R.id.textView_add_item_to_list_List_empty);
+        textViewAmontToPay = (TextView) findViewById(R.id.grocery_fragment_balance_amount_activity_add_item_to_list);
         setDateButtuon.setOnClickListener(this);
 
-        buttonSort=(Button)findViewById(R.id.button_sort_activity_add_item_to_list);
+        buttonSort = (Button) findViewById(R.id.button_sort_activity_add_item_to_list);
 
 
-        Bundle extras=getIntent().getExtras();
+        Bundle extras = getIntent().getExtras();
 
-        if(extras!=null){
-            if(extras.containsKey("itemDB")){
-                itemsDB=extras.getParcelableArrayList("itemDB");
+        if (extras != null) {
+            if (extras.containsKey("itemDB")) {
+                itemsDB = extras.getParcelableArrayList("itemDB");
                 assert itemsDB != null;
-                itemstoShoparray=new ShoppingItem[itemsDB.size()];
+                itemstoShoparray = new ShoppingItem[itemsDB.size()];
                 initArray();
 
-            }else if(extras.containsKey("ListToChange")){
-              isFromDetails=extras.getBoolean("isFromDetails");
-                groceryListFromDetails=extras.getParcelable("ListToChange");
+            } else if (extras.containsKey("ListToChange")) {
+                isFromDetails = extras.getBoolean("isFromDetails");
+                groceryListFromDetails = extras.getParcelable("ListToChange");
             }
 
         }
 
-         search=(SearchView)findViewById(R.id.actionbarsearch_add_item_to_list);
-        search.setQueryHint("Start typing to search...");
-        if(search.hasFocus()){
+        search = (SearchView) findViewById(R.id.actionbarsearch_add_item_to_list);
+        search.setQueryHint(getString(R.string.start_typing_to_search));
+        if (search.hasFocus()) {
             search.setBackgroundColor(getResources().getColor(R.color.white));
         }
         search.setOnQueryTextFocusChangeListener(this);
@@ -176,299 +210,303 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         buttonSort.setOnClickListener(this);
 
 
-        if(savedInstanceState==null){
-            if(groceryListFromDetails!=null){
+        if (savedInstanceState == null) {
+            if (groceryListFromDetails != null) {
                 setDateButtuon.setText(groceryListFromDetails.getDatum());
-                listName=groceryListFromDetails.getDatum();
-            }else {
+                listName = groceryListFromDetails.getDatum();
+            } else {
                 initializeDatePicker();
             }
 
-             if(itemsDB.size()==0 || itemsDB==null){
+            //populate if itemdb!=0
+            getShoppingListitmes();
 
-                 new LoadItemDBAsyncTask().execute();
-             }else {
-                 populateListview();
-             }
-
-        }else {
-            itemsDB=savedInstanceState.getParcelableArrayList("itemDB");
+        } else {
+            itemsDB = savedInstanceState.getParcelableArrayList("itemDB");
             assert itemsDB != null;
-            itemstoShoparray=new ShoppingItem[itemsDB.size()];
+            itemstoShoparray = new ShoppingItem[itemsDB.size()];
             initArray();
-            listName=savedInstanceState.getString("listname");
-            sortName=savedInstanceState.getString("sortType");
+            listName = savedInstanceState.getString("listname");
+            sortName = savedInstanceState.getString("sortType");
 
 
             setDateButtuon.setText(listName);
 
             initTotalPricetextView();
-            populateListview();
+            //populate
+            getShoppingListitmes();
             sort(sortName);
         }
 
-        if(sortName.isEmpty()){
-            sortName=getString(R.string.alphabetic);
+        if (sortName.isEmpty()) {
+            sortName = getString(R.string.alphabetic);
 
 
-        }else {
+        } else {
             sort(sortName);
         }
-
 
     }
 
     private void initArray() {
-        for (int i=0;i<itemsDB.size();i++){
-            if(itemsDB.get(i).getNumberofItemsetForList()!=0){
-                itemstoShoparray[i]=itemsDB.get(i);
+        for (int i = 0; i < itemsDB.size(); i++) {
+
+            if (itemsDB.get(i).getNumberofItemsetForList() != 0) {
+                itemstoShoparray[i] = itemsDB.get(i);
             }
+
+
         }
         initTotalPricetextView();
     }
 
-    void prepareListviewofSorted(ArrayList<ShoppingItem> shoppingItems){
+    void prepareListviewofSorted(ArrayList<ShoppingItem> shoppingItems) {
 
-        if(shoppingItems.size()==0){
+        if (shoppingItems.size() == 0) {
             textViewNoDatainDB.setText(R.string.text_search_itme_to_list_DataBase_empty);
-        }else{
+        } else {
 
             textViewNoDatainDB.setText(R.string.text_search_itme_to_list_DataBase_not_empty);
         }
-        ListViewAdapter listViewAdapter=new ListViewAdapter(this,shoppingItems,this);
+        ListViewAdapter listViewAdapter = new ListViewAdapter(this, shoppingItems, this);
         addItemtolistListview.setVisibility(View.VISIBLE);
         addItemtolistListview.setAdapter(listViewAdapter);
     }
 
-    void sort(String sortname){
+    void sort(ArrayList<ShoppingItem> items) {
 
-        sortName=sortname;
+        Collections.sort(items, new ComparatorShoppingItemName());
+    }
 
-        if(sortName.equals(getString(R.string.market_Rewe))){
-            if(itemstoShopListFromSorting.size()!=0){
+    void sort(String sortname) {
+
+        sortName = sortname;
+
+        if (sortName.equals(getString(R.string.market_Rewe))) {
+            if (itemstoShopListFromSorting.size() != 0) {
                 itemstoShopListFromSorting.clear();
-                itemstoShopListFromSorting=new ArrayList<>();
+                itemstoShopListFromSorting = new ArrayList<>();
             }
-            for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemmarket().equals(getString(R.string.rewe_Market))){
+            for (int i = 0; i < itemsDB.size(); i++) {
+                if (itemsDB.get(i).getItemmarket().equals(getString(R.string.rewe_Market))) {
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
             prepareListviewofSorted(itemstoShopListFromSorting);
 
-        }else if(sortName.equals(getString(R.string.market_DM))){
+        } else if (sortName.equals(getString(R.string.market_DM))) {
 
-            if(itemstoShopListFromSorting.size()!=0){
+            if (itemstoShopListFromSorting.size() != 0) {
                 itemstoShopListFromSorting.clear();
-                itemstoShopListFromSorting=new ArrayList<>();
+                itemstoShopListFromSorting = new ArrayList<>();
             }
-            for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemmarket().equals(getString(R.string.dm_Market))){
+            for (int i = 0; i < itemsDB.size(); i++) {
+                if (itemsDB.get(i).getItemmarket().equals(getString(R.string.dm_Market))) {
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
             prepareListviewofSorted(itemstoShopListFromSorting);
-        }else if(sortName.equals(getString(R.string.market_Norma))){
+        } else if (sortName.equals(getString(R.string.market_Norma))) {
 
-            if(itemstoShopListFromSorting.size()!=0){
+            if (itemstoShopListFromSorting.size() != 0) {
                 itemstoShopListFromSorting.clear();
-                itemstoShopListFromSorting=new ArrayList<>();
+                itemstoShopListFromSorting = new ArrayList<>();
             }
-            for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemmarket().equals(getString(R.string.norma_Market))){
+            for (int i = 0; i < itemsDB.size(); i++) {
+                if (itemsDB.get(i).getItemmarket().equals(getString(R.string.norma_Market))) {
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
             prepareListviewofSorted(itemstoShopListFromSorting);
-        }else if(sortName.equals(getString(R.string.alphabetic))){
+        } else if (sortName.equals(getString(R.string.alphabetic))) {
 
             Collections.sort(itemsDB, new ComparatorShoppingItemName());
-            itemstoShoparray=new ShoppingItem[itemsDB.size()];
+            itemstoShoparray = new ShoppingItem[itemsDB.size()];
             initArray();
             initTotalPricetextView();
             populateListview();
 
-        }else if(sortName.equals(getString(R.string.household))){
-            if(itemstoShopListFromSorting.size()!=0){
+        } else if (sortName.equals(getString(R.string.household))) {
+            if (itemstoShopListFromSorting.size() != 0) {
                 itemstoShopListFromSorting.clear();
-                itemstoShopListFromSorting=new ArrayList<>();
+                itemstoShopListFromSorting = new ArrayList<>();
             }
-            for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.household))){
+            for (int i = 0; i < itemsDB.size(); i++) {
+                if (itemsDB.get(i).getItemcategory().equals(getString(R.string.household))) {
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
             prepareListviewofSorted(itemstoShopListFromSorting);
 
-        }else if(sortName.equals(getString(R.string.fruit))){
-            if(itemstoShopListFromSorting.size()!=0){
+        } else if (sortName.equals(getString(R.string.fruit))) {
+            if (itemstoShopListFromSorting.size() != 0) {
                 itemstoShopListFromSorting.clear();
-                itemstoShopListFromSorting=new ArrayList<>();
+                itemstoShopListFromSorting = new ArrayList<>();
             }
-            for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.fruit))){
-                    itemstoShopListFromSorting.add(itemsDB.get(i));
-                }
-            }
-            prepareListviewofSorted(itemstoShopListFromSorting);
-
-
-        }else if(sortName.equals(getString(R.string.vegetables))){
-            if(itemstoShopListFromSorting.size()!=0){
-                itemstoShopListFromSorting.clear();
-                itemstoShopListFromSorting=new ArrayList<>();
-            }
-            for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.vegetables))){
+            for (int i = 0; i < itemsDB.size(); i++) {
+                if (itemsDB.get(i).getItemcategory().equals(getString(R.string.fruit))) {
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
             prepareListviewofSorted(itemstoShopListFromSorting);
 
 
-        }else if(sortName.equals(getString(R.string.grain_products))){
-
-            if(itemstoShopListFromSorting.size()!=0){
+        } else if (sortName.equals(getString(R.string.vegetables))) {
+            if (itemstoShopListFromSorting.size() != 0) {
                 itemstoShopListFromSorting.clear();
-                itemstoShopListFromSorting=new ArrayList<>();
+                itemstoShopListFromSorting = new ArrayList<>();
             }
-            for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.grain_products))){
+            for (int i = 0; i < itemsDB.size(); i++) {
+                if (itemsDB.get(i).getItemcategory().equals(getString(R.string.vegetables))) {
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
             prepareListviewofSorted(itemstoShopListFromSorting);
 
-        }else if(sortName.equals(getString(R.string.technology))){
 
-            if(itemstoShopListFromSorting.size()!=0){
+        } else if (sortName.equals(getString(R.string.grain_products))) {
+
+            if (itemstoShopListFromSorting.size() != 0) {
                 itemstoShopListFromSorting.clear();
-                itemstoShopListFromSorting=new ArrayList<>();
+                itemstoShopListFromSorting = new ArrayList<>();
             }
-            for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.technology))){
+            for (int i = 0; i < itemsDB.size(); i++) {
+                if (itemsDB.get(i).getItemcategory().equals(getString(R.string.grain_products))) {
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
             prepareListviewofSorted(itemstoShopListFromSorting);
 
-        }else if(sortName.equals(getString(R.string.drinks))){
+        } else if (sortName.equals(getString(R.string.technology))) {
 
-            if(itemstoShopListFromSorting.size()!=0){
+            if (itemstoShopListFromSorting.size() != 0) {
                 itemstoShopListFromSorting.clear();
-                itemstoShopListFromSorting=new ArrayList<>();
+                itemstoShopListFromSorting = new ArrayList<>();
             }
-            for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.drinks))){
+            for (int i = 0; i < itemsDB.size(); i++) {
+                if (itemsDB.get(i).getItemcategory().equals(getString(R.string.technology))) {
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
             prepareListviewofSorted(itemstoShopListFromSorting);
 
-        }else if(sortName.equals(getString(R.string.fats_and_oils))){
+        } else if (sortName.equals(getString(R.string.drinks))) {
 
-            if(itemstoShopListFromSorting.size()!=0){
+            if (itemstoShopListFromSorting.size() != 0) {
                 itemstoShopListFromSorting.clear();
-                itemstoShopListFromSorting=new ArrayList<>();
+                itemstoShopListFromSorting = new ArrayList<>();
             }
-            for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.fats_and_oils))){
+            for (int i = 0; i < itemsDB.size(); i++) {
+                if (itemsDB.get(i).getItemcategory().equals(getString(R.string.drinks))) {
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
             prepareListviewofSorted(itemstoShopListFromSorting);
 
-        }else if(sortName.equals(getString(R.string.milk_products))){
+        } else if (sortName.equals(getString(R.string.fats_and_oils))) {
 
-            if(itemstoShopListFromSorting.size()!=0){
+            if (itemstoShopListFromSorting.size() != 0) {
                 itemstoShopListFromSorting.clear();
-                itemstoShopListFromSorting=new ArrayList<>();
+                itemstoShopListFromSorting = new ArrayList<>();
             }
-            for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.milk_products))){
+            for (int i = 0; i < itemsDB.size(); i++) {
+                if (itemsDB.get(i).getItemcategory().equals(getString(R.string.fats_and_oils))) {
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
             prepareListviewofSorted(itemstoShopListFromSorting);
 
-        }else if(sortName.equals(getString(R.string.spices))){
+        } else if (sortName.equals(getString(R.string.milk_products))) {
 
-            if(itemstoShopListFromSorting.size()!=0){
+            if (itemstoShopListFromSorting.size() != 0) {
                 itemstoShopListFromSorting.clear();
-                itemstoShopListFromSorting=new ArrayList<>();
+                itemstoShopListFromSorting = new ArrayList<>();
             }
-            for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.spices))){
+            for (int i = 0; i < itemsDB.size(); i++) {
+                if (itemsDB.get(i).getItemcategory().equals(getString(R.string.milk_products))) {
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
             prepareListviewofSorted(itemstoShopListFromSorting);
 
-        }else if(sortName.equals(getString(R.string.drugstore))){
+        } else if (sortName.equals(getString(R.string.spices))) {
 
-            if(itemstoShopListFromSorting.size()!=0){
+            if (itemstoShopListFromSorting.size() != 0) {
                 itemstoShopListFromSorting.clear();
-                itemstoShopListFromSorting=new ArrayList<>();
+                itemstoShopListFromSorting = new ArrayList<>();
             }
-            for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.drugstore))){
+            for (int i = 0; i < itemsDB.size(); i++) {
+                if (itemsDB.get(i).getItemcategory().equals(getString(R.string.spices))) {
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
             prepareListviewofSorted(itemstoShopListFromSorting);
 
-        }else if(sortName.equals(getString(R.string.others))){
+        } else if (sortName.equals(getString(R.string.drugstore))) {
 
-            if(itemstoShopListFromSorting.size()!=0){
+            if (itemstoShopListFromSorting.size() != 0) {
                 itemstoShopListFromSorting.clear();
-                itemstoShopListFromSorting=new ArrayList<>();
+                itemstoShopListFromSorting = new ArrayList<>();
             }
-            for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.others))){
+            for (int i = 0; i < itemsDB.size(); i++) {
+                if (itemsDB.get(i).getItemcategory().equals(getString(R.string.drugstore))) {
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
             prepareListviewofSorted(itemstoShopListFromSorting);
 
-        }else if(sortName.equals(getString(R.string.meat))){
+        } else if (sortName.equals(getString(R.string.others))) {
 
-            if(itemstoShopListFromSorting.size()!=0){
+            if (itemstoShopListFromSorting.size() != 0) {
                 itemstoShopListFromSorting.clear();
-                itemstoShopListFromSorting=new ArrayList<>();
+                itemstoShopListFromSorting = new ArrayList<>();
             }
-            for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.meat))){
+            for (int i = 0; i < itemsDB.size(); i++) {
+                if (itemsDB.get(i).getItemcategory().equals(getString(R.string.others))) {
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
             prepareListviewofSorted(itemstoShopListFromSorting);
 
-        }else if(sortName.equals(getString(R.string.sweets))){
+        } else if (sortName.equals(getString(R.string.meat))) {
 
-            if(itemstoShopListFromSorting.size()!=0){
+            if (itemstoShopListFromSorting.size() != 0) {
                 itemstoShopListFromSorting.clear();
-                itemstoShopListFromSorting=new ArrayList<>();
+                itemstoShopListFromSorting = new ArrayList<>();
             }
-            for(int i=0;i<itemsDB.size();i++){
-                if(itemsDB.get(i).getItemcategory().equals(getString(R.string.sweets))){
+            for (int i = 0; i < itemsDB.size(); i++) {
+                if (itemsDB.get(i).getItemcategory().equals(getString(R.string.meat))) {
+                    itemstoShopListFromSorting.add(itemsDB.get(i));
+                }
+            }
+            prepareListviewofSorted(itemstoShopListFromSorting);
+
+        } else if (sortName.equals(getString(R.string.sweets))) {
+
+            if (itemstoShopListFromSorting.size() != 0) {
+                itemstoShopListFromSorting.clear();
+                itemstoShopListFromSorting = new ArrayList<>();
+            }
+            for (int i = 0; i < itemsDB.size(); i++) {
+                if (itemsDB.get(i).getItemcategory().equals(getString(R.string.sweets))) {
                     itemstoShopListFromSorting.add(itemsDB.get(i));
                 }
             }
             prepareListviewofSorted(itemstoShopListFromSorting);
 
         }
-        switch (sortname){
+        switch (sortname) {
 
             case "standard":
                 Collections.sort(itemsDB, new ComparatorShoppingItemName());
-                itemstoShoparray=new ShoppingItem[itemsDB.size()];
+                itemstoShoparray = new ShoppingItem[itemsDB.size()];
                 initArray();
                 initTotalPricetextView();
                 populateListview();
                 break;
             case "price ascending":
                 Collections.sort(itemsDB, new ComparatorShoppingItemPrice());
-                itemstoShoparray=new ShoppingItem[itemsDB.size()];
+                itemstoShoparray = new ShoppingItem[itemsDB.size()];
                 initArray();
                 initTotalPricetextView();
                 populateListview();
@@ -476,7 +514,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
             case "price descending":
                 Comparator<ShoppingItem> comparator_type = Collections.reverseOrder(new ComparatorShoppingItemPrice());
                 Collections.sort(itemsDB, comparator_type);
-                itemstoShoparray=new ShoppingItem[itemsDB.size()];
+                itemstoShoparray = new ShoppingItem[itemsDB.size()];
                 initArray();
                 initTotalPricetextView();
                 populateListview();
@@ -484,7 +522,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
             case "most used":
                 Comparator<ShoppingItem> comparator_type2 = Collections.reverseOrder(new ComparatorShoppingItemMostUsed());
                 Collections.sort(itemsDB, comparator_type2);
-                itemstoShoparray=new ShoppingItem[itemsDB.size()];
+                itemstoShoparray = new ShoppingItem[itemsDB.size()];
                 initArray();
                 initTotalPricetextView();
                 populateListview();
@@ -493,14 +531,14 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
             case "selected first":
                 Comparator<ShoppingItem> comparator_type1 = Collections.reverseOrder(new CompareAddItemAlreadyadded());
                 Collections.sort(itemsDB, comparator_type1);
-                itemstoShoparray=new ShoppingItem[itemsDB.size()];
+                itemstoShoparray = new ShoppingItem[itemsDB.size()];
                 initArray();
                 initTotalPricetextView();
                 populateListview();
                 break;
             case "selected last":
                 Collections.sort(itemsDB, new CompareAddItemAlreadyadded());
-                itemstoShoparray=new ShoppingItem[itemsDB.size()];
+                itemstoShoparray = new ShoppingItem[itemsDB.size()];
                 initArray();
                 initTotalPricetextView();
                 populateListview();
@@ -510,48 +548,51 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         }
 
 
-
-
     }
-    void populateListview(){
+
+    void populateListview() {
 
 
-        if(itemsDB.size()==0){
+        if (itemsDB.size() == 0) {
             textViewNoDatainDB.setText(R.string.text_add_itme_to_list_DataBase_empty);
-        }else{
+        } else {
 
             textViewNoDatainDB.setText(R.string.text_add_itme_to_list_DataBase_not_empty);
         }
 
-        if(productResults.size()!=0){
+        if (productResults.size() != 0) {
             merge();
         }
-        if(groceryListFromDetails!=null){
-            merge(groceryListFromDetails.getListItems());
+        if (groceryListFromDetails != null) {
+            for(ShoppingItem item :groceryListFromDetails.getItemsOftheList()){
+                DatabaseReference ref=listofChossenReference.child(item.getUnique_item_id());
+                ref.setValue(new ShoppingItem().getitemForFirebase(item));
+            }
+            merge(groceryListFromDetails.getItemsOftheList());
             initArray();
 
         }
-        if(itemstoShopListFromSorting!=null){
+        if (itemstoShopListFromSorting != null) {
             merge(itemstoShopListFromSorting);
             initArray();
 
         }
-        if(itemstoShoparray==null){
-            itemstoShoparray=new ShoppingItem[itemsDB.size()];
+        if (itemstoShoparray == null) {
+            itemstoShoparray = new ShoppingItem[itemsDB.size()];
             initArray();
         }
-        ListViewAdapter listViewAdapter=new ListViewAdapter(this,itemsDB,this);
+        ListViewAdapter listViewAdapter = new ListViewAdapter(this, itemsDB, this);
         addItemtolistListview.setVisibility(View.VISIBLE);
         addItemtolistListview.setAdapter(listViewAdapter);
     }
 
     private void merge() {
-        for (int i=0;i<productResults.size();i++){
-            for(int j=0;j<itemsDB.size();j++){
-                if(productResults.get(i).getUnique_item_id().equals(itemsDB.get(j).getUnique_item_id())&&
-                        productResults.get(i).getNumberofItemsetForList()!=itemsDB.get(j).getNumberofItemsetForList()){
+        for (int i = 0; i < productResults.size(); i++) {
+            for (int j = 0; j < itemsDB.size(); j++) {
+                if (productResults.get(i).getUnique_item_id().equals(itemsDB.get(j).getUnique_item_id()) &&
+                        productResults.get(i).getNumberofItemsetForList() != itemsDB.get(j).getNumberofItemsetForList()) {
 
-                    itemsDB.set(j,productResults.get(i));
+                    itemsDB.set(j, productResults.get(i));
                 }
             }
 
@@ -560,12 +601,12 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
     }
 
     private void merge(ArrayList<ShoppingItem> productResults) {
-        for (int i=0;i<productResults.size();i++){
-            for(int j=0;j<itemsDB.size();j++){
-                if(productResults.get(i).getUnique_item_id().equals(itemsDB.get(j).getUnique_item_id())&&
-                        productResults.get(i).getNumberofItemsetForList()!=itemsDB.get(j).getNumberofItemsetForList()){
+        for (int i = 0; i < productResults.size(); i++) {
+            for (int j = 0; j < itemsDB.size(); j++) {
+                if (productResults.get(i).getUnique_item_id().equals(itemsDB.get(j).getUnique_item_id()) &&
+                        productResults.get(i).getNumberofItemsetForList() != itemsDB.get(j).getNumberofItemsetForList()) {
 
-                    itemsDB.set(j,productResults.get(i));
+                    itemsDB.set(j, productResults.get(i));
                 }
             }
 
@@ -576,132 +617,202 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        this.menu=menu;
+        this.menu = menu;
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.add_item_to_list_done, menu);
 
         return true;
     }
 
-    private void hideOption(int id){
-        MenuItem item=menu.findItem(id);
+    private void hideOption(int id) {
+        MenuItem item = menu.findItem(id);
         item.setVisible(false);
     }
-    private void showOption(int id){
-        MenuItem item=menu.findItem(id);
+
+    private void showOption(int id) {
+        MenuItem item = menu.findItem(id);
         item.setVisible(true);
     }
 
-    private void createGrocerylistAndSave(FinanceAccount financeAccount,ArrayList<ShoppingItem> list){
+    private void createGrocerylistAndSave(FinanceAccount financeAccount, ArrayList<ShoppingItem> list) {
 
-            Calendar c=new GregorianCalendar();
-            Date dat=c.getTime();
-            //String day= String.valueOf(dat.getDay());
-            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.GERMAN);
+        Calendar c = new GregorianCalendar();
+        Date dat = c.getTime();
+        //String day= String.valueOf(dat.getDay());
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.GERMAN);
 
-            String date = (String) android.text.format.DateFormat.format("dd-MM-yyyy", dat);
-            GroceryList groceryList=new GroceryList();
-            groceryList.setItemsOftheList(list);
-            groceryList.getListcontain();
-            int hashid=(userLocalStore.getUserfullname() + format.format(dat)).hashCode();
-            groceryList.setList_unique_id(String.valueOf(hashid));
-            groceryList.setCreatorName(userLocalStore.getUserfullname());
+        String date = (String) DateFormat.format("dd-MM-yyyy", dat);
+        GroceryList groceryList = new GroceryList();
+        groceryList.setItemsOftheList(list);
+        groceryList.getListcontain();
+        int hashid = (userLocalStore.getUserfullname() + format.format(dat)).hashCode();
+        groceryList.setList_unique_id(String.valueOf(hashid));
+        groceryList.setCreatorName(userLocalStore.getUserfullname());
 
-            listName=setDateButtuon.getText().toString();
-            if(!listName.isEmpty()){
-                groceryList.setDatum(listName);
-            }
+        listName = setDateButtuon.getText().toString();
+        if (!listName.isEmpty()) {
+            groceryList.setDatum(listName);
+        }
 
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd, HH:mm");
-            formatter.setLenient(false);
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd, HH:mm");
+        formatter.setLenient(false);
 
-            Date currentDate = new Date();
-
-
-            String currentTime = formatter.format(currentDate);
-            CalendarCollection    calendarCollection=new CalendarCollection(listName,groceryList.getListcontain(),
-                    groceryList.getCreatorName(),listName, listName + " 17:00",
-                    listName +" 20:00",String.valueOf(hashid),getString(R.string.Event_Category_Category_Shopping),"0","0",currentTime);
-
-            SimpleDateFormat formatterr = new SimpleDateFormat("dd-MM-yyy HH:mm:ss");
-            String currentTimer = formatterr.format(currentDate);
-            FinanceRecords financeRecords=new FinanceRecords(getString(R.string.textInitialize_create_account_grocery_note),currentTimer.split(" ")[0],
-                    getString(R.string.textInitialize_create_account_grocery_note),groceryList.getGroceryListTotalPriceToPayString().replace(",",".")
-                    ,String.valueOf(hashid),
-                    getString(R.string.textInitialize_create_account_grocery_category),groceryList.getDatum(),userLocalStore.getUserfullname(),0,false,false);
+        Date currentDate = new Date();
 
 
-            if(financeAccount==null){
-                ArrayList<FinanceAccount> financeAccountArrayList= sqlFinanceAccount.getAllFinanceAccount();
-                if(financeAccountArrayList.size()!=0){
-                    financeAccount=financeAccountArrayList.get(0);
-                    financeAccount.addRecordToAccount(financeRecords);
-                    financeAccount.setLastchangeToAccount();
-                    groceryList.setAccountid(financeAccount.getAccountUniqueId());
-                }
-            }else {
-                financeAccount.addRecordToAccount(financeRecords);
-                financeAccount.setLastchangeToAccount();
-                groceryList.setAccountid(financeAccount.getAccountUniqueId());
+        String currentTime = formatter.format(currentDate);
+        CalendarCollection calendarCollection = new CalendarCollection(listName, groceryList.getListcontain(),
+                groceryList.getCreatorName(), listName, listName + " 17:00",
+                listName + " 20:00", String.valueOf(hashid), getString(R.string.Event_Category_Category_Shopping), "0", "0", currentTime);
 
-            }
+        SimpleDateFormat formatterr = new SimpleDateFormat("dd-MM-yyy HH:mm:ss");
+        String currentTimer = formatterr.format(currentDate);
+        FinanceRecords financeRecords = new FinanceRecords(this, getString(R.string.textInitialize_create_account_grocery_note), currentTimer.split(" ")[0],
+                getString(R.string.textInitialize_create_account_grocery_note), groceryList.getGroceryListTotalPriceToPayString().replace(",", ".")
+                , String.valueOf(hashid),
+                getString(R.string.textInitialize_create_account_grocery_category), groceryList.getDatum(), userLocalStore.getUserfullname(), 0, false, false);
 
-        createGroceryAndUpdateFinance(financeAccount,groceryList,calendarCollection);
+
+        financeAccount.setContext(this);
+        financeAccount.addRecordToAccount(financeRecords);
+        financeAccount.setLastchangeToAccount();
+        groceryList.setAccountid(financeAccount.getAccountUniqueId());
+
+
+        createGroceryAndUpdateFinance(financeAccount, groceryList, calendarCollection);
 
 
     }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
+
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_items_added_done) {
 
-            if(isFromDetails){
+            if (isFromDetails) {
 
-                ArrayList<ShoppingItem> list=new ArrayList<>();
-                for(int i=0;i<itemstoShoparray.length;i++){
-                    if(itemstoShoparray[i]!=null && itemstoShoparray[i].getNumberofItemsetForList()>0){
+                ArrayList<ShoppingItem> list = new ArrayList<>();
+                for (int i = 0; i < itemstoShoparray.length; i++) {
+                    if (itemstoShoparray[i] != null && itemstoShoparray[i].getNumberofItemsetForList() > 0) {
 
                         list.add(itemstoShoparray[i]);
                     }
 
                 }
 
-                if(list.size()!=0){
+                if (list.size() != 0) {
+                    String shdate = setDateButtuon.getText().toString();
+                    groceryListFromDetails.setDatum(shdate);
                     groceryListFromDetails.setItemsOftheList(list);
                     groceryListFromDetails.getListcontain();
 
-                    Toast.makeText(getApplicationContext(),"Grocery list on " +groceryListFromDetails.getDatum()+ " updated",Toast.LENGTH_SHORT).show();
-                    updateExcelFile(this,groceryListFromDetails.getItemsOftheList());
-                    startActivity(new Intent(this, DetailsShoppingListActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                            .putExtra("GroceryList",groceryListFromDetails).putExtra("isFromDetails",true));
-                    finish();
+                    assert  auth.getCurrentUser()!=null;
+                    DatabaseReference shoopinglistItem=firebaseReference
+                            .child(auth.getCurrentUser().getUid())
+                            .child(groceryListFromDetails.getList_unique_id())
+                            .child(Config.FIREBASE_APP_URL_SHARED_GROCERY_ITEMS_NODE);
+                    shoopinglistItem.setValue(new GroceryList().getGrocerylistitemForGLFirebase(list));
+                    DatabaseReference refdate=firebaseReference.child(auth.getCurrentUser().getUid())
+                            .child(groceryListFromDetails.getList_unique_id()).child("datum");
+                    refdate.setValue(shdate).addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            if (task.isSuccessful()) {
+                                startActivity(new Intent(AddItemToListActivity.this,
+                                        DetailsShoppingListActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                                        .putExtra("isFromDetails", true)
+                                        .putExtra("GroceryListId", groceryListFromDetails.getList_unique_id()));
+
+                                listofChossenReference.removeValue();
+                                finish();
+
+                            } else {
+                                Toast.makeText(getApplicationContext(),
+                                        task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
 
 
-                }else{
+                    Toast.makeText(getApplicationContext(), "Grocery list on " + groceryListFromDetails.getDatum() + " updated", Toast.LENGTH_SHORT).show();
+                   /**
+                    setDateButtuon.setText(groceryListFromDetails.getDatum());
+                    updateExcelFile( groceryListFromDetails.getItemsOftheList());
+
+
+                    assert auth.getCurrentUser() != null;
+                    DatabaseReference shoopinglistItem = firebaseReference.child(auth.getCurrentUser().getUid()).
+                            child(groceryListFromDetails.getList_unique_id());
+                    GroceryListForFireBase groceryListForFirebase = new GroceryListForFireBase();
+                    groceryListForFirebase.setAccountid(groceryListFromDetails.getAccountid());
+                    groceryListForFirebase.setCreatorName(groceryListFromDetails.getCreatorName());
+
+                    groceryListForFirebase.setDatum(groceryListFromDetails.getDatum());
+                    groceryListForFirebase.setList_unique_id(groceryListFromDetails.getList_unique_id());
+                    groceryListForFirebase.setListcontain(groceryListFromDetails.getListcontain());
+                    for (int i = 0; i < list.size(); i++) {
+                        groceryListForFirebase.getItems().add(new ShoppingItem().getitemForFirebase(list.get(i)));
+                    }
+                    /**
+                    ArrayList<ShoppingItemForFireBase> arrayList = new ArrayList();
+                    for (int i = 0; i < groceryListFromDetails.getItemsOftheList().size(); i++) {
+                        arrayList.add(new ShoppingItem().getitemForFirebase(groceryListFromDetails.getItemsOftheList().get(i)));
+                    }
+                    groceryListForFirebase.setItems(arrayList);
+                   //
+                    groceryListForFirebase.setListdone(groceryListFromDetails.isListdone());
+                    groceryListForFirebase.setToListshare(groceryListFromDetails.isToListshare());
+                    shoopinglistItem.setValue(groceryListForFirebase).addOnCompleteListener(
+                            new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    if (task.isSuccessful()) {
+                                        startActivity(new Intent(AddItemToListActivity.this,
+                                                DetailsShoppingListActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                                                .putExtra("isFromDetails", true)
+                                                .putExtra("GroceryListId", groceryListFromDetails.getList_unique_id()));
+
+                                        listofChossenReference.removeValue();
+                                        finish();
+
+                                    } else {
+                                        Toast.makeText(getApplicationContext(),
+                                                task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            }
+                    );
+                    **/
+
+                } else {
 
                     //error
-                    Toast.makeText(getApplicationContext(),"An Error occured updating list",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), getString(R.string.an_error_occured_while_updating_the_list), Toast.LENGTH_SHORT).show();
                 }
 
-            }else {
-                final ArrayList<ShoppingItem> list=new ArrayList<>();
-                for(int j=0;j<itemstoShoparray.length;j++){
-                    if(itemstoShoparray[j]!=null){
+            } else {
+
+                final ArrayList<ShoppingItem> list = new ArrayList<>();
+                for (int j = 0; j < itemstoShoparray.length; j++) {
+                    if (itemstoShoparray[j] != null
+                            && itemstoShoparray[j].getNumberofItemsetForList() != 0) {
 
                         list.add(itemstoShoparray[j]);
                     }
 
                 }
-                if(list.size()!=0){
+                if (list.size() != 0) {
                     showDialogChoosingAccount(list);
-                }else {
+                } else {
 
-                    Toast.makeText(getApplicationContext(),"No items added",Toast.LENGTH_SHORT).show();
+                    listofChossenReference.removeValue();
+                    Toast.makeText(getApplicationContext(), getString(R.string.no_item_added), Toast.LENGTH_SHORT).show();
                     startActivity(new Intent(this, CreateNewShoppingListActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
                     finish();
                 }
@@ -710,9 +821,9 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
 
 
             return true;
-        }else if (id == R.id.action_item_list_refresh){
-            new LoadItemDBAsyncTask().execute();
-            Toast.makeText(getApplicationContext(),"List updated",Toast.LENGTH_SHORT).show();
+        } else if (id == R.id.action_item_list_refresh) {
+            getShoppingListitmes();
+            Toast.makeText(getApplicationContext(), getString(R.string.list_updated), Toast.LENGTH_SHORT).show();
 
             return true;
         }
@@ -720,34 +831,11 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         return super.onOptionsItemSelected(item);
     }
 
-    private void saveGroceryListLocally(GroceryList groceryList){
-
-
-
-            if(sqLiteShoppingList.addShoppingList(groceryList)!= -1) {
-                String registrationId=userLocalStore.getUserPartnerRegId();
-                String email=userLocalStore.getUserPartnerEmail();
-                if(!registrationId.isEmpty() && !email.isEmpty()){
-                   sendNotification(registrationId,email);
-                }
-
-
-                Toast.makeText(getApplicationContext(),"Grocery list on " +groceryList.getDatum()+ " created",Toast.LENGTH_SHORT).show();
-                updateExcelFile(this,groceryList.getItemsOftheList());
-                startActivity(new Intent(this, CreateNewShoppingListActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP).putExtra("GroceryshoppingList",groceryList));
-                finish();
-            }else{
-                Toast.makeText(getApplicationContext(),"could not save the grocery list locally",Toast.LENGTH_SHORT).show();
-            }
-
-
-    }
-
     private static String getData(ArrayList<Pair<String, String>> values) throws UnsupportedEncodingException {
-        StringBuilder result=new StringBuilder();
-        for(Pair<String,String> pair : values){
+        StringBuilder result = new StringBuilder();
+        for (Pair<String, String> pair : values) {
 
-            if(result.length()!=0)
+            if (result.length() != 0)
 
                 result.append("&");
             result.append(URLEncoder.encode(pair.first, "UTF-8"));
@@ -759,7 +847,8 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
     }
 
 
-    public  void sendNotification(final String regId,final String email) {
+    // after List is created
+    public void sendNotification(final String regId, final String email) {
 
         if (!userLocalStore.getUserRegistrationId().isEmpty()) {
 
@@ -767,31 +856,32 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
             Thread thread = new Thread() {
                 @Override
                 public void run() {
-                    HttpURLConnection conn=null;
+                    HttpURLConnection conn = null;
                     try {
 
                         String regid = userLocalStore.getUserRegistrationId();
-                        String sendertname=userLocalStore.getLoggedInUser().getfullname();
-                        ArrayList<Pair<String,String>> data=new ArrayList<>();
+                        String sendertname = userLocalStore.getLoggedInUser().getfullname();
+                        ArrayList<Pair<String, String>> data = new ArrayList<>();
 
 
-                        String message=getString(R.string.fcm_Notification_message_groceryList_created);
-                        String title=getString(R.string.fcm_Notification_title_groceryList_created);
+                        String message = getString(R.string.fcm_Notification_message_groceryList_created);
+                        String title = getString(R.string.fcm_Notification_title_groceryList_created);
 
-                        data.add(new Pair<String, String>("message", message+ " " +sendertname ));
-                        data.add(new Pair<String, String>("registrationReceiverIDs",regId));
-                        data.add(new Pair<String, String>("receiver",email));
+                        data.add(new Pair<String, String>("message", message + " " + sendertname));
+                        data.add(new Pair<String, String>("registrationReceiverIDs", regId));
+                        data.add(new Pair<String, String>("receiver", email));
                         data.add(new Pair<String, String>("sender", userLocalStore.getLoggedInUser().email));
 
                         data.add(new Pair<String, String>("registrationSenderIDs", regid));
-                        data.add(new Pair<String, String>("title",title ));
+                        data.add(new Pair<String, String>("title", title));
+                        data.add(new Pair<String, String>("chatRoom", "chatroom"));
                         data.add(new Pair<String, String>("apiKey", Config.FIREBASESERVER_KEY));
 
                         byte[] bytes = getData(data).getBytes("UTF-8");
 
 
-                        URL url=new URL(Config.YOUR_SERVER_URL+ "FireBaseConnection.php");
-                        conn=(HttpURLConnection)url.openConnection();
+                        URL url = new URL(Config.YOUR_SERVER_URL + "FireBaseConnection.php");
+                        conn = (HttpURLConnection) url.openConnection();
                         conn.setDoOutput(true);
                         conn.setUseCaches(false);
                         conn.setFixedLengthStreamingMode(bytes.length);
@@ -811,12 +901,12 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                         while ((inputLine = in.readLine()) != null) {
                             reponse.append(inputLine);
                         }
-                        final String response =reponse.toString();
+                        final String response = reponse.toString();
 
                     } catch (Exception e) {
                         e.printStackTrace();
-                    }finally {
-                        if(conn!=null){
+                    } finally {
+                        if (conn != null) {
                             conn.disconnect();
                         }
                     }
@@ -828,186 +918,162 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         }
 
     }
-    public void saveFinanceAccountToServer(final FinanceAccount financeAccount, final GroceryList groceryList){
-        ServerRequests serverRequests =new ServerRequests(this);
-        serverRequests.updateFinanceAccountInBackgroung(financeAccount, new FinanceAccountCallbacks() {
-            @Override
-            public void fetchDone(ArrayList<FinanceAccount> returnedAccounts) {
 
-            }
+    public void createGroceryAndUpdateFinance(final FinanceAccount financeAccount, final GroceryList groceryList, final CalendarCollection calendarCollection) {
+        progressBar = new ProgressDialog(this);
+        progressBar.setCancelable(false);
+        progressBar.setTitle("Creating grocery list");
+        progressBar.setMessage("in progress ...");
+        progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressBar.show();
 
-            @Override
-            public void setServerResponse(String serverResponse) {
-
-                if(serverResponse.contains("Account successfully updated")){
-                    saveFinanceAccountLocally(financeAccount,groceryList);
-                }else {
-                    Toast.makeText(getApplicationContext(),"Error creating account "+ financeAccount.getAccountName(),Toast.LENGTH_SHORT).show();
-
-                }
-            }
-        });
-
-    }
-
-    public void updateGroceryAndUpdateFinance(final FinanceAccount financeAccount, final GroceryList groceryList, final CalendarCollection calendarCollection){
-        ServerRequests serverRequests =new ServerRequests(this);
-        serverRequests.createGroceryAndUpdateFinanceAccountInBackgroung(groceryList, financeAccount, new FinanceAccountCallbacks() {
-            @Override
-            public void fetchDone(ArrayList<FinanceAccount> returnedAccounts) {
-
-            }
-
-            @Override
-            public void setServerResponse(String serverResponse) {
-                if(serverResponse.contains("Account Updated and Grocery list successfully created")){
-                    saveEvent(calendarCollection,groceryList,financeAccount);
-                }else {
-                    Toast.makeText(getApplicationContext(),"Error creating account "+ financeAccount.getAccountName(),Toast.LENGTH_SHORT).show();
-
-                }
-            }
-        });
-    }
-
-    public void createGroceryAndUpdateFinance(final FinanceAccount financeAccount, final GroceryList groceryList, final CalendarCollection calendarCollection){
-        ServerRequests serverRequests =new ServerRequests(this);
-        serverRequests.createGroceryAndUpdateFinanceAccountInBackgroung(groceryList, financeAccount, new FinanceAccountCallbacks() {
-            @Override
-            public void fetchDone(ArrayList<FinanceAccount> returnedAccounts) {
-
-            }
-
-            @Override
-            public void setServerResponse(String serverResponse) {
-                if(serverResponse.contains("Account Updated and Grocery list successfully created")){
-                    String email=userLocalStore.getUserPartnerEmail();
-                    fetchUserforFCMNotification(email,calendarCollection,groceryList,financeAccount);
-
-                }else {
-                    Toast.makeText(getApplicationContext(),"Error creating account "+ financeAccount.getAccountName(),Toast.LENGTH_SHORT).show();
-
-                }
-            }
-        });
-    }
-    public void fetchUserforFCMNotification(String email, final CalendarCollection calendarCollection, final GroceryList groceryList, final FinanceAccount financeAccount){
-        ServerRequests serverRequests =new ServerRequests(this);
-        serverRequests.fetchUserForFCMNotificationinBackground(email, new GetUserCallbacks() {
-            @Override
-            public void done(User returneduser) {
-                if(returneduser!=null){
-                    userLocalStore.storeUserPartnerData(returneduser);
-                    userLocalStore.setUserPartnerRegId(returneduser.regId);
-                    saveEvent(calendarCollection,groceryList,financeAccount);
-                }else{
-                    Toast.makeText(getApplicationContext(),"Error fetching partner data "+ financeAccount.getAccountName(),Toast.LENGTH_SHORT).show();
-                    saveEvent(calendarCollection,groceryList,financeAccount);
-                }
-            }
-
-            @Override
-            public void serverReponse(String reponse) {
-
-            }
-
-            @Override
-            public void userlist(ArrayList<User> reponse) {
-
-            }
-        });
-    }
-    public void saveFinanceAccountLocally(FinanceAccount financeAccount, GroceryList groceryList){
-
-        if (sqlFinanceAccount.updateFinanceAccount(financeAccount)!=0){
-           saveGroceryListLocally(groceryList);
+        assert auth.getCurrentUser() != null;
+        DatabaseReference groceryRef = databaseReference.child(Config.FIREBASE_APP_URL_GROCERYLISTS)
+                .child(auth.getCurrentUser().getUid());
+        GroceryListForFireBase groceryListForFirebase = new GroceryListForFireBase();
+        groceryListForFirebase.setAccountid(groceryList.getAccountid());
+        groceryListForFirebase.setCreatorName(groceryList.getCreatorName());
+        groceryListForFirebase.setDatum(groceryList.getDatum());
+        groceryListForFirebase.setList_unique_id(groceryList.getList_unique_id());
+        groceryListForFirebase.setListcontain(groceryList.getListcontain());
+        for (int i = 0; i < groceryList.getItemsOftheList().size(); i++) {
+            groceryListForFirebase.getItems().add(new ShoppingItem().getitemForFirebase(groceryList.getItemsOftheList().get(i)));
         }
-    }
-    private  boolean updateExcelFile(Context context, ArrayList<ShoppingItem> items) {
-        boolean success= false;
+        groceryListForFirebase.setListdone(groceryList.isListdone());
+        groceryListForFirebase.setToListshare(groceryList.isToListshare());
 
-        FileHelper fileHelper=new FileHelper(context);
-        // Creating Input Stream
-
-        // Create a path where we will place our List of objects on external storage
-        File file=null;
-        FileOutputStream os = null;
-
-        try {
-
-            // Creating Input Stream
-            file = new File(fileHelper.getExcelfile("shopping_list_items"));
-
-
-            FileInputStream myInput = new FileInputStream(file);
-
-
-            XSSFWorkbook wb = new  XSSFWorkbook(myInput);
-            XSSFSheet sheet = wb.getSheetAt(0);
-            XSSFRow row;
-            XSSFCell cell;
-
-            Iterator rows = sheet.rowIterator();
-
-            while (rows.hasNext())
-            {
-                row=(XSSFRow) rows.next();
-
-                cell=row.getCell(0);
-
-                for(int i=0;i<items.size();i++){
-                    if(cell.getStringCellValue().equals(items.get(i).getItemName())){
-
-                        row.getCell(2).setCellValue(items.get(i).getNumberoftimeAddedAnyToList());
-                        System.out.print(cell.getStringCellValue()+" "+row.getCell(2).getNumericCellValue());
+        groceryRef.child(groceryList.getList_unique_id()).setValue(groceryListForFirebase).addOnCompleteListener(
+                new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            DatabaseReference financeref = databaseReference
+                                    .child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS).child(auth.getCurrentUser().getUid());
+                            financeref.child(financeAccount.getAccountUniqueId()).setValue(
+                                    new FinanceAccount(getApplicationContext()).getFinanceAccountForFirebase(financeAccount)
+                            ).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    if (task.isSuccessful()) {
+                                        //send notification
+                                        Toast.makeText(getApplicationContext(), "Grocery list on " + groceryList.getDatum() + " created", Toast.LENGTH_SHORT).show();
+                                        updateExcelFile(groceryList.getItemsOftheList());
+                                        if (progressBar != null) {
+                                            progressBar.dismiss();
+                                        }
+                                        listofChossenReference.removeValue();
+                                        finish();
+                                    } else {
+                                        if (progressBar != null) {
+                                            progressBar.dismiss();
+                                        }
+                                        if (task.getException().getMessage().equals(FirebaseError.NETWORK_ERROR)) {
+                                            finish();
+                                        }
+                                        Toast.makeText(getApplicationContext(), task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            });
+                        } else {
+                            if (progressBar != null) {
+                                progressBar.dismiss();
+                            }
+                            Toast.makeText(getApplicationContext(), task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }
-
-                System.out.println();
-            }
-
-
-
-            os = new FileOutputStream(file);
-            wb.write(os);
-            Log.w("FileUtils", "Writing file" + file);
-            success = true;
-        } catch (IOException e) {
-            Log.w("FileUtils", "Error writing " + file, e);
-        } catch (Exception e) {
-            Log.w("FileUtils", "Failed to save file", e);
-        } finally {
-            try {
-                if (null != os)
-                    os.close();
-            } catch (Exception ex) {
-                ex.printStackTrace();
+        );
+        if (!new ServerRequests(this).haveNetworkConnection()) {
+            if (progressBar != null) {
+                progressBar.dismiss();
+                finish();
             }
         }
 
+    }
+
+    private boolean updateExcelFile(ArrayList<ShoppingItem> items) {
+
+        final DatabaseReference ref = FirebaseDatabase.getInstance().getReference()
+                .child(Config.FIREBASE_APP_URL_SHOPPING_ITEMS_XSL)
+                .child(Config.FIREBASE_APP_URL_SHOPPING_ITEMS_XSL_ITEMS_NODE);
+
+        boolean success = false;
+
+        for(int i=0; i<items.size();i++){
+            items.get(i).setNumberofItemsetForList(0);
+           success = ref.child(items.get(i).getUnique_item_id()).setValue(
+                    new ShoppingItem().getitemForFirebase(items.get(i))
+            ).isSuccessful();
+        }
+
+        listofChossenReference.removeValue();
         return success;
     }
 
 
-
-
+    public void setCategoriesForItems(ArrayList<ShoppingItem> list){
+        for(ShoppingItem item: list){
+            switch (item.getItemcategory()) {
+                case "Household":
+                    item.setItemcategory(getString(R.string.household));
+                    break;
+                case "Fruit":
+                    item.setItemcategory(getString(R.string.fruit));
+                    break;
+                case "Vegetables":
+                    item.setItemcategory(getString(R.string.vegetables));
+                    break;
+                case "Grain products":
+                    item.setItemcategory(getString(R.string.grain_products));
+                    break;
+                case "Technology":
+                    item.setItemcategory(getString(R.string.technology));
+                    break;
+                case "Drinks":
+                    item.setItemcategory(getString(R.string.drinks));
+                    break;
+                case "Spices":
+                    item.setItemcategory(getString(R.string.spices));
+                    break;
+                case "Drugstore":
+                    item.setItemcategory(getString(R.string.drugstore));
+                    break;
+                case "Others":
+                    item.setItemcategory(getString(R.string.others));
+                    break;
+                case "Fats and oils":
+                    item.setItemcategory(getString(R.string.fats_and_oils));
+                    break;
+                case "Milk products":
+                    item.setItemcategory(getString(R.string.milk_products));
+                    break;
+                case "Meat":
+                    item.setItemcategory(getString(R.string.meat));
+                    break;
+                case "Sweets":
+                    item.setItemcategory(getString(R.string.sweets));
+                    break;
+            }
+        }
+    }
     public ArrayList<ShoppingItem> getItemFromDB(ArrayList<String> itemsname,
                                                  ArrayList<String> itemsprice,
                                                  ArrayList<String> itemUsageFrequency
-                                                ,ArrayList<String> itemCategory,
-                                                 ArrayList<String> itemMarket){
+            , ArrayList<String> itemCategory,
+                                                 ArrayList<String> itemMarket) {
 
-        ArrayList<ShoppingItem> itemsdb=new ArrayList<>();
-        for(int i=0;i<itemsname.size();i++){
+        ArrayList<ShoppingItem> itemsdb = new ArrayList<>();
+        for (int i = 0; i < itemsname.size(); i++) {
 
-            ShoppingItem item=new ShoppingItem();
+            ShoppingItem item = new ShoppingItem();
             item.setPrice(itemsprice.get(i));
             item.setItemName(itemsname.get(i));
-            int hashid=(itemsname.get(i) + itemsprice.get(i)).hashCode();
+            int hashid = (itemsname.get(i) + itemsprice.get(i) + itemMarket.get(i)).hashCode();
             item.setUnique_item_id((String.valueOf(hashid)));
             item.setDetailstoItem("");
             item.setItemSpecification("");
-            switch (itemCategory.get(i)){
+            switch (itemCategory.get(i)) {
                 case "Haushalt":
                     item.setItemcategory(getString(R.string.household));
                     break;
@@ -1054,7 +1120,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
             DecimalFormat df = new DecimalFormat("0.00");
             df.setMaximumFractionDigits(2);
             try {
-                Number number=df.parse(itemUsageFrequency.get(i));
+                Number number = df.parse(itemUsageFrequency.get(i));
                 item.setNumberoftimeAddedAnyToList(number.intValue());
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1063,18 +1129,19 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
             itemsdb.add(item);
 
         }
-        itemstoShoparray=new ShoppingItem[itemsdb.size()];
+        itemstoShoparray = new ShoppingItem[itemsdb.size()];
+        sort(itemsdb);
         return itemsdb;
     }
 
     @Override
     protected void onSaveInstanceState(Bundle state) {
-            super.onSaveInstanceState(state);
+        super.onSaveInstanceState(state);
 
-            state.putParcelableArrayList("itemDB", itemsDB);
+        state.putParcelableArrayList("itemDB", itemsDB);
         state.putParcelableArray("arrayitems", itemstoShoparray);
-        state.putString("listname",listName);
-        state.putString("sortType",sortName);
+        state.putString("listname", listName);
+        state.putString("sortType", sortName);
 
     }
 
@@ -1096,7 +1163,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
 
             new SearchAsyncTask().execute(newText);
         } else {
-           populateListview();
+            populateListview();
         }
 
 
@@ -1104,28 +1171,25 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
     }
 
 
-
     @Override
     public void onClick(View v) {
-        int id=v.getId();
-        switch (id){
+        int id = v.getId();
+        switch (id) {
             case R.id.grocery_activity_add_itemtoList_button:
-                startActivity(new Intent(this,CreatANewItemActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        .putExtra("itemDB",itemsDB));
+                startActivity(new Intent(this, CreatANewItemActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra("itemDB",itemsDB));
                 break;
             case R.id.dateaddeventstart_creatList_add_item_to_list:
                 onDatePickercliced(true);
                 break;
             case R.id.button_sort_activity_add_item_to_list:
-               showDialogSortingOptions();
+                showDialogSortingOptions();
                 break;
         }
 
     }
 
 
-    void showDialogSortingOptions(){
-
+    void showDialogSortingOptions() {
 
 
         alertDialog = new android.support.v7.app.AlertDialog.Builder(this).create();
@@ -1134,7 +1198,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         alertDialog.setView(convertView);
         alertDialog.setTitle(getString(R.string.activity_details_options_list_text_sort_by));
         ListView listView = (ListView) convertView.findViewById(R.id.listView_addItmeListActivity_sort_options);
-        sortOptionslist=new ArrayList<>();
+        sortOptionslist = new ArrayList<>();
         sortOptionslist.add(getString(R.string.alphabetic));
         sortOptionslist.add(getString(R.string.market_Rewe));
         sortOptionslist.add(getString(R.string.market_DM));
@@ -1152,16 +1216,16 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         sortOptionslist.add(getString(R.string.others));
         sortOptionslist.add(getString(R.string.sweets));
 
-        if(selectedOnRows==null){
-            selectedOnRows=new boolean[sortOptionslist.size()];
+        if (selectedOnRows == null) {
+            selectedOnRows = new boolean[sortOptionslist.size()];
         }
-        final SortOptionListAdapter sortOptionListAdapter=new SortOptionListAdapter(this, sortOptionslist, new SortOptionListAdapter.OnSortOptionsListener() {
+        final SortOptionListAdapter sortOptionListAdapter = new SortOptionListAdapter(this, sortOptionslist, new SortOptionListAdapter.OnSortOptionsListener() {
             @Override
-            public void onSortOption(String sortOption,boolean[] selected) {
+            public void onSortOption(String sortOption, boolean[] selected) {
 
-                selectedOnRows=selected;
-                if(!sortOption.isEmpty()){
-                    sortName=sortOption;
+                selectedOnRows = selected;
+                if (!sortOption.isEmpty()) {
+                    sortName = sortOption;
                     alertDialog.dismiss();
                     sort(sortOption);
                 }
@@ -1174,14 +1238,14 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                if(!sortOptionslist.get(i).isEmpty()){
+                if (!sortOptionslist.get(i).isEmpty()) {
                     alertDialog.dismiss();
-                    sortName=sortOptionslist.get(i);
+                    sortName = sortOptionslist.get(i);
                     sort(sortOptionslist.get(i));
-                    for(int j=0;j<selectedOnRows.length;j++){
-                        selectedOnRows[j]=false;
+                    for (int j = 0; j < selectedOnRows.length; j++) {
+                        selectedOnRows[j] = false;
                     }
-                    selectedOnRows[i]=true;
+                    selectedOnRows[i] = true;
                     sortOptionListAdapter.setNumberSelectedOnrow(selectedOnRows);
                 }
             }
@@ -1190,410 +1254,44 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         alertDialog.setCancelable(true);
         alertDialog.show();
     }
+
     @Override
     public void dateSet(String date, boolean isstart) {
         setDateButtuon.setText(date);
-        listName=date;
+        listName = date;
     }
 
-    private void initializeDatePicker(){
+    private void initializeDatePicker() {
         final SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
         formatter.setLenient(false);
 
         Date curDate = new Date();
         String curTime = formatter.format(curDate);
         setDateButtuon.setText(curTime);
-        listName=curTime;
-    }
-    public void onDatePickercliced(boolean bol){
-        android.support.v4.app.FragmentManager manager=getSupportFragmentManager();
-        DialogFragment fragmentDatePicker=DialogFragmentDatePicker.newInstance(bol);
-
-        fragmentDatePicker.show(manager,"datePickerfr");
+        listName = curTime;
     }
 
-
-    private  boolean saveExcelXLSXFileFirstInit(Context context) {
-        boolean success= false;
-
-        FileHelper fileHelper=new FileHelper(context);
-        XSSFWorkbook  wb = null;
-        String workbooksFolderpath= fileHelper.getWorkbooksFolder();
-        String filesDirectorypath= fileHelper.getFilesDirectory();
-        File filedirectory=new File(filesDirectorypath);
-
-        if (!filedirectory.exists()){
-            filedirectory.mkdirs();
-        }
-        File workbookfolder=new File(workbooksFolderpath);
-        if(!workbookfolder.exists()){
-            workbookfolder.mkdir();
-        }
-        // Create a path where we will place our List of objects on external storage
-        File file=null;
-        FileOutputStream os = null;
-
-        try {
-            AssetManager manager=getAssets();
-            InputStream in=manager.open("book_shopping_item.xlsx");
-            wb = new XSSFWorkbook(in);
-
-             file = new File(fileHelper.getExcelfile("book_shopping_item"));
-            if(!file.exists()){
-                file.createNewFile();
-
-            }
-
-            os = new FileOutputStream(file);
-            wb.write(os);
-            Log.w("FileUtils", "Writing file" + file);
-            success = true;
-        } catch (IOException e) {
-            Log.w("FileUtils", "Error writing " + file, e);
-        } catch (Exception e) {
-            Log.w("FileUtils", "Failed to save file", e);
-        } finally {
-            try {
-                if (null != os)
-                    os.close();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-
-        return success;
-    }
-
-
-    public static byte[] decodeBase64File(String input)
-    {
-        byte[] decodedByte = Base64.decode(input, 0);
-        return decodedByte;
-    }
-
-    public class FetchFileAsynckTacks extends AsyncTask<Void,Void,String>
-    {
-
-        FileHelper fileHelper=new FileHelper(getApplicationContext());
-        @Override
-        protected void onPostExecute(String file) {
-            super.onPostExecute(file);
-           File files = new File(fileHelper.getExcelfile("shopping_list_items"));
-            FileOutputStream fos = null;
-
-            try {
-                fos = new FileOutputStream(files);
-                fos.write(decodeBase64File(file));
-                fos.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-
-            new LoadItemDBAsyncTask().execute();
-
-        }
-
-        @Override
-        protected String doInBackground(Void... params) {
-
-          String file ="";
-            URL url;
-            HttpURLConnection urlConnection=null;
-
-            try {
-
-
-                url=new URL(ServerRequests.SERVER_ADDRESS + "FetchFileFromServer.php");
-                urlConnection=(HttpURLConnection)url.openConnection();
-                urlConnection.setReadTimeout(ServerRequests.CONNECTION_TIMEOUT);
-                urlConnection.setConnectTimeout(ServerRequests.CONNECTION_TIMEOUT);
-                urlConnection.setRequestMethod("POST");
-                urlConnection.setDoOutput(true);
-                urlConnection.setDoInput(true);
-
-                InputStream in =urlConnection.getInputStream();
-                String respons="";
-                StringBuilder bi=new StringBuilder();
-                BufferedReader reader=new BufferedReader(new InputStreamReader(in));
-                String line;
-                while((line=reader.readLine())!=null){
-                    bi.append(line).append("\n");
-                }
-                reader.close();
-                in.close();
-
-                respons =bi.toString();
-                JSONArray jsonArray= new JSONArray(respons);
-                JSONObject jo_inside = jsonArray.getJSONObject(0);
-
-               file = jo_inside.getString("file");
-
-
-
-                // fetch data to a jason object
-            }catch (Exception e){
-                e.printStackTrace();
-            }finally {
-                assert urlConnection != null;
-                urlConnection.disconnect();
-            }
-
-            return file;
-        }
-
-
-    }
-    private void readExcelXLSXFile(Context context) {
-
-        FileHelper fileHelper=new FileHelper(context);
-
-        File file=null;
-        try{
-            // Creating Input Stream
-            file = new File(fileHelper.getExcelfile("shopping_list_items"));
-
-
-            FileInputStream myInput = new FileInputStream(file);
-
-
-            XSSFWorkbook wb = new  XSSFWorkbook(myInput);
-            XSSFSheet sheet = wb.getSheetAt(0);
-            XSSFRow row;
-            XSSFCell cell;
-
-            Iterator rows = sheet.rowIterator();
-
-            while (rows.hasNext())
-            {
-                row=(XSSFRow) rows.next();
-
-                cell=row.getCell(0);
-
-                if (cell.getCellType() == XSSFCell.CELL_TYPE_STRING)
-                {
-                    System.out.print(cell.getStringCellValue()+" ");
-                    itemNamee.add(cell.getStringCellValue());
-                }
-                cell=row.getCell(1);
-               if(cell.getCellType() == XSSFCell.CELL_TYPE_NUMERIC)
-                {
-                    System.out.print(cell.getNumericCellValue()+" ");
-                    itemPrice.add(String.valueOf(cell.getNumericCellValue()));
-                }
-                cell=row.getCell(2);
-                if(cell.getCellType() == XSSFCell.CELL_TYPE_NUMERIC)
-                {
-                    System.out.print(cell.getNumericCellValue()+" ");
-                    itemUsageFrequency.add(String.valueOf(cell.getNumericCellValue()));
-                }
-                cell=row.getCell(3);
-                if(cell.getCellType() == XSSFCell.CELL_TYPE_STRING)
-                {
-                    System.out.print(cell.getStringCellValue()+" ");
-                    itemMarket.add(String.valueOf(cell.getStringCellValue()));
-                }
-                cell=row.getCell(4);
-                if(cell.getCellType() == XSSFCell.CELL_TYPE_STRING)
-                {
-                    System.out.print(cell.getStringCellValue()+" ");
-                    itemCategory.add(String.valueOf(cell.getStringCellValue()));
-                }
-
-                System.out.println();
-            }
-
-        }catch (Exception e){e.printStackTrace(); }
-
-
-    }
-
-    public  void readXLSXFile()
-    {
-
-
-        XSSFWorkbook  wb = null;
-        try {
-            AssetManager manager=getAssets();
-            InputStream in=manager.open("book_shopping_item.xlsx");
-            wb = new XSSFWorkbook(in);
-            XSSFWorkbook test = new XSSFWorkbook();
-
-            XSSFSheet sheet = wb.getSheetAt(1);
-            XSSFRow row;
-            XSSFCell cell;
-
-            Iterator rows = sheet.rowIterator();
-
-            while (rows.hasNext())
-            {
-                row=(XSSFRow) rows.next();
-                Iterator cells = row.cellIterator();
-                while (cells.hasNext())
-                {
-                    cell=(XSSFCell) cells.next();
-
-                    if (cell.getCellType() == XSSFCell.CELL_TYPE_STRING)
-                    {
-                        System.out.print(cell.getStringCellValue()+" ");
-                        itemNamee.add(cell.getStringCellValue());
-                    }
-                    else if(cell.getCellType() == XSSFCell.CELL_TYPE_NUMERIC)
-                    {
-                        System.out.print(cell.getNumericCellValue()+" ");
-                        itemPrice.add(String.valueOf(cell.getNumericCellValue()));
-                    }
-                    else
-                    {
-                        //U Can Handel Boolean, Formula, Errors
-                    }
-                }
-                System.out.println();
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
-    }
-
-    public static void writeXLSXFile() throws IOException {
-
-        String excelFileName = "C:/Test.xlsx";//name of excel file
-
-
-        String sheetName = "Sheet1";//name of sheet
-
-        XSSFWorkbook wb = new XSSFWorkbook();
-        XSSFSheet sheet = wb.createSheet(sheetName) ;
-
-        //iterating r number of rows
-        for (int r=0;r < 5; r++ )
-        {
-
-            XSSFRow row = sheet.createRow(r);
-
-
-            //iterating c number of columns
-            for (int c=0;c < 5; c++ )
-            {
-                XSSFCell cell = row.createCell(c);
-
-                cell.setCellValue("Cell "+r+" "+c);
-            }
-        }
-
-        FileOutputStream fileOut = new FileOutputStream(excelFileName);
-
-        //write this workbook to an Outputstream.
-        wb.write(fileOut);
-        fileOut.flush();
-        fileOut.close();
-    }
-
-
-    private static boolean saveExcelFile(Context context, String fileName) {
-
-        boolean success = false;
-
-        //New Workbook
-        Workbook wb = new HSSFWorkbook();
-
-        Cell c = null;
-
-        //Cell style for header row
-        CellStyle cs = wb.createCellStyle();
-        cs.setFillForegroundColor(HSSFColor.LIME.index);
-        cs.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
-
-        //New Sheet
-        Sheet sheet1 = null;
-        sheet1 = wb.createSheet("myOrder");
-
-        // Generate column headings
-        Row row = sheet1.createRow(0);
-
-        c = row.createCell(0);
-        c.setCellValue("Item Number");
-        c.setCellStyle(cs);
-
-        c = row.createCell(1);
-        c.setCellValue("Quantity");
-        c.setCellStyle(cs);
-
-        c = row.createCell(2);
-        c.setCellValue("Price");
-        c.setCellStyle(cs);
-
-        sheet1.setColumnWidth(0, (15 * 500));
-        sheet1.setColumnWidth(1, (15 * 500));
-        sheet1.setColumnWidth(2, (15 * 500));
-
-        // Create a path where we will place our List of objects on external storage
-        File file = new File(context.getExternalFilesDir(null), fileName);
-        FileOutputStream os = null;
-
-        try {
-            os = new FileOutputStream(file);
-            wb.write(os);
-            Log.w("FileUtils", "Writing file" + file);
-            success = true;
-        } catch (IOException e) {
-            Log.w("FileUtils", "Error writing " + file, e);
-        } catch (Exception e) {
-            Log.w("FileUtils", "Failed to save file", e);
-        } finally {
-            try {
-                if (null != os)
-                    os.close();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-
-        return success;
-    }
-
-    private static void readExcelFile(Context context, String filename) {
-
-        try{
-            // Creating Input Stream
-            File file = new File(context.getExternalFilesDir(null), filename);
-            FileInputStream myInput = new FileInputStream(file);
-
-            // Create a POIFSFileSystem object
-            POIFSFileSystem myFileSystem = new POIFSFileSystem(myInput);
-
-            // Create a workbook using the File System
-            HSSFWorkbook myWorkBook = new HSSFWorkbook(myFileSystem);
-
-            // Get the first sheet from workbook
-            HSSFSheet mySheet = myWorkBook.getSheetAt(0);
-
-            /** We now need something to iterate through the cells.**/
-            Iterator<Row> rowIter = mySheet.rowIterator();
-
-            while(rowIter.hasNext()){
-                HSSFRow myRow = (HSSFRow) rowIter.next();
-                Iterator<Cell> cellIter = myRow.cellIterator();
-                while(cellIter.hasNext()){
-                    HSSFCell myCell = (HSSFCell) cellIter.next();
-                    Log.w("FileUtils", "Cell Value: " +  myCell.toString());
-                    Toast.makeText(context, "cell Value: " + myCell.toString(), Toast.LENGTH_SHORT).show();
-                }
-            }
-        }catch (Exception e){e.printStackTrace(); }
-
-        return;
+    public void onDatePickercliced(boolean bol) {
+        FragmentManager manager = getSupportFragmentManager();
+        DialogFragment fragmentDatePicker = DialogFragmentDatePicker.newInstance(bol);
+
+        fragmentDatePicker.show(manager, "datePickerfr");
     }
 
     @Override
-    public void onShoppingOtemSet(ShoppingItem item,int position) {
+    public void onShoppingOtemSet(ShoppingItem item, int position) {
 
-        for (int i=0; i<itemsDB.size();i++){
-            if(itemsDB.get(i).getUnique_item_id().equals(item.getUnique_item_id())){
-                itemstoShoparray[i]=item;
+        for (int i = 0; i < itemsDB.size(); i++) {
+            if (itemsDB.get(i).getUnique_item_id().equals(item.getUnique_item_id())) {
+                item.setItemIsBought(itemsDB.get(i).isItemIsBought());
+                itemstoShoparray[i] = item;
+               DatabaseReference ref=listofChossenReference.child(item.getUnique_item_id());
+                if(item.getNumberofItemsetForList()!=0){
+                    ref.setValue(new ShoppingItem().getitemForFirebase(item));
+                }else {
+                    ref.removeValue();
+                }
+
                 break;
             }
         }
@@ -1603,22 +1301,22 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
 
     }
 
-    private void initTotalPricetextView(){
-        double totalPrice=0;
-        for (int i=0;i<itemstoShoparray.length;i++){
-            if(itemstoShoparray[i]!=null){
-                int numb=itemstoShoparray[i].getNumberofItemsetForList();
-                totalPrice= totalPrice+Double.parseDouble(itemstoShoparray[i].getPrice())*numb;
+    private void initTotalPricetextView() {
+        double totalPrice = 0;
+        for (int i = 0; i < itemstoShoparray.length; i++) {
+            if (itemstoShoparray[i] != null) {
+                int numb = itemstoShoparray[i].getNumberofItemsetForList();
+                totalPrice = totalPrice + Double.parseDouble(itemstoShoparray[i].getPrice()) * numb;
             }
         }
         DecimalFormat df = new DecimalFormat("0.00");
         df.setMaximumFractionDigits(2);
         String priceStr = df.format(totalPrice);
-        if((priceStr.replace(",",".")).equals("0.00")){
-            textViewAmontToPay.setText(priceStr+"€");
+        if ((priceStr.replace(",", ".")).equals("0.00")) {
+            textViewAmontToPay.setText(priceStr + "€");
             textViewAmontToPay.setTextColor(getResources().getColor(R.color.grey));
-        }else {
-            textViewAmontToPay.setText("- "+priceStr+"€");
+        } else {
+            textViewAmontToPay.setText("- " + priceStr + "€");
             textViewAmontToPay.setTextColor(getResources().getColor(R.color.warning_color));
         }
     }
@@ -1627,25 +1325,36 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
     protected void onResume() {
         super.onResume();
 
-
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        newItem=false;
+        newItem = false;
+    }
+
+
+    @Override
+    public void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
     }
 
     //in this myAsyncTask, we are fetching data from server for the search string entered by user.
     class SearchAsyncTask extends AsyncTask<String, Void, String> {
-        ArrayList<ShoppingItem>  productList;
+        ArrayList<ShoppingItem> productList;
         String textSearch;
 
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            productList =new ArrayList<>();
+            productList = new ArrayList<>();
         }
 
         @Override
@@ -1666,15 +1375,12 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
 
             try {
 
-                productList=itemsDB;
+                productList = itemsDB;
                 //parse date for dateList
                 for (int i = 0; i < productList.size(); i++) {
 
 
-
-
-
-                    object=productList.get(i);
+                    object = productList.get(i);
 
 
                     //check if this product is already there in productResults, if yes, then don't add it again.
@@ -1702,17 +1408,15 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
             }
 
 
-
-
         }
 
         @Override
-        protected void onPostExecute (String result){
+        protected void onPostExecute(String result) {
 
             super.onPostExecute(result);
 
             if (result.equalsIgnoreCase("Exception Caught")) {
-                Toast.makeText(getApplicationContext(), "Unable to connect to server,please try later", Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), getString(R.string.unable_to_connect_to_server_try_later), Toast.LENGTH_LONG).show();
 
             } else {
                 //calling this method to filter the search results from productResults and move them to
@@ -1727,15 +1431,15 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
 
     }
 
-    void prepareListviewall(ArrayList<ShoppingItem> shoppingItems){
+    void prepareListviewall(ArrayList<ShoppingItem> shoppingItems) {
 
-        if(shoppingItems.size()==0){
+        if (shoppingItems.size() == 0) {
             textViewNoDatainDB.setText(R.string.text_search_itme_to_list_DataBase_empty);
-        }else{
+        } else {
 
             textViewNoDatainDB.setText(R.string.text_search_itme_to_list_DataBase_not_empty);
         }
-        ListViewAdapter listViewAdapter=new ListViewAdapter(this,shoppingItems,this);
+        ListViewAdapter listViewAdapter = new ListViewAdapter(this, shoppingItems, this);
         addItemtolistListview.setVisibility(View.VISIBLE);
         addItemtolistListview.setAdapter(listViewAdapter);
     }
@@ -1751,152 +1455,232 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                 filteredProductResults.add(productResults.get(i));
 
 
-
             }
         }
 
     }
 
 
-    class LoadItemDBAsyncTask extends AsyncTask<Void ,Void, Void> {
-
-        private FragmentProgressBarLoading progressDialog;
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            //start progressBar
-            progressDialog = new FragmentProgressBarLoading();
-            progressDialog.setCancelable(false);
-            progressDialog.show(getSupportFragmentManager(), "task_progress");
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-
-            //readXLSXFile();
-
-            readExcelXLSXFile(getApplicationContext());
-            return null;
-
-        }
-
-        @Override
-        protected void onPostExecute(Void params) {
-            //end progressBar
-            progressDialog.dismiss(getSupportFragmentManager());
-
-            if(itemsDB.size()==0 || itemsDB==null ){
-                itemsDB=getItemFromDB(itemNamee,itemPrice,itemUsageFrequency,itemCategory,itemMarket);
-            }
-            populateListview();
-        }
-    }
 
 
-   private void saveGroceryListToServer(final GroceryList groceryList, final CalendarCollection collection, final FinanceAccount financeAccount){
-       ServerRequests serverRequests=new ServerRequests(this);
-       serverRequests.saveGroceryListInBackgroung(groceryList, new GroceryListCallBacks() {
-           @Override
-           public void fetchDone(ArrayList<GroceryList> returnedGroceryLists) {
+    private void getShoppingListitmes() {
 
-           }
+        progressBar = new ProgressDialog(this);
+        progressBar.setCancelable(false);
+        progressBar.setTitle("Loading items");
+        progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressBar.show();
 
-           @Override
-           public void setServerResponse(String serverResponse) {
-               if(serverResponse.contains("Grocery list added successfully")){
-                   // list save to server save it locally
-                   saveEvent(collection,groceryList,financeAccount);
+        final ArrayList<ShoppingItem> list=new ArrayList<>();
+        final DatabaseReference ref = FirebaseDatabase.getInstance().getReference()
+                .child(Config.FIREBASE_APP_URL_SHOPPING_ITEMS_XSL)
+                .child(Config.FIREBASE_APP_URL_SHOPPING_ITEMS_XSL_ITEMS_NODE);
+        final DatabaseReference listRef=FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_SHOPPING_ITEMS_XSL)
+                .child(auth.getCurrentUser().getUid()).child(Config.FIREBASE_APP_URL_SHOPPING_ITEMS_XSL_USER_LIST);
 
-               }else {
-                 // error snackbar
-                   showSnackBar(groceryList,collection,financeAccount);
-               }
-           }
-       });
-   }
-
-    void saveEvent(final CalendarCollection collection, final
-                   GroceryList groceryList, final FinanceAccount financeAccount){
-        ServerRequests serverRequests=new ServerRequests(this);
-        serverRequests.saveCalenderEventInBackgroung(collection, new GetEventsCallbacks() {
+        ref.addValueEventListener(new ValueEventListener() {
             @Override
-            public void done(ArrayList<CalendarCollection> returnedeventobject) {
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                itemsDB.clear();
+                list.clear();
+                for (DataSnapshot child : dataSnapshot.getChildren()) {
+                    ShoppingItem item = new ShoppingItem().getitemFromFirebase(child.getValue(ShoppingItemForFireBase.class));
+                    list.add(item);
+                }
 
-            }
+                setCategoriesForItems(list);
+                itemsDB=list;
+                listRef.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        listofchoosenItem.clear();
+                        for (DataSnapshot child : dataSnapshot.getChildren()) {
+                            ShoppingItem item = new ShoppingItem().getitemFromFirebase(child.getValue(ShoppingItemForFireBase.class));
+                            listofchoosenItem.add(item);
+                        }
 
-            @Override
-            public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
+                        merge(listofchoosenItem);
+                        itemstoShoparray = new ShoppingItem[itemsDB.size()];
 
-            }
-
-            @Override
-            public void updated(String reponse) {
-                if (reponse.contains("Event added successfully")) {
-                    /**if(financeAccount==null){
-                        saveGroceryListLocally(groceryList);
-                        saveeventtoSQl(collection);
-                    }else {
-                        saveFinanceAccountToServer(financeAccount,groceryList);
-                        saveeventtoSQl(collection);
+                        sort(itemsDB);
+                        initArray();
+                        populateListview();
+                        listRef.removeEventListener(this);
+                        if (progressBar != null) {
+                            progressBar.dismiss();
+                        }
                     }
-                    **/
-                    saveFinanceAccountLocally(financeAccount,groceryList);
-                    saveeventtoSQl(collection);
 
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+                Toast.makeText(getApplicationContext(),
+                        databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+                if (progressBar != null) {
+                    progressBar.dismiss();
                 }
             }
         });
+        if (!new ServerRequests(this).haveNetworkConnection()) {
+            showSnackBarNoInternet();
+            if (progressBar != null) {
+                progressBar.dismiss();
+            }
+        }
+    }
+
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        listofChossenReference.removeValue();
+    }
+
+    private void createitemList(ArrayList<ShoppingItem> list) {
+        ArrayList<ShoppingItemForFireBase> arrayList = new ArrayList<>();
+        for (ShoppingItem item : list) {
+            arrayList.add(new ShoppingItem().getitemForFirebase(item));
+        }
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference()
+                .child(Config.FIREBASE_APP_URL_SHOPPING_ITEMS_XSL)
+                .child(Config.FIREBASE_APP_URL_SHOPPING_ITEMS_XSL_ITEMS_NODE);
+
+        for (ShoppingItemForFireBase item : arrayList) {
+            ref.child(item.getUnique_item_id()).setValue(item).addOnCompleteListener(new OnCompleteListener<Void>() {
+                @Override
+                public void onComplete(@NonNull Task<Void> task) {
+                    if (task.isSuccessful()) {
+
+                    }
+                }
+            });
+        }
 
     }
 
-    void showDialogChoosingAccount(final ArrayList<ShoppingItem> list){
 
-
+    void showDialogChoosingAccount(final ArrayList<ShoppingItem> list) {
 
 
         alertDialog = new android.support.v7.app.AlertDialog.Builder(this).create();
-        LayoutInflater inflater =  (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View convertView = (View) inflater.inflate(R.layout.custom_sort_options, null);
         alertDialog.setView(convertView);
         alertDialog.setTitle(getString(R.string.activity_choose_account_for_grocery_list));
         ListView listView = (ListView) convertView.findViewById(R.id.listView_addItmeListActivity_sort_options);
 
-        if(selectedOnRows==null){
-            selectedOnRows=new boolean[accountsforshopping.size()];
-        }
-        final ChooseAccountAdapter chooseAccountAdapter=new ChooseAccountAdapter(this, accountsforshopping, new ChooseAccountAdapter.OnAccountChooseListener() {
+        assert auth.getCurrentUser() != null;
+        final DatabaseReference ref = databaseReference
+                .child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS).child(auth.getCurrentUser().getUid());
+        valueEventListener = new ValueEventListener() {
             @Override
-            public void onAccountChoosed(FinanceAccount financeAccount, boolean[] selected) {
-                alertDialog.dismiss();
-                sortName=financeAccount.getAccountName();
-                selectedOnRows=selected;
-                createGrocerylistAndSave(financeAccount
-                        ,list);
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (!dataSnapshot.getChildren().iterator().hasNext()) {
 
 
+                    alert.create();
+                    alert.setMessage("Create an account first");
+                    alert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            //start create Account Activity
+                            startActivity(new Intent(AddItemToListActivity.this,
+                                    CreateFinanceAccountActivity.class)
+                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                        }
+                    });
+                    alert.show();
+
+
+                } else {
+
+                    if (valueEventListener != null) ref.removeEventListener(valueEventListener);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
 
             }
-        });
+        };
+        ref.addValueEventListener(valueEventListener);
 
-        listView.setAdapter(chooseAccountAdapter);
+        FirebaseListAdapter<FinanceAccountForFireBase> adapter = new FirebaseListAdapter<FinanceAccountForFireBase>(
+                AddItemToListActivity.this,
+                FinanceAccountForFireBase.class,
+                R.layout.custom_account_to_choose,
+                ref
+
+        ) {
+            @Override
+            protected void populateView(View v, final FinanceAccountForFireBase model, final int position) {
+                final FinanceAccount financeAccount = new FinanceAccount(getApplicationContext())
+                        .getFinanceAccountFromFirebase(model);
+
+
+                TextView sortName = (TextView) v.findViewById(R.id.textView_sort_options_items);
+                TextView balance = (TextView) v.findViewById(R.id.textView_sort_options_items_amount);
+
+                final RadioButton buttonisChecked = (RadioButton) v.findViewById(R.id.radioButton_sort_options_items);
+
+                sortName.setText(model.getAccountName());
+
+                financeAccount.getAccountrecordsAmountUpdateBalance(getApplicationContext());
+                String balancestr = financeAccount.getAccountBlanceTostring() + " €";
+                if (balancestr.contains("-")) {
+                    balance.setText(balancestr);
+                    balance.setTextColor(getResources().getColor(R.color.warning_color));
+                } else {
+                    balance.setText(balancestr);
+                    balance.setTextColor(getResources().getColor(R.color.color_account_balance_positive));
+                }
+
+
+                buttonisChecked.setChecked(false);
+
+                buttonisChecked.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+
+                        buttonisChecked.setChecked(true);
+
+
+                        createGrocerylistAndSave(
+                                new FinanceAccount(getApplicationContext()).getFinanceAccountFromFirebase(getItem(position))
+                                , list);
+                    }
+                });
+
+            }
+        };
+
+        listView.setAdapter(adapter);
+
+        // listView.setAdapter(chooseAccountAdapter);
 
         listView.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                if(accountsforshopping.get(i)!=null){
-                    alertDialog.dismiss();
-                    sortName=accountsforshopping.get(i).getAccountName();
 
-                    for(int j=0;j<selectedOnRows.length;j++){
-                        selectedOnRows[j]=false;
-                    }
-                    selectedOnRows[i]=true;
-                    chooseAccountAdapter.setNumberSelectedOnrow(selectedOnRows);
-                    createGrocerylistAndSave(accountsforshopping.get(i)
-                            ,list);
+                alertDialog.dismiss();
+                FinanceAccount financeAccount = new FinanceAccount(getApplicationContext())
+                        .getFinanceAccountFromFirebase((FinanceAccountForFireBase) adapterView.getAdapter().getItem(i));
+                sortName = financeAccount.getAccountName();
 
-                }
+                createGrocerylistAndSave(financeAccount
+                        , list);
+
+
             }
         });
 
@@ -1904,49 +1688,28 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         alertDialog.show();
     }
 
-    private void saveeventtoSQl(CalendarCollection calendarCollections) {
 
-
-            try {
-                JSONObject jsonObject=new JSONObject();
-                jsonObject.put("title",calendarCollections.title);
-                jsonObject.put("description",calendarCollections.description);
-                jsonObject.put("datetime",calendarCollections.datetime);
-                jsonObject.put("creator",calendarCollections.creator);
-                jsonObject.put("category",calendarCollections.category);
-                jsonObject.put("startingtime",calendarCollections.startingtime);
-                jsonObject.put("endingtime",calendarCollections.endingtime);
-                jsonObject.put("hashid",calendarCollections.hashid);
-                jsonObject.put("alldayevent",calendarCollections.alldayevent);
-                jsonObject.put("everymonth",calendarCollections.everymonth);
-                jsonObject.put("defaulttime",calendarCollections.creationdatetime);
-                Calendar c=new GregorianCalendar();
-                Date dat=c.getTime();
-                //String day= String.valueOf(dat.getDay());
-                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-                String date = (String) android.text.format.DateFormat.format("yyyy-MM-dd", dat);
-               IncomingNotification incomingNotification=new IncomingNotification(1,0,jsonObject.toString(),date);
-                int incomingNotifiId =  mySQLiteHelper.addIncomingNotification(incomingNotification);
-
-            }catch (Exception e){
-                e.printStackTrace();
-
-            }
-
-
-    }
-    public void showSnackBar(final GroceryList groceryList, final CalendarCollection collection, final FinanceAccount financeAccount){
+    public void showSnackBar(final GroceryList groceryList, final CalendarCollection collection, final FinanceAccount financeAccount) {
         snackbar = Snackbar
-                .make(coordinatorLayout, "An error occured during the connection to the server", Snackbar.LENGTH_INDEFINITE)
-                .setAction("RETRY", new View.OnClickListener() {
+                .make(coordinatorLayout, getString(R.string.error_occured_during_connecting_to_server), Snackbar.LENGTH_INDEFINITE)
+                .setAction(getString(R.string.retry), new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        createGroceryAndUpdateFinance(financeAccount,groceryList,collection);
+                        createGroceryAndUpdateFinance(financeAccount, groceryList, collection);
 
-                        // saveGroceryListToServer(groceryList,collection,financeAccount);
                     }
                 });
+        snackbar.setActionTextColor(Color.WHITE);
+        View snackbarView = snackbar.getView();
+        snackbarView.setBackgroundColor(getResources().getColor(R.color.colorSnackbar));
+        TextView textView = (TextView) snackbarView.findViewById(android.support.design.R.id.snackbar_text);
+        textView.setTextColor(Color.WHITE);
+        snackbar.show();
+    }
+
+    public void showSnackBarNoInternet() {
+        snackbar = Snackbar
+                .make(coordinatorLayout, getString(R.string.internet_connection_error_message), Snackbar.LENGTH_INDEFINITE);
         snackbar.setActionTextColor(Color.WHITE);
         View snackbarView = snackbar.getView();
         snackbarView.setBackgroundColor(getResources().getColor(R.color.colorSnackbar));

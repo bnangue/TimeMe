@@ -3,6 +3,7 @@ package com.app.bricenangue.timeme;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -19,6 +20,13 @@ import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
 import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -41,12 +49,12 @@ public class CreateFinanceRecordsActivity extends AppCompatActivity implements V
     private RadioButton radioButtonexpenditure,radioButtonincome;
     private Spinner spinnerAccounts;
 
-    private String [] categoryArray={"Grocery","Leisure","Traveling","Personal"};
+    private String [] categoryArray=new String[4];
     private String [] nameAccArray;
     private String [] idAccArray;
     private android.support.v7.app.AlertDialog alertDialog;
-
-
+    private FirebaseAuth auth;
+    private DatabaseReference dataref;
 
 
     @Override
@@ -55,22 +63,28 @@ public class CreateFinanceRecordsActivity extends AppCompatActivity implements V
         setContentView(R.layout.activity_create_finance_records);
         sqlFinanceAccount=new SQLFinanceAccount(this);
         userLocalStore=new UserLocalStore(this);
+        auth=FirebaseAuth.getInstance();
+        dataref= FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS);
         Bundle bundle=getIntent().getExtras();
         if(bundle!=null && bundle.containsKey("AccountToUpdate")){
             accounts=bundle.getParcelableArrayList("AccountToUpdate");
         }
+
         editTextRecordAmount=(EditText)findViewById(R.id.editText_Create_Finance_Records_Amount);
         editTextRecordName=(EditText)findViewById(R.id.editText_activity__Create_Finance_Record_name);
         editTextRecordNote=(EditText)findViewById(R.id.editText_Create_Finance_Records_note);
 
         if(accounts!=null &&accounts.size()!=0){
-            nameAccArray=new String[accounts.size()];
-            idAccArray=new String[accounts.size()];
+            nameAccArray=new String[accounts.size()+1];
+            idAccArray=new String[accounts.size()+1];
+            nameAccArray[0]=getString(R.string.Choose_An_Account);
+            idAccArray[0]="0";
             for(int i=0;i<accounts.size();i++){
-                nameAccArray[i]=accounts.get(i).getAccountName();
-                idAccArray[i]=accounts.get(i).getAccountUniqueId();
+                nameAccArray[i+1]=accounts.get(i).getAccountName();
+                idAccArray[i+1]=accounts.get(i).getAccountUniqueId();
             }
         }
+
         spinnerAccounts=(Spinner)findViewById(R.id.spinner_activity_Create_Finance_Record_which_account);
         if(nameAccArray!=null){
             SpinnerAdapter adapter = new ArrayAdapter<>(this, R.layout.spinnerlayout, nameAccArray);
@@ -85,7 +99,14 @@ public class CreateFinanceRecordsActivity extends AppCompatActivity implements V
 
 
         buttonBookingDate=(Button) findViewById(R.id.button_booking_activity_Create_Finance_Record);
+
         spinnerSelectCategory=(Spinner) findViewById(R.id.spinner_activity_Create_Finance_Record);
+
+        categoryArray[0]=getString(R.string.Choose_A_Category);
+        categoryArray[1]="Leisure";
+        categoryArray[2]="Traveling";
+        categoryArray[3]="Personal";
+
         SpinnerAdapter adap = new ArrayAdapter<>(this, R.layout.spinnerlayout, categoryArray);
         spinnerSelectCategory.setAdapter(adap);
 
@@ -130,7 +151,12 @@ public class CreateFinanceRecordsActivity extends AppCompatActivity implements V
         editTextBookingDate.setText(bookingDate);
         editTextAmount.setText(recordAmount);
         editTextCategory.setText(recordCategory);
-        editTextNote.setText(recordNote);
+        if(recordNote.isEmpty()){
+            editTextNote.setText(getString(R.string.Text_Create_Finance_Record_Nothing_Specified));
+        }else {
+            editTextNote.setText(recordNote);
+        }
+
 
         alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.alert_dialog_changed_not_saved_shopping_list_done_buttoncancel),
                 new DialogInterface.OnClickListener() {
@@ -168,7 +194,7 @@ public class CreateFinanceRecordsActivity extends AppCompatActivity implements V
 
                         }else{
                             //save to server
-                            FinanceRecords financeRecord=new FinanceRecords();
+                            FinanceRecords financeRecord=new FinanceRecords(getApplicationContext());
                             financeRecord.setRecordNAme(recordName);
                             financeRecord.setRecordCategorie(recordCategory);
                             financeRecord.setRecordValueDate(valueDate);
@@ -178,16 +204,13 @@ public class CreateFinanceRecordsActivity extends AppCompatActivity implements V
                             financeRecord.setRecordAmount(recordAmount);
                             financeRecord.setRecordUpdateVersion(0);
                             financeRecord.setSecured(true);
-                            if(radioGroupexpInc.getCheckedRadioButtonId()==R.id.radiobutton_activity_Create_Finance_Records_Account_expenditure){
-                                financeRecord.setIncome(false);
-                            }else if(radioGroupexpInc.getCheckedRadioButtonId()==R.id.radiobutton_activity_Create_Finance_Records_Account_income) {
-                                financeRecord.setIncome(true);
-                            }
+                            financeRecord.setIncome(radioButtonincome.isChecked());
                             if(recordNote.isEmpty()){
                                 financeRecord.setRecordNote("");
                             }else {
                                 financeRecord.setRecordNote(recordNote);
                             }
+
 
                             saveRecords(financeRecord);
                             alertDialog.dismiss();
@@ -238,13 +261,24 @@ public class CreateFinanceRecordsActivity extends AppCompatActivity implements V
         if (id == R.id.action_items_added_done) {
             String recordName = editTextRecordName.getText().toString();
             String recordAmount=editTextRecordAmount.getText().toString();
+            String category = spinnerSelectCategory.getSelectedItem().toString();
+            String accountNAme=spinnerAccounts.getSelectedItem().toString();
 
             if(TextUtils.isEmpty(recordName)){
                 editTextRecordName.setError("this field cannot be empty");
+                editTextRecordName.requestFocus();
             }else if(TextUtils.isEmpty(recordAmount)){
                 editTextRecordAmount.setError("set an amount for this record");
+                editTextRecordAmount.requestFocus();
 
-            }else{
+            }else if(category.equals(getString(R.string.Choose_A_Category))){
+                spinnerSelectCategory.requestFocus();
+                spinnerSelectCategory.performClick();
+
+            }else if(accountNAme.equals(getString(R.string.Choose_An_Account))){
+                spinnerAccounts.requestFocus();
+                spinnerAccounts.performClick();
+            }else {
                 showDialogConfirmCreationRecord();
             }
 
@@ -264,37 +298,37 @@ public class CreateFinanceRecordsActivity extends AppCompatActivity implements V
 
             if(financeAcc.getAccountName().equals(recordAccount)
                     && idAccArray[position].equals(financeAcc.getAccountUniqueId()) ){
+                financeAccount=new FinanceAccount(this);
                 financeAccount=financeAcc;
             }
         }
 
         if(financeAccount!=null){
 
+            financeAccount.setContext(this);
             financeAccount.addRecordToAccount(financeRecord);
+            financeAccount.setLastchangeToAccount();
 
-            ServerRequests serverRequests=new ServerRequests(this);
-            serverRequests.updateFinanceAccountInBackgroung(financeAccount, new FinanceAccountCallbacks() {
-                @Override
-                public void fetchDone(ArrayList<FinanceAccount> returnedAccounts) {
 
-                }
+            assert auth.getCurrentUser()!=null;
 
-                @Override
-                public void setServerResponse(String serverResponse) {
-                    if(serverResponse.contains("Account successfully updated")){
-                        if(sqlFinanceAccount.updateFinanceAccount(financeAccount)!=0){
-                            Toast.makeText(getApplicationContext(),"Record "+financeRecord.getRecordNAme() +" created",Toast.LENGTH_SHORT).show();
-                            startActivity(new Intent(CreateFinanceRecordsActivity.this,NewCalendarActivty.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
-
-                        }else {
-                            Toast.makeText(getApplicationContext(),"Error while saving "+financeRecord.getRecordNAme() +" locally",Toast.LENGTH_SHORT).show();
-
+            DatabaseReference ref=dataref.child(auth.getCurrentUser().getUid())
+                    .child(financeAccount.getAccountUniqueId());
+            ref.setValue(new FinanceAccount(getApplicationContext()).getFinanceAccountForFirebase(financeAccount)).addOnCompleteListener(
+                    new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            if(task.isSuccessful()){
+                                Toast.makeText(getApplicationContext(),"Record "+financeRecord.getRecordNAme() +" created",Toast.LENGTH_SHORT).show();
+                                finish();
+                            }else {
+                                Toast.makeText(getApplicationContext(),"Error while saving "+financeRecord.getRecordNAme() +" locally",Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getApplicationContext(),task.getException().getMessage(),Toast.LENGTH_SHORT).show();
+                            }
                         }
-                    }else {
-                        Toast.makeText(getApplicationContext(),"Error while saving "+financeRecord.getRecordNAme() +" on server",Toast.LENGTH_SHORT).show();
                     }
-                }
-            });
+            );
+
         }
     }
 

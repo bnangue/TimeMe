@@ -12,9 +12,9 @@
     <string name="lastnamestring">Last Name</string>
 
 
-    <string name="title_section1">Section 1</string>
-    <string name="title_section2">Section 2</string>
-    <string name="title_section3">Section 3</string>
+    <string name="title_section1" translatable="false">Section 1</string>
+    <string name="title_section2" translatable="false">Section 2</string>
+    <string name="title_section3" translatable="false">Section 3</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
@@ -23,7 +23,7 @@
     <string name="action_settings">Settings</string>
 
     <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="hello_blank_fragment" translatable="false">Hello blank fragment</string>
     <string name="dateformat">YYYY-MM-D</string>
     <string name="eventDescription">Description</string>
     <string name="buttonsave">Save</string>
@@ -34,27 +34,27 @@
     <string name="action_day_view">Day view</string>
     <string name="action_three_day_view">3 day view</string>
     <string name="action_week_view">Week view</string>
-    <string name="title_activity_basic">Basic Example</string>
-    <string name="title_activity_asynchronous">Asynchronous Events</string>
+    <string name="title_activity_basic" translatable="false">Basic Example</string>
+    <string name="title_activity_asynchronous" translatable="false">Asynchronous Events</string>
     <string name="async_error">Could not download events from the internet</string>
 
     //description
     <string name="createdbyheader">Created by: </string>
     <string name="creationwhenheader">Date of creation: </string>
-    <string name="creatorname">Cretor full Name</string>
+    <string name="creatorname">Creator full Name</string>
     <string name="creationtime">2016-27-06 at 23:15</string>
-    <string name="periodeheader">2016-27-06  -  2016-28-06 </string>
-    <string name="periodde">Asynchronous Events</string>
+    <string name="periodeheader" translatable="false">2016-27-06  -  2016-28-06 </string>
+    <string name="periodde" translatable="false">Asynchronous Events</string>
     <string name="descriptionheader">Description: </string>
-    <string name="descriptiontext">This is a sample text of description which might be quite long and sometimes very short</string>
+    <string name="descriptiontext" translatable="false">This is a sample text of description which might be quite long and sometimes very short</string>
     <string name="noteexpandheader">Note: </string>
-    <string name="noteexpand">This is a sample text note</string>
+    <string name="noteexpand" translatable="false">This is a sample text note</string>
     <string name="PressSecondTimeToCloseApp">Click a second time to exit the application</string>
     <string name="grocery_fragment_recently_created">recently created</string>
     <string name="grocery_fragment_balance">Balance :</string>
     <string name="grocery_fragment_list_done">done</string>
     <string name="text_grocery_fragment_add_recently_button">create a new shopping List</string>
-    <string name="text_create_list_add_items_button">Add shopping itmes to the list</string>
+    <string name="text_create_list_add_items_button">Add shopping items to the list</string>
     <string name="text_create_list_use_on_date">Date :</string>
     <string name="text_create_list_List_empty">The list is currently empty</string>
     <string name="text_create_list_List_not_empty">Your shopping list</string>
@@ -74,8 +74,8 @@
     <string name="btn_grocery_fragment_create_new_item_create">Create</string>
     <string name="error_field_required_price">The price is missing</string>
     <string name="error_field_required_name">The name is missing</string>
-    <string name="null_item_total_price">0,00 €</string>
-    <string name="null_item_selected">0</string>
+    <string name="null_item_total_price" translatable="false">0,00 €</string>
+    <string name="null_item_selected" translatable="false">0</string>
     <string name="grocery_add_item_to_list_to_pay_text">To spend :</string>
     <string name="grocery_list_item_title_text">From :</string>
 
@@ -112,12 +112,12 @@
     <string name="january">January</string>
     <string name="february">February</string>
     <string name="march">March</string>
-    <string name="april">April</string>
+    <string name="april" translatable="false">April</string>
     <string name="may">May</string>
     <string name="june">June</string>
     <string name="july">July</string>
-    <string name="august">August</string>
-    <string name="septmeber">September</string>
+    <string name="august" translatable="false">August</string>
+    <string name="septmeber" translatable="false">September</string>
     <string name="october">October</string>
     <string name="november">November</string>
     <string name="december">December</string>
@@ -164,9 +164,9 @@
     <string name="pref_user_profile">User Profile</string>
     <string name="pref_update_setting">Private Settings</string>
     <string name="pref_general_setting">General Settings</string>
-    <string name="title_intent_preference">android</string>
+    <string name="title_intent_preference" translatable="false">android</string>
     <string name="summary_intent_preference">go to android webpage</string>
-    <string name="title_activity_time_sheet">TimeSheetActivity</string>
+    <string name="title_activity_time_sheet" translatable="false">TimeSheetActivity</string>
     <string name="app_name_preference_app_activity">Settings</string>
     //alert dialog changed not save
 
@@ -231,8 +231,8 @@
     <string name="text_radiobtn_activity_Create_Finance_Records_income">Income</string>
     <string name="text_radiobtn_activity_Create_Finance_Records_expenditure">Expenditure</string>
     <string name="textInitialize_create_account_record_name">Inititial record</string>
-    <string name="textInitialize_create_account_record_note">Init</string>
-    <string name="textInitialize_create_account_record_category">Init</string>
+    <string name="textInitialize_create_account_record_note" translatable="false">Init</string>
+    <string name="textInitialize_create_account_record_category" translatable="false">Init</string>
     <string name="textInitialize_create_account_grocery_category">Grocery</string>
     <string name="textInitialize_create_account_grocery_note">Grocery list</string>
     <string name="text_View_Finance_records_details_Amount">Amount</string>
@@ -262,5 +262,57 @@
     <string name="textInitialize_account_AccountName">Account name (optional)</string>
     <string name="activity_choose_account_for_grocery_list">Choose an account for this grocery list</string>
     <string name="activity_create_finance_record_dialog_title">Do you really want to create this record?</string>
+    <string name="Choose_An_Account">Choose an account</string>
+    <string name="Choose_A_Category">Choose a Category</string>
+    <string name="Text_Create_Finance_Record_Nothing_Specified">nothing specified</string>
+    <string name="action_deletechat">Delete chat history</string>
+    <string name="fcm_Notification_title_message_sent">New chat message</string>
+    <string name="Chat_Message_recieved_from">from</string>
 
+    //account strings
+    <string name="sync_account_type" translatable="false">com.app.bricenangue.timeme</string>
+    <string name="content_authority" translatable="false">com.app.bricenangue.timeme.provider</string>
+    <string name="button_register_login_screen_activity">Register</string>
+    <string name="button_Loging_login_screen_activity">Login</string>
+    <string name="text_Already_Account_login_screen_activity">Already have an account?</string>
+    <string name="text_change_password_open_user_profile_activity">Change password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="or_sign_in">or sign in</string>
+    <string name="ok" translatable="false">OK</string>
+    <string name="cancel">CANCEL</string>
+    <string name="accept">ACCEPT</string>
+    <string name="type_your_message">Type your message</string>
+    <string name="send">Send</string>
+    <string name="share">Share</string>
+    <string name="delete">Delete</string>
+    <string name="are_you_sure_you_want_to_delete_this_chat">Are you sure you want to delete this chat?</string>
+    <string name="delete_chat">Delete Chat</string>
+    <string name="you_will_not_be_able_to_retrieve_this_event_delete">You will not be able to retrieve this event. Delete?</string>
+    <string name="delete_this_event">Delete this event?</string>
+    <string name="logout">LOGOUT</string>
+    <string name="product_description">Product Description</string>
+    <string name="sub_category_name">Sub Category Name</string>
+    <string name="event_start">Event start:</string>
+    <string name="event_end">Event end:</string>
+    <string name="all_day_event">All-day event:</string>
+    <string name="repeat_every_month">Repeat every month:</string>
+    <string name="category">Category:</string>
+    <string name="events">Events</string>
+    <string name="events_lowercase">events</string>
+    <string name="shopping">Shopping</string>
+    <string name="finances">Finances</string>
+    <string name="confirm">Confirm</string>
+    <string name="messsage">messsage</string>
+    <string name="exit">Exit</string>
+    <string name="start_typing_to_search">Start typing to search...</string>
+    <string name="an_error_occured_while_updating_the_list">An Error occured updating list</string>
+    <string name="no_item_added">No items added</string>
+    <string name="list_updated">List updated</string>
+    <string name="could_not_save_grocery_locally">could not save the grocery list locally</string>
+    <string name="error_creating_account">Error creating account</string>
+    <string name="unable_to_connect_to_server_try_later">Unable to connect to server,please try later</string>
+    <string name="error_occured_during_connecting_to_server">An error occured during the connection to the server</string>
+    <string name="retry">RETRY</string>
+    <string name="internet_connection_error_message">No internet connection detected.</string>
+    <string name="internet_connection_error_message_change_sycn_later">Your changes will be synchronize once the connection is established</string>
 </resources>

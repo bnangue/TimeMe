@@ -92,7 +92,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Change password"
+        android:text="@string/text_change_password_open_user_profile_activity"
         android:textColor="@color/primary_dark"
         android:textStyle="italic"
         android:id="@+id/textViewchanpassword"

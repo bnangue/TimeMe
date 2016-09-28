@@ -18,14 +18,15 @@ public class DialogDeleteEventFragment extends DialogFragment {
 
 
     public interface OnDeleteListener {
-        void delete(int position);
+        void delete(String id, String accid);
     }
 
     OnDeleteListener onDeleteListener;
-    public static DialogDeleteEventFragment newInstance(int position) {
+    public static DialogDeleteEventFragment newInstance(String listid,String accid) {
         DialogDeleteEventFragment frag = new DialogDeleteEventFragment();
         Bundle args = new Bundle();
-        args.putInt("position", position);
+        args.putString("id", listid);
+        args.putString("accid", accid);
 
         frag.setArguments(args);
         return frag;
@@ -59,7 +60,8 @@ public class DialogDeleteEventFragment extends DialogFragment {
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
-        final int position =getArguments().getInt("position");
+        final String id =getArguments().getString("id");
+        final String accid =getArguments().getString("accid");
         final android.support.v7.app.AlertDialog alertDialog = new android.support.v7.app.AlertDialog.Builder(getActivity()).create();
         LayoutInflater inflater = (LayoutInflater)getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View vw = inflater.inflate(R.layout.dialog_warning_delete_event, null);
@@ -79,7 +81,7 @@ public class DialogDeleteEventFragment extends DialogFragment {
         delete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onDeleteListener.delete(position);
+                onDeleteListener.delete(id,accid);
                 alertDialog.dismiss();
             }
         });

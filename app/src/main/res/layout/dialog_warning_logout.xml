@@ -39,8 +39,9 @@
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="LOGOUT"
-        style="@style/buttondelete"
+        android:text="@string/logout"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:textColor="@color/primary"
         android:id="@+id/buttonDeleteaccount"
         android:layout_marginTop="24dp"
         android:layout_marginRight="60dp"
@@ -50,8 +51,9 @@
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="CANCEL"
-        style="@style/buttondelete"
+        android:text="@string/cancel"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:textColor="@color/primary"
         android:id="@+id/buttonCancelaccount"
         android:layout_marginTop="14dp"
         android:layout_marginRight="60dp"

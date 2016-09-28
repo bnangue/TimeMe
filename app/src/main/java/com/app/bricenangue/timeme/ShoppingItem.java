@@ -206,4 +206,38 @@ public class ShoppingItem implements Parcelable{
         dest.writeByte((byte) (itemIsBought ? 1 : 0));
         dest.writeString(itemcategory);
     }
+
+    public ShoppingItemForFireBase getitemForFirebase(ShoppingItem shoppingItem){
+        ShoppingItemForFireBase shoppingItemForFireBase= new ShoppingItemForFireBase();
+        shoppingItemForFireBase.setDetailstoItem(shoppingItem.getDetailstoItem());
+        shoppingItemForFireBase.setItemName(shoppingItem.getItemName());
+        shoppingItemForFireBase.setPrice(shoppingItem.getPrice());
+        shoppingItemForFireBase.setNumberofItemsetForList(shoppingItem.getNumberofItemsetForList());
+        shoppingItemForFireBase.setNumberoftimeAddedAnyToList(shoppingItem.getNumberoftimeAddedAnyToList());
+        shoppingItemForFireBase.setUnique_item_id(shoppingItem.getUnique_item_id());
+        shoppingItemForFireBase.setItemSpecification(shoppingItem.getItemSpecification());
+        shoppingItemForFireBase.setItemmarket(shoppingItem.getItemmarket());
+        shoppingItemForFireBase.setItemIsBought(shoppingItem.isItemIsBought());
+        shoppingItemForFireBase.setItemcategory(shoppingItem.getItemcategory());
+
+
+        return shoppingItemForFireBase;
+    }
+
+    public ShoppingItem getitemFromFirebase(ShoppingItemForFireBase shoppingItemForFireBase){
+        ShoppingItem shoppingItem= new ShoppingItem();
+        shoppingItem.setDetailstoItem(shoppingItemForFireBase.getDetailstoItem());
+        shoppingItem.setItemName(shoppingItemForFireBase.getItemName());
+        shoppingItem.setPrice(shoppingItemForFireBase.getPrice());
+        shoppingItem.setNumberofItemsetForList(shoppingItemForFireBase.getNumberofItemsetForList());
+        shoppingItem.setNumberoftimeAddedAnyToList(shoppingItemForFireBase.getNumberoftimeAddedAnyToList());
+        shoppingItem.setUnique_item_id(shoppingItemForFireBase.getUnique_item_id());
+        shoppingItem.setItemSpecification(shoppingItemForFireBase.getItemSpecification());
+        shoppingItem.setItemmarket(shoppingItemForFireBase.getItemmarket());
+        shoppingItem.setItemIsBought(shoppingItemForFireBase.isItemIsBought());
+        shoppingItem.setItemcategory(shoppingItemForFireBase.getItemcategory());
+
+
+        return shoppingItem;
+    }
 }

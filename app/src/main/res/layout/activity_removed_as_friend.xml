@@ -22,7 +22,7 @@
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="OK"
+        android:text="@string/ok"
         android:id="@+id/removedasfriendbtn"
         style="@style/Widget.AppCompat.Button.Borderless"
         android:textColor="@color/create_new_ShoppingList"

@@ -1,10 +1,14 @@
 package com.app.bricenangue.timeme;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -19,18 +23,25 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link OnFragmentCategoryShoppingInteractionListener} interface
- * to handle interaction events.
- * create an instance of this fragment.
- */
 public class FragmentCategoryShopping extends Fragment implements View.OnClickListener{
 
     private String mParam1;
@@ -40,64 +51,32 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
     private boolean isExpanded = false;
     private float mCurrentRotation = 360.0f;
     private android.support.v7.app.AlertDialog alertDialog;
-    private boolean[] selectedOnRows;
+    private ProgressDialog progressBar;
 
 
-    private RecyclerAdapterSmallCards.MyRecyclerAdaptaterCreateShoppingListClickListener myClickListener;
-    private RecyclerAdapterSmallCards.MyRecyclerAdaptaterCreateShoppingListDoneClickListener myDoneClickListener;
 
-    private RecyclerView mRecyclerView,mRecyclerViewdone;
-    private RecyclerView.Adapter mAdapter;
+    private RecyclerView mRecyclerView;
     private RecyclerView.LayoutManager mLayoutManager;
 
-    private MySQLiteHelper mySQLiteHelper;
-    private SQLiteShoppingList sqLiteShoppingList;
-    private OnFragmentCategoryShoppingInteractionListener mListener;
     private static String LOG_TAG = "RecyclerViewActivity_Fragment_Shopping";
     private Fragment fragment=this;
-    private ArrayList<GroceryList> shoppingListdone = new ArrayList<>();
     private ArrayList<GroceryList> shoppingListsrecent = new ArrayList<>();
 
     private boolean isShown=false;
-    private OnCalendarEventsChanged calendarEventsChanged;
     private UserLocalStore userLocalStore;
     private TextView textshowHide;
     private LinearLayout linearLayout;
-    private SQLFinanceAccount sqlFinanceAccount;
     private String sortName;
+    private FirebaseRecyclerAdapter<GroceryListForFireBase,GroceryFrangmentViewHolder> adapter;
 
+    private FirebaseAuth auth;
+    private DatabaseReference databaseReference;
+    private ValueEventListener valueEventListener;
 
-    private void prepareRecyclerView(Context context,ArrayList<GroceryList> arrayList){
-        mRecyclerView.setVisibility(View.VISIBLE);
-        mAdapter = new RecyclerAdapterSmallCards(((NewCalendarActivty)getActivity()),arrayList,myClickListener,myDoneClickListener,false);
-        mRecyclerView.setHasFixedSize(true);
-        mLayoutManager = new LinearLayoutManager(getContext());
-        mRecyclerView.setLayoutManager(mLayoutManager);
-        mRecyclerView.setAdapter(mAdapter);
-
-    }
-
-    private void prepareRecyclerViewdone(Context context,ArrayList<GroceryList> arrayList){
-
-        mRecyclerViewdone.setVisibility(View.VISIBLE);
-        mAdapter = new RecyclerAdapterSmallCards(((NewCalendarActivty)getActivity()),arrayList,myClickListener,myDoneClickListener,true);
-        mRecyclerViewdone.setHasFixedSize(true);
-        mLayoutManager = new LinearLayoutManager(getContext());
-        mRecyclerViewdone.setLayoutManager(mLayoutManager);
-        mRecyclerViewdone.setAdapter(mAdapter);
-
-    }
 
     public FragmentCategoryShopping() {
         // Required empty public constructor
     }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-    }
-
 
 
     @Override
@@ -105,25 +84,14 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
         super.onSaveInstanceState(outState);
 
         //Save the fragment's state here
-        outState.putParcelableArrayList("list_recent",shoppingListsrecent);
-        outState.putParcelableArrayList("list_done",shoppingListdone);
     }
 
-
-    private ArrayList<GroceryList> getGroceryList(){
-        return sqLiteShoppingList.getAllShoppingList()[0];
-    }
-    private ArrayList<GroceryList> getGroceryListDone(){
-        return sqLiteShoppingList.getAllShoppingList()[1];
-    }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-      //  getEvents(mySQLiteHelper.getAllIncomingNotification());
         // Inflate the layout for this fragment
-        sqLiteShoppingList=new SQLiteShoppingList(getContext());
+
         userLocalStore=new UserLocalStore(getContext());
-        sqlFinanceAccount=new SQLFinanceAccount(getContext());
         alertDialog = new android.support.v7.app.AlertDialog.Builder(getContext()).create();
 
         View v = inflater.inflate(R.layout.fragment_grocery_list, container, false);
@@ -132,69 +100,14 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
 
         add_List = (Button) v.findViewById(R.id.grocery_fragment_add_recently_button);
 
-
-
-
-       // linearLayout=(LinearLayout)v.findViewById(R.id.text_grocery_fragment_done_hide_layout);
-        mRecyclerViewdone = (RecyclerView) v.findViewById(R.id.shoppingrecycleViewfragment_grocery_list_done_lists);
         mRecyclerView = (RecyclerView) v.findViewById(R.id.shoppingrecycleViewfragöment_grocery_list_recentlityl_added);
+        mRecyclerView.setHasFixedSize(true);
+        mLayoutManager = new LinearLayoutManager(getContext());
+        mRecyclerView.setLayoutManager(mLayoutManager);
 
 
-        myClickListener=new RecyclerAdapterSmallCards.MyRecyclerAdaptaterCreateShoppingListClickListener() {
-            @Override
-            public void onItemClick(int position, View v) {
-                startGroceryListOverview(shoppingListsrecent.get(position));
-            }
-
-        };
-
-        myDoneClickListener=new RecyclerAdapterSmallCards.MyRecyclerAdaptaterCreateShoppingListDoneClickListener() {
-            @Override
-            public void onItemClick(int position, View v) {
-                startGroceryListOverview(shoppingListdone.get(position));
-            }
-
-        };
-
-
-       final ImageView arrow = (ImageView) v.findViewById(R.id.arrow_grocery_fragment_done_hide_text);
-
-
-        arrow.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-
-                if (isExpanded) {
-                    RotateAnimation anim = new RotateAnimation(mCurrentRotation, mCurrentRotation + 180.0f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
-                    mCurrentRotation = (mCurrentRotation + 180.0f) % 360.0f;
-                    anim.setInterpolator(new LinearInterpolator());
-                    anim.setFillAfter(true);
-                    anim.setFillEnabled(true);
-                    anim.setDuration(300);
-                    assert arrow != null;
-                    arrow.startAnimation(anim);
-                    isExpanded = false;
-                    textshowHide.setText(getContext().getString(R.string.grocery_fragment_list_hide));
-                    mRecyclerViewdone.setVisibility(View.VISIBLE);
-                } else {
-                    RotateAnimation anim = new RotateAnimation(mCurrentRotation, mCurrentRotation - 180.0f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
-                    mCurrentRotation = (mCurrentRotation - 180.0f) % 360.0f;
-                    anim.setInterpolator(new LinearInterpolator());
-                    anim.setFillAfter(true);
-                    anim.setFillEnabled(true);
-                    anim.setDuration(300);
-                    assert arrow != null;
-                    arrow.startAnimation(anim);
-                    isExpanded = true;
-                    textshowHide.setText(getContext().getString(R.string.grocery_fragment_list_show));
-                    mRecyclerViewdone.setVisibility(View.GONE);
-
-                }
-
-            }
-        });
         add_List.setOnClickListener(this);
+
         if(userLocalStore.getUserAccountBalance().contains("-")){
             textBalance.setText(userLocalStore.getUserAccountBalance()+" €");
             textBalance.setTextColor(getResources().getColor(R.color.warning_color));
@@ -210,48 +123,10 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
 
     private void startGroceryListOverview(GroceryList item) {
         startActivity(new Intent(getActivity(),DetailsShoppingListActivity.class)
-                .putExtra("GroceryList",item).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK));
+              .putExtra("GroceryListId",item.getList_unique_id())
+                .putExtra("GroceryListIsShared",item.isToListshare()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 
     }
-
-    private ArrayList[] getShoppingListsformDB(){
-        return sqLiteShoppingList.getAllShoppingList();
-    }
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        mySQLiteHelper=new MySQLiteHelper(getContext());
-        //prepareListview
-        if(savedInstanceState!=null){
-            shoppingListdone=savedInstanceState.getParcelableArrayList("list_done");
-            shoppingListsrecent=savedInstanceState.getParcelableArrayList("list_recent");
-        }
-
-    }
-
-    public void onButtonDeleteGroceryListPressed(GroceryList groceryList, int position,ArrayList<GroceryList> groceryLists) {
-        if (mListener != null) {
-            mListener.onFragmentCategoryShoppingInteraction(groceryList,position,groceryLists);
-        }
-    }
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        if (context instanceof OnFragmentCategoryShoppingInteractionListener) {
-            mListener = (OnFragmentCategoryShoppingInteractionListener) context;
-        } else {
-            throw new RuntimeException(context.toString()
-                    + " must implement OnFragmentCategoryShoppingInteractionListener");
-        }
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mListener = null;
-    }
-
 
     @Override
     public void onClick(View v) {
@@ -259,8 +134,6 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
         int id=v.getId();
         switch (id){
             case R.id.grocery_fragment_add_recently_button:
-                //Create new shopping list
-               //showDialogChoosingAccount();
                 startActivity(new Intent(getActivity(),CreateNewShoppingListActivity.class)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
                 break;
@@ -271,30 +144,30 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
 
 
 
-
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnFragmentCategoryShoppingInteractionListener {
-        // TODO: Update argument type and name
-        void onFragmentCategoryShoppingInteraction(GroceryList groceryList,int position,ArrayList<GroceryList> groceryLists);
-    }
-
-
-
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        calendarEventsChanged =(OnCalendarEventsChanged)getActivity();
 
     }
+
+
+    @Override
+    public void onCreate(@Nullable  Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        databaseReference= FirebaseDatabase.getInstance().getReference();
+
+    }
+
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        auth=FirebaseAuth.getInstance();
+
+    }
+
     @Override
     public void setUserVisibleHint(boolean isVisibleToUser) {
         super.setUserVisibleHint(isVisibleToUser);
@@ -308,14 +181,184 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        progressBar = new ProgressDialog(getContext());
+        progressBar.setCancelable(false);
+        progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressBar.show();
+        assert auth.getCurrentUser()!=null;
+       final DatabaseReference reference= databaseReference.child(Config.FIREBASE_APP_URL_GROCERYLISTS)
+               .child(auth.getCurrentUser().getUid());
+
+        reference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                shoppingListsrecent.clear();
+
+                for(DataSnapshot child: dataSnapshot.getChildren()){
+                    shoppingListsrecent.add(new GroceryList().getGrocerylistFromGLFirebase(
+                            child.getValue(GroceryListForFireBase.class)
+                    ));
+                }
+
+                if(progressBar!=null){
+                    progressBar.dismiss();
+                }
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                if(progressBar!=null){
+                    progressBar.dismiss();
+                }
+            }
+
+        });
+        adapter=new FirebaseRecyclerAdapter<GroceryListForFireBase, GroceryFrangmentViewHolder>(
+                GroceryListForFireBase.class,
+                R.layout.card_shop_list_small,
+                GroceryFrangmentViewHolder.class,
+                reference) {
+            @Override
+            protected void populateViewHolder(GroceryFrangmentViewHolder viewHolder,
+                                              final GroceryListForFireBase model, int position) {
+
+                final GroceryList groceryList=new GroceryList().getGrocerylistFromGLFirebase(model);
+                String name=getContext().getResources().getString(R.string.grocery_list_item_title_text ).toLowerCase() + " " + groceryList.getDatum();
+                viewHolder.listname.setText(name);
+                viewHolder.listStatus.setText(groceryList.isListdone() ?
+                        groceryList.getGroceryListTotalPriceString() : getContext().getString(R.string.grocery_list_status__not_done_text));
+                viewHolder.listStatus.setTextColor(groceryList.isListdone() ?
+                        getContext().getResources().getColor(R.color.warning_color) : getContext().getResources().getColor(R.color.grey_light));
+
+                viewHolder.delete.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        alertDialogDelete(model.getList_unique_id(), model);
+                    }
+                });
+                viewHolder.view.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        startGroceryListOverview(groceryList);
+                    }
+                });
+            }
+        };
+
+        mRecyclerView.setAdapter(adapter);
+    }
+
+    public void alertDialogDelete(final String id, final GroceryListForFireBase groceryList){
+
+        LayoutInflater inflater= (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                getContext());
+        View dialoglayout = inflater.inflate(R.layout.dialog_warning_delete_event, null);
+
+        final android.support.v7.app.AlertDialog alertDialog = alertDialogBuilder.create();
+
+        alertDialog.setView(dialoglayout);
+        Button delete= (Button)dialoglayout.findViewById(R.id.buttonDeleteaccount);
+        Button cancel= (Button)dialoglayout.findViewById(R.id.buttonCancelaccount);
+        cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                alertDialog.dismiss();
+
+            }
+        });
+        delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                progressBar = new ProgressDialog(getContext());
+                progressBar.setCancelable(false);
+                progressBar.setTitle("Deleting grocery list");
+                progressBar.setMessage("in progress ...");
+                progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+                progressBar.show();
+                assert auth.getCurrentUser()!=null;
+                final DatabaseReference finRef=FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS)
+                        .child(auth.getCurrentUser().getUid());
+
+                final DatabaseReference grRef=FirebaseDatabase.getInstance()
+                        .getReference().child(Config.FIREBASE_APP_URL_GROCERYLISTS).child(auth.getCurrentUser().getUid()).child(id);
+                valueEventListener=new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        FinanceAccountForFireBase child=dataSnapshot.child(groceryList.getAccountid()).getValue(FinanceAccountForFireBase.class);
+                        FinanceAccount financeAccount=new FinanceAccount(getContext()).getFinanceAccountFromFirebase(child);
+                        ArrayList<FinanceRecords> list=financeAccount.getAccountsRecord();
+                        for(int i=0;i<list.size();i++){
+                            if(list.get(i).getRecordUniquesId()
+                                    .equals(groceryList.getList_unique_id())){
+                                list.remove(list.get(i));
+                            }
+                        }
+                        financeAccount.setAccountsRecords(list);
+                        financeAccount.setAccountsRecord(list);
+                        financeAccount.setLastchangeToAccount();
+                        financeAccount.getAccountrecordsAmountUpdateBalance(getContext());
+                        DatabaseReference newRef=finRef.child(financeAccount.getAccountUniqueId());
+                        newRef.setValue(new FinanceAccount(getContext()).getFinanceAccountForFirebase(financeAccount))
+                                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<Void> task) {
+                                        if(task.isSuccessful()){
+                                            grRef.removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                @Override
+                                                public void onComplete(@NonNull Task<Void> task) {
+                                                    if(task.isSuccessful()){
+                                                        if(valueEventListener!=null){
+                                                            finRef.removeEventListener(valueEventListener);
+                                                        }
+                                                        if (progressBar!=null){
+                                                            progressBar.dismiss();
+                                                        }
+                                                        Toast.makeText(getContext(),"Deleted",Toast.LENGTH_SHORT).show();
+                                                    }else {
+                                                        if (progressBar!=null){
+                                                            progressBar.dismiss();
+                                                        }
+                                                        Toast.makeText(getContext(),task.getException().getMessage(),Toast.LENGTH_SHORT).show();
+                                                    }
+                                                }
+                                            });
+                                        }else {
+                                            if (progressBar!=null){
+                                                progressBar.dismiss();
+                                            }
+                                            Toast.makeText(getContext(),task.getException().getMessage(),Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                });
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        if (progressBar!=null){
+                            progressBar.dismiss();
+                        }
+                    }
+                };
+                finRef.addValueEventListener(valueEventListener);
+
+
+                alertDialog.dismiss();
+            }
+        });
+
+        alertDialog.setCancelable(false);
+        // show it
+        alertDialog.show();
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
-        //bing listener
-        shoppingListdone=getGroceryListDone();
-        shoppingListsrecent=getGroceryList();
-        prepareRecyclerView(getContext(),shoppingListsrecent);
-        prepareRecyclerViewdone(getContext(),shoppingListdone);
-
 
         if(userLocalStore.getUserAccountBalance().contains("-")){
             textBalance.setText(userLocalStore.getUserAccountBalance()+" €");
@@ -323,21 +366,27 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
         }else {
             textBalance.setText(userLocalStore.getUserAccountBalance()+" €");
         }
-    ((RecyclerAdapterSmallCards) mAdapter).setOnshoppinglistsmallClickListener(myClickListener,myDoneClickListener);
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-    }
 
-    public void updateUi(ArrayList<CalendarCollection> arrayList){
-        ArrayList<CalendarCollection> a=new ArrayList<>();
-        for(int i=0;i<arrayList.size();i++){
-            if(arrayList.get(i).category.contains("Grocery")){
-                a.add(arrayList.get(i));
-            }
+    public static class GroceryFrangmentViewHolder extends RecyclerView.ViewHolder
+    {
+        TextView listname,listStatus;
+        Button delete;
+        View view;
+        public GroceryFrangmentViewHolder(View itemView) {
+            super(itemView);
+
+            view=itemView;
+
+            listname = (TextView) itemView.findViewById(R.id.textView_Grocery_listname_create_shopping_list_small_card);
+            listStatus = (TextView) itemView.findViewById(R.id.textView_LisStatus_create_shopping_list_small_card);
+            delete = (Button) itemView.findViewById(R.id.buttondeletecardview_create_shopping_list_small_card);
         }
+
     }
+
+
+
 
 }

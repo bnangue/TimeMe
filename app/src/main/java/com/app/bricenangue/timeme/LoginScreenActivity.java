@@ -5,11 +5,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -19,11 +21,25 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.firebase.client.Firebase;
+import com.firebase.client.FirebaseError;
+import com.google.android.gms.gcm.GoogleCloudMessaging;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.messaging.FirebaseMessaging;
 
+import org.apache.poi.util.PngUtils;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -38,25 +54,30 @@ public class LoginScreenActivity extends AppCompatActivity implements View.OnCli
     private EditText emailed,passworded;
     private String emailstr,passwordstr;
     private UserLocalStore userLocalStore;
-    private IncomingNotification incomingNotification;
     public static boolean eventsareloaded=false;
     private Snackbar snackbar;
     private CoordinatorLayout coordinatorLayout;
 
     private int count=0;
-    private MySQLiteHelper mySQLiteHelper;
-    private SQLFinanceAccount sqlFinanceAccount;
-    private SQLiteShoppingList sqLiteShoppingList;
+
     private FragmentProgressBarLoading progressDialog;
+    private FirebaseAuth auth;
+    private DatabaseReference databaseReference;
+    private FirebaseUser firebaseUser;
+    private ValueEventListener valueEventListener;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login_screen);
         userLocalStore=new UserLocalStore(this);
-        mySQLiteHelper=new MySQLiteHelper(this);
-        sqlFinanceAccount=new SQLFinanceAccount(this);
-        sqLiteShoppingList=new SQLiteShoppingList(this);
+
+
+        auth=FirebaseAuth.getInstance();
+        firebaseUser=auth.getCurrentUser();
+
+        databaseReference=FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_USERS);
 
         registerbtn=(Button)findViewById(R.id.buttonregisterReg);
         loginbtn=(Button)findViewById(R.id.buttonlogin);
@@ -85,9 +106,9 @@ public class LoginScreenActivity extends AppCompatActivity implements View.OnCli
                 if(internetConnection()){
                   logCurrentuserIn();
 
+
                 }else {
                     showErrordialog("No internet connection detected");
-
                 }
                 break;
             case R.id.buttonregisterReg:
@@ -110,310 +131,6 @@ public class LoginScreenActivity extends AppCompatActivity implements View.OnCli
         progressDialog.dismiss(getSupportFragmentManager());
     }
 
-
-
-    private void getEventsfromMySQL(final User user,final String username) {
-
-        final ServerRequests serverRequests=new ServerRequests(this);
-        serverRequests.getCalenderEventInBackgroung(username,new GetEventsCallbacks() {
-            @Override
-            public void done(ArrayList<CalendarCollection> returnedeventobject) {
-                if(returnedeventobject.size()!=0){
-
-                    saveeventtoSQl(returnedeventobject);
-                    serverRequests.getFinanceAccountsAndUserInBackgroung(username,new FinanceAccountCallbacks() {
-                        @Override
-                        public void fetchDone(ArrayList<FinanceAccount> returnedAccounts) {
-                            if(returnedAccounts.size()!=0){
-                                saveAccountLocally(returnedAccounts);
-                            }
-                        }
-
-                        @Override
-                        public void setServerResponse(String serverResponse) {
-
-                        }
-                    });
-                    serverRequests.getGroceryListsInBackgroung(username,new GroceryListCallBacks() {
-                        @Override
-                        public void fetchDone(ArrayList<GroceryList> returnedGroceryLists) {
-                            if(returnedGroceryLists.size()!=0){
-                                //save to sql
-                                saveGroceryListtoSQl(returnedGroceryLists);
-                                saveGroceryListtoSQlIncome(returnedGroceryLists);
-
-                                eventsareloaded=true;
-                                saveloggedInuserPreferences(user);
-                            }else{
-                                showSnackBar();
-                                eventsareloaded=false;
-                                saveloggedInuserPreferences(user);
-                            }
-                        }
-
-                        @Override
-                        public void setServerResponse(String serverResponse) {
-
-                        }
-                    });
-                    /**   serverRequests.getItemsInBackgroung(new GetEventsCallbacks() {
-                    @Override
-                    public void done(ArrayList<CalendarCollection> returnedeventobject) {
-
-                    }
-
-                    @Override
-                    public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
-
-                    if(returnedShoppingItem.size()!=0){
-
-
-
-                    }else{
-                    serverRequests.getGroceryListsInBackgroung(new GroceryListCallBacks() {
-                    @Override
-                    public void fetchDone(ArrayList<GroceryList> returnedGroceryLists) {
-                    if(returnedGroceryLists.size()!=0){
-                    //save to sql
-                    saveGroceryListtoSQl(returnedGroceryLists);
-                    saveGroceryListtoSQlIncome(returnedGroceryLists);
-                    loadprogressBar.setIndeterminate(false);
-                    loadprogressBar.setVisibility(View.INVISIBLE);
-                    startActivity(new Intent(MainActivity.this,LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
-                    eventsareloaded=true;
-                    }else{
-                    showSnackBar();
-                    eventsareloaded=false;
-                    loadprogressBar.setIndeterminate(false);
-                    loadprogressBar.setVisibility(View.INVISIBLE);
-                    //startActivity(new Intent(MainActivity.this, LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
-
-                    }
-                    }
-
-                    @Override
-                    public void setServerResponse(String serverResponse) {
-
-                    }
-                    });
-
-                    }
-                    }
-
-                    @Override
-                    public void updated(String reponse) {
-
-                    }
-                    });
-                     **/
-                }else {
-
-                    serverRequests.getFinanceAccountsAndUserInBackgroung(username,new FinanceAccountCallbacks() {
-                        @Override
-                        public void fetchDone(ArrayList<FinanceAccount> returnedAccounts) {
-                            if(returnedAccounts.size()!=0){
-                                saveAccountLocally(returnedAccounts);
-                            }
-                        }
-
-                        @Override
-                        public void setServerResponse(String serverResponse) {
-
-                        }
-                    });
-                    serverRequests.getGroceryListsInBackgroung(username,new GroceryListCallBacks() {
-                        @Override
-                        public void fetchDone(ArrayList<GroceryList> returnedGroceryLists) {
-                            if(returnedGroceryLists.size()!=0){
-                                //save to sql
-                                saveGroceryListtoSQl(returnedGroceryLists);
-                                saveGroceryListtoSQlIncome(returnedGroceryLists);
-                                eventsareloaded=true;
-                                saveloggedInuserPreferences(user);
-                            }else{
-                                showSnackBar();
-                                eventsareloaded=false;
-                                saveloggedInuserPreferences(user);
-                            }
-                        }
-
-                        @Override
-                        public void setServerResponse(String serverResponse) {
-
-                        }
-                    });
-
-                    /**    serverRequests.getItemsInBackgroung(new GetEventsCallbacks() {
-                    @Override
-                    public void done(ArrayList<CalendarCollection> returnedeventobject) {
-
-                    }
-
-                    @Override
-                    public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
-
-                    if(returnedShoppingItem.size()!=0){
-
-
-
-                    }else{
-                    serverRequests.getGroceryListsInBackgroung(new GroceryListCallBacks() {
-                    @Override
-                    public void fetchDone(ArrayList<GroceryList> returnedGroceryLists) {
-                    if(returnedGroceryLists.size()!=0){
-                    //save to sql
-                    saveGroceryListtoSQl(returnedGroceryLists);
-                    saveGroceryListtoSQlIncome(returnedGroceryLists);
-                    loadprogressBar.setIndeterminate(false);
-                    loadprogressBar.setVisibility(View.INVISIBLE);
-                    startActivity(new Intent(MainActivity.this,LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
-                    eventsareloaded=true;
-                    }else{
-                    showSnackBar();
-                    eventsareloaded=false;
-                    loadprogressBar.setIndeterminate(false);
-                    loadprogressBar.setVisibility(View.INVISIBLE);
-                    //startActivity(new Intent(MainActivity.this, LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
-
-                    }
-                    }
-
-                    @Override
-                    public void setServerResponse(String serverResponse) {
-
-                    }
-                    });
-
-                    }
-                    }
-
-                    @Override
-                    public void updated(String reponse) {
-
-                    }
-                    });
-
-                     **/
-
-                }
-            }
-
-            @Override
-            public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
-
-            }
-
-            @Override
-            public void updated(String reponse) {
-
-            }
-        });
-    }
-
-    private void saveAccountLocally(ArrayList<FinanceAccount> accounts) {
-        for(int i=0;i<accounts.size();i++){
-            sqlFinanceAccount.addFINANCEACCOUNT(accounts.get(i));
-
-        }
-    }
-
-    private void saveGroceryListtoSQlIncome(ArrayList<GroceryList> groceryLists) {
-
-        if(groceryLists.size()!=0){
-
-        }
-        for(int i=0;i<groceryLists.size();i++){
-            try {
-                JSONObject jsonObject=new JSONObject();
-
-                int status=(groceryLists.get(i).isListdone())? 1 : 0;
-                int shareStatus=(groceryLists.get(i).isToListshare())? 1 : 0;
-
-                jsonObject.put("list_name",groceryLists.get(i).getDatum());
-                jsonObject.put("list_creator",groceryLists.get(i).getCreatorName());
-                jsonObject.put("list_status",String.valueOf(status));
-                jsonObject.put("list_uniqueId",groceryLists.get(i).getList_unique_id());
-                jsonObject.put("list_contain",groceryLists.get(i).getListcontain());
-                jsonObject.put("list_isShareStatus",String.valueOf(shareStatus));
-                jsonObject.put("list_note","nothing specified");
-                jsonObject.put("list_account_id",groceryLists.get(i).getAccountid());
-
-                Calendar c=new GregorianCalendar();
-                Date dat=c.getTime();
-                //String day= String.valueOf(dat.getDay());
-                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-                String date = (String) android.text.format.DateFormat.format("yyyy-MM-dd", dat);
-                incomingNotification=new IncomingNotification(2,0,jsonObject.toString(),date);
-                int incomingNotifiId =  mySQLiteHelper.addIncomingNotification(incomingNotification);
-
-            }catch (Exception e){
-                e.printStackTrace();
-
-            }
-
-
-        }
-
-    }
-
-    private void saveGroceryListtoSQl(ArrayList<GroceryList> groceryLists) {
-
-        if(groceryLists.size()!=0){
-
-        }
-        for(int i=0;i<groceryLists.size();i++){
-            try {
-                SQLiteShoppingList sqLiteShoppingList=new SQLiteShoppingList(this);
-                sqLiteShoppingList.addShoppingList(groceryLists.get(i));
-            }catch (Exception e){
-                e.printStackTrace();
-
-            }
-
-
-        }
-
-    }
-    private void saveeventtoSQl(ArrayList<CalendarCollection> calendarCollections) {
-
-        if(calendarCollections.size()!=0){
-
-        }
-        for(int i=0;i<calendarCollections.size();i++){
-            if(!calendarCollections.get(i).category.equals("Grocery")){
-                try {
-                    JSONObject jsonObject=new JSONObject();
-                    jsonObject.put("title",calendarCollections.get(i).title);
-                    jsonObject.put("description",calendarCollections.get(i).description);
-                    jsonObject.put("datetime",calendarCollections.get(i).datetime);
-                    jsonObject.put("creator",calendarCollections.get(i).creator);
-                    jsonObject.put("category",calendarCollections.get(i).category);
-                    jsonObject.put("startingtime",calendarCollections.get(i).startingtime);
-                    jsonObject.put("endingtime",calendarCollections.get(i).endingtime);
-                    jsonObject.put("hashid",calendarCollections.get(i).hashid);
-                    jsonObject.put("alldayevent",calendarCollections.get(i).alldayevent);
-                    jsonObject.put("everymonth",calendarCollections.get(i).everymonth);
-                    jsonObject.put("defaulttime",calendarCollections.get(i).creationdatetime);
-
-                    Calendar c=new GregorianCalendar();
-                    Date dat=c.getTime();
-                    //String day= String.valueOf(dat.getDay());
-                    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-                    String date = (String) android.text.format.DateFormat.format("yyyy-MM-dd", dat);
-                    incomingNotification=new IncomingNotification(1,0,jsonObject.toString(),date);
-                    int incomingNotifiId =  mySQLiteHelper.addIncomingNotification(incomingNotification);
-
-                }catch (Exception e){
-                    e.printStackTrace();
-
-                }
-            }
-
-        }
-
-    }
 
 
     @Override
@@ -447,9 +164,11 @@ public class LoginScreenActivity extends AppCompatActivity implements View.OnCli
     protected void onStart() {
         super.onStart();
         count=0;
-        if (authenticate()) {
-            displayUserdetails();
+        if(firebaseUser!=null){
+            //direct loging
+            Intent intent=new Intent(LoginScreenActivity.this,NewCalendarActivty.class);
 
+            startActivity(intent);
         }
 
     }
@@ -457,16 +176,6 @@ public class LoginScreenActivity extends AppCompatActivity implements View.OnCli
     private  boolean internetConnection(){
         return new ServerRequests(this).haveNetworkConnection();
     }
-    private void displayUserdetails() {
-        User user = userLocalStore.getLoggedInUser();
-        emailed.setText(user.email);
-    }
-
-    //true if user logged in
-    private boolean authenticate() {
-        return userLocalStore.getUserLoggedIn();
-    }
-
     @Override
     public void onBackPressed() {
        count++;
@@ -479,43 +188,6 @@ public class LoginScreenActivity extends AppCompatActivity implements View.OnCli
 
     }
 
-    /**
-    private void saveeventtoSQl(ArrayList<CalendarCollection> calendarCollections) {
-
-        if(calendarCollections.size()!=0){
-
-        }
-        for(int i=0;i<calendarCollections.size();i++){
-            try {
-                JSONObject jsonObject=new JSONObject();
-                jsonObject.put("title",calendarCollections.get(i).title);
-                jsonObject.put("description",calendarCollections.get(i).description);
-                jsonObject.put("datetime",calendarCollections.get(i).datetime);
-                jsonObject.put("creator",calendarCollections.get(i).creator);
-                jsonObject.put("category",calendarCollections.get(i).category);
-                jsonObject.put("startingtime",calendarCollections.get(i).startingtime);
-                jsonObject.put("endingtime",calendarCollections.get(i).endingtime);
-                jsonObject.put("hashid",calendarCollections.get(i).hashid);
-                jsonObject.put("alldayevent",calendarCollections.get(i).alldayevent);
-                Calendar c=new GregorianCalendar();
-                Date dat=c.getTime();
-                //String day= String.valueOf(dat.getDay());
-                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-                String date = (String) android.text.format.DateFormat.format("yyyy-MM-dd", dat);
-                IncomingNotification incomingNotification=new IncomingNotification(1,0,jsonObject.toString(),date);
-                int incomingNotifiId =  mySQLiteHelper.addIncomingNotification(incomingNotification);
-
-            }catch (Exception e){
-                e.printStackTrace();
-
-            }
-
-
-        }
-
-    }
-    **/
 
     public void logCurrentuserIn(){
 
@@ -523,9 +195,6 @@ public class LoginScreenActivity extends AppCompatActivity implements View.OnCli
         progressDialog = new FragmentProgressBarLoading();
         progressDialog.setCancelable(false);
         progressDialog.show(getSupportFragmentManager(), "logging_progress");
-        sqlFinanceAccount.reInitializeFinanceSqliteTable();
-        mySQLiteHelper.reInitializeSqliteTable();
-        sqLiteShoppingList.reInitializeShoppingListSqliteTable();
 
 
         emailstr = emailed.getText().toString();
@@ -548,39 +217,58 @@ public class LoginScreenActivity extends AppCompatActivity implements View.OnCli
             }
 
 
-            ServerRequests serverRequests=new ServerRequests(this);
-            serverRequests.loggingUserinBackground(usertologIn, new GetUserCallbacks() {
-                @Override
-                public void done(User returneduser) {
-                    if(returneduser !=null){
-                        getEventsfromMySQL(returneduser,returneduser.getfullname());
+            auth.signInWithEmailAndPassword(emailstr,String.valueOf(passHash))
+                    .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            if(task.isSuccessful()){
+                                firebaseUser=auth.getCurrentUser();
+                                assert firebaseUser != null;
+                                final String uid=firebaseUser.getUid();
+                                valueEventListener=new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(DataSnapshot dataSnapshot) {
+                                        if(dataSnapshot.hasChild(uid)){
+                                            UserForFireBase userForFireBase=dataSnapshot.child(uid).getValue(UserForFireBase.class);
+                                            final User user=new User().getUserFromFireBase(userForFireBase);
+                                            DatabaseReference data= databaseReference.child(uid);
+                                            data.child("status").setValue(1).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                @Override
+                                                public void onComplete(@NonNull Task<Void> task) {
+                                                    if(task.isSuccessful()){
+                                                        if(valueEventListener!=null){
+                                                            databaseReference.removeEventListener(valueEventListener);
+                                                        }
+                                                        saveloggedInuserPreferences(user);
 
+                                                    }else {
+                                                        Toast.makeText(getApplicationContext(), task.getException().getMessage()
+                                                                ,Toast.LENGTH_SHORT).show();
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    }
 
-
-                    }else {
-                        showErrordialog("Could not log in.  Wrong email or password");
-                        progressDialog.dismiss(getSupportFragmentManager());
-
-                    }
-                }
-
-                @Override
-                public void serverReponse(String reponse) {
-
-                }
-
-                @Override
-                public void userlist(ArrayList<User> reponse) {
-
-                }
-            });
-
+                                    @Override
+                                    public void onCancelled(DatabaseError databaseError) {
+                                        Toast.makeText(getApplicationContext(), databaseError.getMessage()
+                                                ,Toast.LENGTH_SHORT).show();
+                                    }
+                                };
+                                databaseReference.addValueEventListener(valueEventListener);
+                            }else {
+                                progressDialog.dismiss(getSupportFragmentManager());
+                                Toast.makeText(getApplicationContext(),
+                                         task.getException().getMessage(),Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
 
         }
 
 
     }
-
 
 
     private String registerDevice() {
@@ -590,6 +278,8 @@ public class LoginScreenActivity extends AppCompatActivity implements View.OnCli
 
 
     }
+
+
     public void showSnackBar(){
         snackbar = Snackbar
                 .make(coordinatorLayout, "No connection internet detected.", Snackbar.LENGTH_INDEFINITE)

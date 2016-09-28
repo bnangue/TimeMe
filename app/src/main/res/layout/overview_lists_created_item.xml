@@ -23,7 +23,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="3dp"
-                android:text="Grocery list from 20-07-17"
+                android:text=""
                 android:textColor="#000000"
                 android:textSize="14dp"
                 android:textStyle="bold" />
@@ -35,7 +35,7 @@
                 android:layout_height="wrap_content"
                 android:textSize="13sp"
                 android:textStyle="italic"
-                android:text="by : brice nangue" android:layout_marginTop="20dp"/>
+                android:text="" android:layout_marginTop="20dp"/>
 
         </LinearLayout>
 

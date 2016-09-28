@@ -15,7 +15,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="You will not be able to retrieve this event. Delete?"
+        android:text="@string/you_will_not_be_able_to_retrieve_this_event_delete"
         android:gravity="center_horizontal"
         android:id="@+id/textViewMessageinfo"
         android:layout_marginTop="15dp"
@@ -28,7 +28,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="Delete this event? "
+        android:text="@string/delete_this_event"
         android:id="@+id/textViewTitelinfo"
         android:layout_marginTop="5dp"
         android:layout_centerHorizontal="true"
@@ -39,8 +39,9 @@
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="DELETE"
-        style="@style/buttondelete"
+        android:text="@string/delete"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:textColor="@color/primary"
         android:id="@+id/buttonDeleteaccount"
         android:layout_marginTop="24dp"
         android:layout_marginRight="60dp"
@@ -50,8 +51,10 @@
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="CANCEL"
-        style="@style/buttondelete"
+        android:text="@string/cancel"
+        android:textColor="@color/primary"
+
+        style="@style/Widget.AppCompat.Button.Borderless"
         android:id="@+id/buttonCancelaccount"
         android:layout_marginTop="14dp"
         android:layout_marginRight="60dp"

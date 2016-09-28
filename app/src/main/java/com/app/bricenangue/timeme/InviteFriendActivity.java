@@ -181,6 +181,8 @@ public class InviteFriendActivity extends AppCompatActivity implements View.OnCl
                     for (int i=0;i<isChecked.length;i++){
                         if(isChecked[i]){
                             sendFriendrequest(userArrayList.get(i));
+                            Toast.makeText(getApplicationContext(),"Friend request sent to "+userArrayList.get(i).getfullname(),Toast.LENGTH_SHORT).show();
+                            finish();
                         }
                     }
                 }else {
@@ -272,6 +274,7 @@ public class InviteFriendActivity extends AppCompatActivity implements View.OnCl
 
                         data.add(new Pair<String, String>("registrationSenderIDs", regid));
                         data.add(new Pair<String, String>("title","You have a new friend request." ));
+                        data.add(new Pair<String, String>("chatRoom","" ));
                         data.add(new Pair<String, String>("apiKey", Config.FIREBASESERVER_KEY));
 
                         byte[] bytes = getData(data).getBytes("UTF-8");

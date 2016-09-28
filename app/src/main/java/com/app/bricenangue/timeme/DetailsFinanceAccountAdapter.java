@@ -98,7 +98,7 @@ public class DetailsFinanceAccountAdapter extends BaseAdapter {
 
         }else {
             String p= recordsArrayList.get(position).getRecordAmount()+" €";
-            if(recordsArrayList.get(position).getRecordNAme().equals("Grocery list")){
+            if(recordsArrayList.get(position).getRecordNAme().equals(context.getString(R.string.textInitialize_create_account_grocery_note))){
                 // grocery list done all item bought substract from account balance
 
                 if(recordsArrayList.get(position).isSecured()){

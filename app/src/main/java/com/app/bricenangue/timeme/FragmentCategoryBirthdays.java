@@ -178,9 +178,9 @@ public class FragmentCategoryBirthdays extends Fragment implements DialogDeleteE
     }
 
     @Override
-    public void delete(int position) {
+    public void delete(String id, String accid) {
        // deleteFromSQLITEAndSERver(position);
-        ((MyRecyclerViewAdapter)mAdapter).deleteItem(position);
+        ((MyRecyclerViewAdapter)mAdapter).deleteItem(0);
         //((MyRecyclerViewAdapter)mAdapter).notifyDataSetChanged();
         calendarEventsChanged.eventsCahnged(true);
     }

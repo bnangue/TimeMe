@@ -1,9 +1,11 @@
 package com.app.bricenangue.timeme;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -22,6 +24,15 @@ import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -35,6 +46,7 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 
 public class CreatANewItemActivity extends AppCompatActivity implements View.OnClickListener, RadioGroup.OnCheckedChangeListener {
@@ -49,10 +61,10 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
     private Spinner spinnerItemCategory,spinnerItemMarket;
     private Snackbar snackbar;
     private CoordinatorLayout coordinatorLayout;
-
-
-
-    private ArrayList<ShoppingItem> list=new ArrayList<>();
+    private ProgressDialog progressBar;
+    private FirebaseAuth auth;
+    private DatabaseReference databaseReference;
+    private ArrayList<ShoppingItem> itemDB=new ArrayList<>();
 
 
 
@@ -63,11 +75,12 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
         buttoncanclecreation=(Button)findViewById(R.id.button_create_item_cancle);
         buttoncreateItem=(Button)findViewById(R.id.button_create_item_create);
 
-        Bundle bundle=getIntent().getExtras();
-        if(bundle!=null){
-            list=bundle.getParcelableArrayList("itemDB");
-        }
+        auth=FirebaseAuth.getInstance();
 
+        Bundle extras=getIntent().getExtras();
+        if(extras!=null){
+            itemDB= extras.getParcelableArrayList("itemDB");
+        }
         String [] catergories={getString(R.string.household),getString(R.string.fruit),getString(R.string.vegetables),
                 getString(R.string.grain_products),getString(R.string.technology),getString(R.string.drinks),
                 getString(R.string.fats_and_oils),getString(R.string.milk_products),getString(R.string.spices),
@@ -151,6 +164,44 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
         }
     }
 
+    private void createShoppingitem(final ShoppingItem item) {
+
+        progressBar = new ProgressDialog(this);
+        progressBar.setCancelable(false);
+        progressBar.setTitle("Loading items");
+        progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressBar.show();
+
+        final ArrayList<ShoppingItem> list=new ArrayList<>();
+        final DatabaseReference ref = FirebaseDatabase.getInstance().getReference()
+                .child(Config.FIREBASE_APP_URL_SHOPPING_ITEMS_XSL)
+                .child(Config.FIREBASE_APP_URL_SHOPPING_ITEMS_XSL_ITEMS_NODE);
+
+        ref.child(item.getUnique_item_id()).setValue(new ShoppingItem().getitemForFirebase(item))
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                       if(task.isSuccessful()){
+                           Toast.makeText(getApplicationContext(),"Shopping item "+ item.getItemName()+ " created",Toast.LENGTH_SHORT).show();
+                           clearEditTextContain();
+                           if (progressBar != null) {
+                               progressBar.dismiss();
+                           }
+
+                       }else {
+                           Toast.makeText(getApplicationContext(),
+                                   task.getException().getMessage(),Toast.LENGTH_SHORT).show();
+                       }
+                    }
+                });
+        if (!new ServerRequests(this).haveNetworkConnection()) {
+
+            if (progressBar != null) {
+                progressBar.dismiss();
+            }
+        }
+    }
+
     void clearEditTextContain(){
         editTextItemname.setText("");
         editTextItemPrice.setText("");
@@ -159,114 +210,6 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
         spinnerItemCategory.setSelection(0);
 
         spinnerItemMarket.setSelection(0);
-    }
-    private  boolean saveShoppingItmeInExcelXLSXFile(Context context, ShoppingItem item) {
-        boolean success= false;
-
-        FileHelper fileHelper=new FileHelper(context);
-        // Creating Input Stream
-
-        // Create a path where we will place our List of objects on external storage
-        File file=null;
-        FileOutputStream os = null;
-
-        try {
-
-            file = new File(fileHelper.getExcelfile("shopping_list_items"));
-
-
-            FileInputStream myInput = new FileInputStream(file);
-
-            XSSFWorkbook wb = new  XSSFWorkbook(myInput);
-            XSSFSheet sheet = wb.getSheetAt(0);
-            XSSFRow row;
-
-            Cell c = null;
-            int lastrow = sheet.getLastRowNum();
-
-             row = sheet.createRow(lastrow +1);
-
-            c = row.createCell(0);
-            c.setCellValue(item.getItemName());
-
-
-            c = row.createCell(1);
-            DecimalFormat df = new DecimalFormat("0.00");
-            df.setMaximumFractionDigits(2);
-            Number nm=df.parse(item.getPrice());
-
-            c.setCellValue(Double.parseDouble(item.getPrice().replace(",",".")));
-
-
-            c = row.createCell(2);
-            c.setCellValue(0);
-
-            c = row.createCell(3);
-            c.setCellValue(item.getItemmarket());
-
-            c = row.createCell(4);
-            String  sortName=item.getItemcategory();
-
-            if(sortName.equals(getString(R.string.household))){
-                c.setCellValue("Haushalt");
-
-            }else if(sortName.equals(getString(R.string.fruit))){
-                c.setCellValue("Obst");
-
-            }else if(sortName.equals(getString(R.string.vegetables))){
-                c.setCellValue("Gemüse");
-
-            }else if(sortName.equals(getString(R.string.grain_products))){
-                c.setCellValue("Getreideprodukte");
-
-            }else if(sortName.equals(getString(R.string.technology))){
-                c.setCellValue("Technik");
-
-            }else if(sortName.equals(getString(R.string.drinks))){
-                c.setCellValue("Getränke");
-
-            }else if(sortName.equals(getString(R.string.fats_and_oils))){
-                c.setCellValue("Fette&Öle");
-
-            }else if(sortName.equals(getString(R.string.milk_products))){
-                c.setCellValue("Milchprodukte");
-
-            }else if(sortName.equals(getString(R.string.spices))){
-                c.setCellValue("Gewürze");
-
-            }else if(sortName.equals(getString(R.string.drugstore))){
-                c.setCellValue("Drogerie");
-
-            }else if(sortName.equals(getString(R.string.others))){
-                c.setCellValue("Sonstiges");
-
-            }else if(sortName.equals(getString(R.string.meat))){
-                c.setCellValue("Fleisch");
-
-            }else if(sortName.equals(getString(R.string.sweets))){
-                c.setCellValue("Süßigkeiten");
-
-            }
-
-
-            os = new FileOutputStream(file);
-            wb.write(os);
-            Log.w("FileUtils", "Writing file" + file);
-            success = true;
-        } catch (IOException e) {
-            Log.w("FileUtils", "Error writing " + file, e);
-        } catch (Exception e) {
-            Log.w("FileUtils", "Failed to save file", e);
-        } finally {
-            try {
-                if (null != os)
-                    os.close();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-
-        return success;
     }
 
     private void createAndSaveItem() {
@@ -309,38 +252,52 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
             String curTime = formatter.format(curDate);
             int itemId= (itemSpecification+itemname+itemprice+itemSpecification+curTime).hashCode();
             item.setUnique_item_id(String.valueOf(itemId));
-            new CreateItemToDBAsyncTask(this,item).execute();
+
+            String  sortName=item.getItemcategory();
+
+            if(sortName.equals(getString(R.string.household))){
+                item.setItemcategory("Household");
+
+            }else if(sortName.equals(getString(R.string.fruit))){
+                item.setItemcategory("Fruit");
+
+            }else if(sortName.equals(getString(R.string.vegetables))){
+                item.setItemcategory("Vegetables");
+
+            }else if(sortName.equals(getString(R.string.grain_products))){
+                item.setItemcategory("Grain products");
+
+            }else if(sortName.equals(getString(R.string.technology))){
+                item.setItemcategory("Technology");
+
+            }else if(sortName.equals(getString(R.string.drinks))){
+                item.setItemcategory("Drinks");
+
+            }else if(sortName.equals(getString(R.string.fats_and_oils))){
+                item.setItemcategory("Fats and oils");
+
+            }else if(sortName.equals(getString(R.string.milk_products))){
+                item.setItemcategory("Milk products");
+
+            }else if(sortName.equals(getString(R.string.spices))){
+                item.setItemcategory("Spices");
+
+            }else if(sortName.equals(getString(R.string.drugstore))){
+                item.setItemcategory("Drugstore");
+
+            }else if(sortName.equals(getString(R.string.others))){
+                item.setItemcategory("Others");
+
+            }else if(sortName.equals(getString(R.string.meat))){
+                item.setItemcategory("Meat");
+
+            }else if(sortName.equals(getString(R.string.sweets))){
+                item.setItemcategory("Sweets");
+
+            }
+            createShoppingitem(item);
         }
-       // saveShoppingItmeInExcelXLSXFile(this,item);
-       // saveItem(item);
-    }
 
-    private void saveItem(final ShoppingItem item) {
-        //save item to DB
-        ServerRequests serverRequests=new ServerRequests(this);
-        serverRequests.saveItemInBackgroung(item, new GetEventsCallbacks() {
-            @Override
-            public void done(ArrayList<CalendarCollection> returnedeventobject) {
-
-            }
-
-            @Override
-            public void itemslis(ArrayList<ShoppingItem> returnedShoppingItem) {
-
-            }
-
-            @Override
-            public void updated(String reponse) {
-
-                if(reponse.contains("Item added successfully")){
-                    Toast.makeText(getApplicationContext(),"item created",Toast.LENGTH_SHORT).show();
-                   clearEditTextContain();
-                }else {
-                    //error
-                    showSnackBar(item);
-                }
-            }
-        });
     }
 
     public void showSnackBar(final ShoppingItem item){
@@ -349,7 +306,7 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
                 .setAction("RETRY", new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        saveItem(item);
+
                     }
                 });
         snackbar.setActionTextColor(Color.WHITE);
@@ -375,63 +332,9 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
         }
     }
 
-
-    class CreateItemToDBAsyncTask extends AsyncTask<Void ,Void, Boolean> {
-
-        private FragmentProgressBarLoading progressDialog;
-        private ShoppingItem item;
-        private Context context;
-        private boolean success=false;
-        public CreateItemToDBAsyncTask(Context context, ShoppingItem item){
-            this.item=item;
-            this.context=context;
-        }
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            //start progressBar
-            progressDialog = new FragmentProgressBarLoading();
-            progressDialog.setCancelable(false);
-            progressDialog.show(getSupportFragmentManager(), "task_progress");
-        }
-
-        @Override
-        protected Boolean doInBackground(Void... params) {
-
-            if (saveShoppingItmeInExcelXLSXFile(context,item)){
-
-                success=true;
-
-            }
-            return success;
-
-        }
-
-        @Override
-        protected void onPostExecute(Boolean params) {
-            //end progressBar
-            progressDialog.dismiss(getSupportFragmentManager());
-            if(params){
-                list.add(item);
-
-                Toast.makeText(getApplicationContext(),"Shopping item "+ item.getItemName()+ " created",Toast.LENGTH_SHORT).show();
-
-                AddItemToListActivity.newItem=true;
-                clearEditTextContain();
-            }else{
-                Toast.makeText(getApplicationContext(),"error saving item to file",Toast.LENGTH_SHORT).show();
-            }
-
-        }
-    }
-
-
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
-            startActivity(new Intent(this, AddItemToListActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP).
-                    putExtra("itemDB",list));
 
-
+        startActivity(new Intent(this,AddItemToListActivity.class).putExtra("itemstoShoparray",itemDB).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
     }
 }

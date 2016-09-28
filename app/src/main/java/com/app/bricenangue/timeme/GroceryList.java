@@ -253,6 +253,7 @@ public class GroceryList implements Parcelable {
         return "";
     }
 
+
     public boolean allItemsbought(){
         boolean allbought =true;
         for(int i =0;i<itemsOftheList.size();i++){
@@ -262,5 +263,34 @@ public class GroceryList implements Parcelable {
         }
         setListdone(allbought);
         return allbought;
+    }
+
+    public GroceryList getGrocerylistFromGLFirebase(GroceryListForFireBase groceryListForFireBase){
+        GroceryList groceryList=new GroceryList();
+        groceryList.setDatum(groceryListForFireBase.getDatum());
+        groceryList.setList_unique_id(groceryListForFireBase.getList_unique_id());
+        groceryList.setCreatorName(groceryListForFireBase.getCreatorName());
+        groceryList.setAccountid(groceryListForFireBase.getAccountid());
+        groceryList.setToListshare(groceryListForFireBase.isToListshare());
+        groceryList.setListdone(groceryListForFireBase.isListdone());
+        groceryList.setListcontain(groceryListForFireBase.getListcontain());
+        ArrayList<ShoppingItem> arrayList=new ArrayList<>();
+        for(int i=0; i<groceryListForFireBase.getItems().size();i++){
+            arrayList.add(new ShoppingItem().getitemFromFirebase(groceryListForFireBase.getItems().get(i)));
+        }
+        groceryList.setItemsOftheList(arrayList);
+
+
+        return groceryList;
+
+    }
+    public ArrayList<ShoppingItemForFireBase> getGrocerylistitemForGLFirebase(ArrayList<ShoppingItem> shoppingItems){
+
+        ArrayList<ShoppingItemForFireBase> arrayList=new ArrayList<>();
+        for(int i=0; i<shoppingItems.size();i++){
+            arrayList.add(new ShoppingItem().getitemForFirebase(shoppingItems.get(i)));
+        }
+        return arrayList;
+
     }
 }

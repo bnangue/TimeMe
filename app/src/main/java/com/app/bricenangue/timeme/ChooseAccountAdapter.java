@@ -92,6 +92,7 @@ public class ChooseAccountAdapter extends BaseAdapter {
         }
 
         viewHolder.sortName.setText(accountsNames.get(position).getAccountName());
+        accountsNames.get(position).getAccountrecordsAmountUpdateBalance(context);
         String balance=accountsNames.get(position).getAccountBlanceTostring()+" €";
         if(balance.contains("-")){
             viewHolder.balance.setText(balance);

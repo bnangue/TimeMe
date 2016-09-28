@@ -20,7 +20,7 @@
         android:layout_marginBottom="10dp"
         android:layout_marginLeft="17dp"
         android:layout_marginRight="10dp"
-        android:text="Sub Category Name"
+        android:text="@string/sub_category_name"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:textSize="14dp" />
 

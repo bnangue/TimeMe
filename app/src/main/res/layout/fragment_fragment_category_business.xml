@@ -51,7 +51,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scrollbars="vertical"
-        android:layout_below="@+id/fragment_finance_add_account_buttonslayout"/>
+        android:layout_below="@+id/fragment_finance_add_account_buttonslayout"
+        android:layout_above="@+id/linearLayout_separator_activity_grocery_list"/>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="2dp"
@@ -83,7 +84,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="end"
-                android:text=" 0,00 €"
+                android:text="@string/null_item_total_price"
                 android:textColor="@color/white"
                 android:layout_weight="8"/>
         </LinearLayout>

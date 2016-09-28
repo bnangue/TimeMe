@@ -159,6 +159,37 @@ public class UserLocalStore {
         return picturePath;
     }
 
+    public void setChatRoom(String path){
+
+        SharedPreferences.Editor editor=userLocalDataBase.edit();
+        editor.putString("chatRoom", path);
+        editor.apply();
+
+    }
+    public String getChatRoom() {
+        String chatRoom = userLocalDataBase.getString("chatRoom", "");
+        if (chatRoom.isEmpty()) {
+            return "";
+        }
+        return chatRoom;
+    }
+
+
+
+    public void setUserPartnerPicturePath(String path){
+
+        SharedPreferences.Editor editor=userLocalDataBase.edit();
+        editor.putString("partnerPicturePath", path);
+        editor.apply();
+
+    }
+    public String getUserPartnerPicturePath() {
+        String picturePath = userLocalDataBase.getString("partnerPicturePath", "");
+        if (picturePath.isEmpty()) {
+            return "";
+        }
+        return picturePath;
+    }
 
     public void setUserAccountBalance(String balance){
 
@@ -269,6 +300,50 @@ public class UserLocalStore {
         Bitmap bitmap=null;
         try {
             File f=new File(path, "user.jpg");
+            bitmap = BitmapFactory.decodeStream(new FileInputStream(f));
+        }
+        catch (FileNotFoundException e)
+        {
+            e.printStackTrace();
+        }
+        return bitmap;
+    }
+
+    public String savePartnerPicToInternalStorage(Bitmap bitmapImage){
+        ContextWrapper cw = new ContextWrapper(context);
+        // path to /data/data/yourapp/app_data/imageDir
+        File directory = cw.getDir("partnerProfilePicture", Context.MODE_PRIVATE);
+        // Create imageDir
+        File mypath=new File(directory,"partner.jpg");
+
+        if(mypath.exists()){
+            mypath.delete();
+            mypath=new File(directory,"partner.jpg");
+        }
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(mypath);
+            // Use the compress method on the BitMap object to write image to the OutputStream
+            bitmapImage.compress(Bitmap.CompressFormat.PNG, 100, fos);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return directory.getAbsolutePath();
+    }
+
+
+    public Bitmap loadPartnerImageFromStorage(String path)
+    {
+        Bitmap bitmap=null;
+        try {
+            File f=new File(path, "partner.jpg");
             bitmap = BitmapFactory.decodeStream(new FileInputStream(f));
         }
         catch (FileNotFoundException e)

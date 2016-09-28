@@ -58,7 +58,7 @@
 
         <ListView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:id="@+id/listView_activity_details_shoppping_list"
             android:layout_below="@+id/linearLayout_separator_activity_details_shopping_list1"
             android:layout_above="@+id/linearLayout_separator_activity_details_shopping_list"/>

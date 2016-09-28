@@ -79,7 +79,7 @@ public class RecyclerAdaptaterCreateShoppingList  extends RecyclerView
             delete = (Button) itemView.findViewById(R.id.buttondeletecardview_create_shopping_list_card);
 
 
-            Log.i(LOG_TAG, "Adding Listener");
+           // Log.i(LOG_TAG, "Adding Listener");
             itemView.setOnClickListener(this);
 
         }

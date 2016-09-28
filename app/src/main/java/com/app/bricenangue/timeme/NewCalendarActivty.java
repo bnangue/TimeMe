@@ -1,10 +1,12 @@
 package com.app.bricenangue.timeme;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.DialogFragment;
@@ -31,8 +33,19 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.firebase.client.Firebase;
 import com.github.sundeepk.compactcalendarview.CompactCalendarView;
 import com.github.sundeepk.compactcalendarview.domain.CalendarDayEvent;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -48,15 +61,21 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
 /**
  * Created by bricenangue on 27/02/16.
  */
-public class NewCalendarActivty extends AppCompatActivity implements NavigationDrawerFragment.NavigationDrawerCallbacks, View.OnClickListener,
-        FragmentCategoryShopping.OnFragmentCategoryShoppingInteractionListener,DialogLogoutFragment.YesNoListenerDeleteAccount,OnCalendarEventsChanged{
+public class NewCalendarActivty extends AppCompatActivity implements NavigationDrawerFragment.NavigationDrawerCallbacks, View.OnClickListener
+        ,DialogLogoutFragment.YesNoListenerDeleteAccount,OnCalendarEventsChanged{
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -64,7 +83,7 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
 
 
 
-
+    private ProgressDialog progressBar;
     ViewPager viewPager;
     private NavigationDrawerFragment mNavigationDrawerFragment;
 
@@ -96,6 +115,8 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
     public static ArrayList<CalendarCollection> calendarCollectionArrayList;
     public FragmentCommunicator fragmentCommunicator;
 
+    private DatabaseReference root = FirebaseDatabase.getInstance().getReference().getRoot();
+    private  String chatRoomName;
 
 
 
@@ -108,12 +129,18 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
     private int positionToDelete=0;
     private ArrayList<GroceryList> groceryListsToSend=new ArrayList<>();
     private int countout=1;
+    private ArrayList<String> chatRoomsArraylist=new ArrayList<>();
+    private FirebaseAuth auth;
+    private DatabaseReference databaseReference;
+    private Firebase firebase;
+
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.time_sheet_act_test);
+        auth=FirebaseAuth.getInstance();
         userLocalStore=new UserLocalStore(this);
 
         mySQLiteHelper=new MySQLiteHelper(this);
@@ -122,6 +149,10 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
   fragmentMyEvent=new FragmentMyEvent();
          fragmentCategoryShopping=new FragmentCategoryShopping();
 
+        progressBar=new ProgressDialog(this);
+
+        databaseReference=FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_USERS);
+        firebase=new Firebase(Config.FIREBASE_APP_URL);
 
         sqLiteShoppingList=new SQLiteShoppingList(this);
 
@@ -133,6 +164,7 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
 
             }
         }
+
 
 
 
@@ -239,11 +271,13 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
             }
         });
 
+        chatRoomName=userLocalStore.getChatRoom();
+
 
     }
 
 
-
+// create chatRommAndShare hwile inviting
 
     private void initViewPagerAndTabs() {
 
@@ -342,13 +376,6 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
     public void eventsCahnged(boolean haschanged) {
     }
 
-    @Override
-    public void onFragmentCategoryShoppingInteraction(GroceryList groceryList,int position,ArrayList<GroceryList> groceryLists) {
-        groceryListTodelete=groceryList;
-        positionToDelete=position;
-        groceryListsToSend=groceryLists;
-    }
-
 
     public interface YourFragmentInterface {
         void fragmentBecameVisible();
@@ -396,6 +423,7 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
                     startActivity(new Intent(NewCalendarActivty.this,InviteFriendActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
                 }else {
                     //start chat activity
+                    fetchUserforFCMNotification(userLocalStore.getUserPartnerEmail());
                 }
                 break;
             case 3:
@@ -410,7 +438,159 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
     }
 
 
+    public void fetchUserforFCMNotification(String email){
+        ServerRequests serverRequests =new ServerRequests(this);
+        serverRequests.fetchUserForFCMNotificationinBackground(email, new GetUserCallbacks() {
+            @Override
+            public void done(final User returneduser) {
+                if(returneduser!=null){
+                    userLocalStore.storeUserPartnerData(returneduser);
+                    userLocalStore.setUserPartnerRegId(returneduser.regId);
+                    if(returneduser.picture!=null){
+                        userLocalStore.setUserPartnerPicturePath(userLocalStore.savePartnerPicToInternalStorage(returneduser.picture));
+                    }
+                    String recievername= returneduser.getfullname();
+                    String reciverregId= returneduser.regId;
 
+
+
+                    Intent intent =new Intent(NewCalendarActivty.this,TimeMeChatActivity.class);
+
+
+                    intent.putExtra("Chatroom",chatRoomName);
+                    intent.putExtra("chatPartner",returneduser);
+
+                    startActivity(intent);
+
+
+              /**
+                    if(chatRoomName == null || (chatRoomName.isEmpty())){
+                        Map<String,Object> map=new HashMap<String, Object>();
+
+                        chatRoomName=userLocalStore.getLoggedInUser().email.replace(".","-")+returneduser.email.replace(".","-");
+                        map.put(chatRoomName ,"");
+                        root.updateChildren(map);
+
+                        Intent intent =new Intent(NewCalendarActivty.this,TimeMeChatActivity.class);
+
+                        intent.putExtra("Chatroom",chatRoomName);
+                        intent.putExtra("chatPartner",returneduser);
+
+                        startActivity(intent);
+                    }else {
+               chatRoomName=userLocalStore.getChatRoom();
+               intent.putExtra("Chatroom",chatRoomName);
+               intent.putExtra("chatPartner",returneduser);
+
+               startActivity(intent);
+
+                    }
+
+**/
+
+                }else{
+                    Toast.makeText(getApplicationContext(),"Error fetching partner data ",Toast.LENGTH_SHORT).show();
+                    startActivity(new Intent(NewCalendarActivty.this,InviteFriendActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                }
+            }
+
+            @Override
+            public void serverReponse(String reponse) {
+
+            }
+
+            @Override
+            public void userlist(ArrayList<User> reponse) {
+
+            }
+        });
+    }
+
+
+   /** public  void sendFriendChatRoom(final String chatRoom) {
+
+        if (!userLocalStore.getUserRegistrationId().isEmpty()) {
+
+
+            Thread thread = new Thread() {
+                @Override
+                public void run() {
+                    HttpURLConnection conn=null;
+                    try {
+
+                        String regid = userLocalStore.getUserRegistrationId();
+                        String sendertname=userLocalStore.getLoggedInUser().getfullname();
+                        ArrayList<Pair<String,String>> data=new ArrayList<>();
+
+
+                        data.add(new Pair<String, String>("message", "New chat request from " +sendertname));
+                        data.add(new Pair<String, String>("registrationReceiverIDs", userLocalStore.getUserPartnerRegId()));
+                        data.add(new Pair<String, String>("receiver", userLocalStore.getLoggedInUser().email));
+                        data.add(new Pair<String, String>("sender", sendertname));
+
+                        data.add(new Pair<String, String>("registrationSenderIDs", regid));
+                        data.add(new Pair<String, String>("title",sendertname +" invited you to chat." ));
+                        data.add(new Pair<String, String>("chatRoom",chatRoom ));
+
+                        data.add(new Pair<String, String>("apiKey", Config.FIREBASESERVER_KEY));
+
+                        byte[] bytes = getData(data).getBytes("UTF-8");
+
+
+                        URL url=new URL(Config.YOUR_SERVER_URL+ "FireBaseConnection.php");
+                        conn=(HttpURLConnection)url.openConnection();
+                        conn.setDoOutput(true);
+                        conn.setUseCaches(false);
+                        conn.setFixedLengthStreamingMode(bytes.length);
+                        conn.setRequestMethod("POST");
+                        conn.setRequestProperty("Content-Type",
+                                "application/x-www-form-urlencoded;charset=UTF-8");
+                        // post the request
+                        OutputStream out = conn.getOutputStream();
+                        out.write(bytes);
+                        out.close();
+
+                        BufferedReader in = new BufferedReader(
+                                new InputStreamReader(conn.getInputStream()));
+                        String inputLine;
+                        StringBuffer reponse = new StringBuffer();
+
+                        while ((inputLine = in.readLine()) != null) {
+                            reponse.append(inputLine);
+                        }
+                        final String response =reponse.toString();
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }finally {
+                        if(conn!=null){
+                            conn.disconnect();
+                        }
+                    }
+                }
+            };
+
+            thread.start();
+
+        }
+
+    }
+
+    **/
+    private static String getData(ArrayList<Pair<String, String>> values) throws UnsupportedEncodingException {
+        StringBuilder result=new StringBuilder();
+        for(Pair<String,String> pair : values){
+
+            if(result.length()!=0)
+
+                result.append("&");
+            result.append(URLEncoder.encode(pair.first, "UTF-8"));
+            result.append("=");
+            result.append(URLEncoder.encode(pair.second, "UTF-8"));
+
+        }
+        return result.toString();
+    }
     protected void sendSMS() {
         Log.i("Send SMS", "");
         Intent smsIntent = new Intent(Intent.ACTION_VIEW);
@@ -675,44 +855,45 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
 
     @Override
     public void onYes() {
-        User us=new User(userLocalStore.getLoggedInUser().email,userLocalStore.getLoggedInUser().password,0,userLocalStore.getUserRegistrationId());
-        us.status=0;
+        progressBar.setCancelable(false);
+        progressBar.setTitle("Logging out");
+        progressBar.setMessage("in progress ...");
+        progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressBar.show();
+        if(auth.getCurrentUser()!=null){ //user log in
+          DatabaseReference  data=databaseReference.child(auth.getCurrentUser().getUid());
+            data.child("status").setValue(0).addOnCompleteListener(NewCalendarActivty.this
+            ,new OnCompleteListener<Void>() {
+                @Override
+                public void onComplete(@NonNull Task<Void> task) {
+                    if(task.isSuccessful()){
+                        auth.signOut();
+                        FirebaseAuth.AuthStateListener authStateListener= new FirebaseAuth.AuthStateListener() {
+                            @Override
+                            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                                FirebaseUser user=firebaseAuth.getCurrentUser();
+                                if(user==null){
+                                    userLocalStore.clearUserData();
+                                    Intent intent = new Intent(NewCalendarActivty.this, LoginScreenActivity.class);
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                    startActivity(intent);
+                                    progressBar.dismiss();
+                                }
+                            }
+                        };
 
-        updatestatus(us);
-    }
-
-    private void updatestatus(User us) {
-
-        ServerRequests serverRequests=new ServerRequests(this);
-        serverRequests.logginguserOutInBackgroung(us, new GetUserCallbacks() {
-            @Override
-            public void done(User returneduser) {
-
-            }
-
-            @Override
-            public void serverReponse(String reponse) {
-                if (reponse.contains("Status successfully updated")) {
-                    userLocalStore.clearUserData();
-                    userLocalStore.setUserLoggedIn(false);
-                    Intent intent = new Intent(NewCalendarActivty.this, LoginScreenActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    startActivity(intent);
-                    MainActivity.eventsareloaded=false;
-
-                } else {
-                    showErrordialog("Error : You cannot be logged out at the moment please try again later");
+                        auth.addAuthStateListener(authStateListener);
+                    }else {
+                        Toast.makeText(getApplicationContext(), "here"+task.getException().getMessage()
+                                ,Toast.LENGTH_SHORT).show();
+                    }
                 }
-            }
+            });
 
-            @Override
-            public void userlist(ArrayList<User> reponse) {
-
-            }
-        });
-
+        }
 
     }
+
 
 
     private void showErrordialog(String message) {

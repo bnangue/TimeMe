@@ -22,18 +22,20 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/buttonOKsharewithfriend"
-            android:text="OK"
+            android:text="@string/ok"
             android:layout_weight="1"
-            style="@style/buttondelete"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:textColor="@color/primary"
             android:layout_marginLeft="5dp"
             android:layout_marginRight="5dp"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/buttonCancelsharewithfriend"
-            android:text="Cancel"
+            android:text="@string/cancel"
             android:layout_weight="1"
-            style="@style/buttondelete"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:textColor="@color/primary"
             android:layout_marginLeft="5dp"
             android:layout_marginRight="5dp"/>
     </LinearLayout>

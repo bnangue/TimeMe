@@ -14,6 +14,14 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -21,7 +29,6 @@ import java.util.Collections;
 public class DetailsFinanceAccountActivity extends AppCompatActivity implements View.OnFocusChangeListener, SearchView.OnQueryTextListener, AdapterView.OnItemClickListener, SearchView.OnCloseListener {
 
     private Button button;
-    private AdaterAdddNewEventListButton adapter;
     private ListView listViewAccountdetails;
     private ArrayList<FinanceRecords> financeRecordses;
     private String accountName;
@@ -35,7 +42,10 @@ public class DetailsFinanceAccountActivity extends AppCompatActivity implements 
     //Based on the search string, only filtered products will be moved here from productResults
     private ArrayList<FinanceRecords> filteredProductResults = new ArrayList<FinanceRecords>();
     private Menu menu;
-
+    private String financeAccountid;
+    private DatabaseReference databaseReference;
+    private  DetailsFinanceAccountAdapter accountAdapter;
+    private FirebaseAuth auth;
 
 
     @Override
@@ -43,55 +53,74 @@ public class DetailsFinanceAccountActivity extends AppCompatActivity implements 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details_finance_account);
 
+        auth=FirebaseAuth.getInstance();
         sqlFinanceAccount=new SQLFinanceAccount(this);
+        financeAccount=new FinanceAccount(this);
+        databaseReference= FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS);
         alertDialog = new android.support.v7.app.AlertDialog.Builder(this).create();
         accountNameTextView=(TextView)findViewById(R.id.textView_grocery_list_item_title_activity_details_shopping_detail_fiannce_account);
         accountBalanceTextView=(TextView)findViewById(R.id.finance_fragment_balance_amount_detail_fiannce_account);
         listViewAccountdetails=(ListView) findViewById(R.id.listView_activity_details_shoppping_list_detail_fiannce_account);
         Bundle extras=getIntent().getExtras();
         if(extras!=null){
-            if(extras.containsKey("Account")){
-                financeAccount=extras.getParcelable("Account");
-                assert financeAccount != null;
-                accountName=financeAccount.getAccountName();
-                financeRecordses=financeAccount.getRecords();
+            if(extras.containsKey("Accountid")){
+                financeAccountid=extras.getString("Accountid");
             }
         }
 
-        populateListViewFinanceRecords();
-
+       // populateListViewFinanceRecords();
 
     }
 
-    void refresh(){
-       ArrayList<FinanceAccount> financeAccounts=sqlFinanceAccount.getAllFinanceAccount();
-        if(financeAccounts.size()==1){
-            if(financeAccounts.get(0).getAccountUniqueId().equals(financeAccount.getAccountUniqueId())){
-                assert financeAccounts.get(0) != null;
-                accountName=financeAccounts.get(0).getAccountName();
-                financeRecordses=financeAccounts.get(0).getRecords();
-            }
-        }else {
-            for(int i=0;i<financeAccounts.size();i++){
-                if(financeAccounts.get(i).getAccountUniqueId().equals(financeAccount.getAccountUniqueId())){
-                    assert financeAccounts.get(i) != null;
-                    accountName=financeAccounts.get(i).getAccountName();
-                    financeRecordses=financeAccounts.get(i).getRecords();
-                    return;
+    @Override
+    protected void onStart() {
+        super.onStart();
+        assert auth.getCurrentUser()!=null;
+        DatabaseReference ref=databaseReference.child(auth.getCurrentUser().getUid());
+        ref.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.hasChild(financeAccountid)){
+                    FinanceAccountForFireBase financeAccountForFireBase=dataSnapshot.child(financeAccountid)
+                            .getValue(FinanceAccountForFireBase.class);
+                    financeAccount= new FinanceAccount(getApplicationContext())
+                            .getFinanceAccountFromFirebase(financeAccountForFireBase);
+                    financeRecordses=financeAccount.getAccountsRecord();
+                    accountName=financeAccount.getAccountName();
+                    populateListViewFinanceRecords();
                 }
             }
-        }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
 
 
     }
+
 
     private void populateListViewFinanceRecords() {
         String nameAcc=getString(R.string.View_account_accountName) + " " + accountName;
         accountNameTextView.setText(nameAcc);
-        accountBalanceTextView.setText(financeAccount.getAccountBlanceTostring()+ " €");
-        DetailsFinanceAccountAdapter accountAdapter=new DetailsFinanceAccountAdapter(this,financeRecordses);
+
+        assert financeAccount != null;
+        financeAccount.getAccountrecordsAmountUpdateBalance(getApplicationContext());
+        String balcance=financeAccount.getAccountBlanceTostring()+ " €";
+        accountBalanceTextView.setText(balcance);
+        if(balcance.contains("-")){
+            accountBalanceTextView.setText(balcance);
+            accountBalanceTextView.setTextColor(getResources().getColor(R.color.warning_color));
+        }else {
+            accountBalanceTextView.setText(balcance);
+
+        }
+
+       accountAdapter=new DetailsFinanceAccountAdapter(this,financeRecordses);
         listViewAccountdetails.setAdapter(accountAdapter);
         listViewAccountdetails.setOnItemClickListener(this);
+
         sort();
     }
 
@@ -168,10 +197,6 @@ public class DetailsFinanceAccountActivity extends AppCompatActivity implements 
         callSearchView();
 
             return true;
-        }else if (id == R.id.action_account_details_refresh){
-            //refresh
-          new RefreshDetailsFianceAccountAsyncTask().execute();
-            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -185,36 +210,6 @@ public class DetailsFinanceAccountActivity extends AppCompatActivity implements 
 
 
 
-    class RefreshDetailsFianceAccountAsyncTask extends AsyncTask<Void ,Void, Void> {
-
-        private FragmentProgressBarLoading progressDialog;
-
-        public RefreshDetailsFianceAccountAsyncTask(){
-        }
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            //start progressBar
-            progressDialog = new FragmentProgressBarLoading();
-            progressDialog.setCancelable(false);
-            progressDialog.show(getSupportFragmentManager(), "task_progress");
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-
-            refresh();
-           return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void params) {
-            //end progressBar
-            progressDialog.dismiss(getSupportFragmentManager());
-            populateListViewFinanceRecords();
-
-        }
-    }
 
 
 

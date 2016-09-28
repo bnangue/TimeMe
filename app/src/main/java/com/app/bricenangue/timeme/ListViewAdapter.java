@@ -135,6 +135,9 @@ public class ListViewAdapter extends BaseAdapter {
             @Override
             public void onClick(View v) {
 
+                if(shoppingItemsDBList.get(position).isItemIsBought()){
+                    shoppingItemsDBList.get(position).setItemIsBought(false);
+                }
                 viewHolder.removeItem.setEnabled(true);
                 viewHolder.nummberitemSelected.setTextColor(context.getResources().getColor(R.color.warning_color));
 
@@ -209,6 +212,9 @@ public class ListViewAdapter extends BaseAdapter {
             @Override
             public void onClick(View v) {
 
+                if(shoppingItemsDBList.get(position).isItemIsBought()){
+                    shoppingItemsDBList.get(position).setItemIsBought(false);
+                }
                 if(positionmemo==position){
 
                     counterItemSelected=shoppingItemsDBList.get(position).getNumberofItemsetForList();

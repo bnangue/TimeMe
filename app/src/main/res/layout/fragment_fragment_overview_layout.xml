@@ -21,7 +21,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Events"
+                android:text="@string/events"
                 android:id="@+id/text_overview_fragment_next_events"
                 android:layout_marginBottom="2dp"
                 android:layout_marginLeft="5dp"/>
@@ -45,7 +45,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="events"
+                    android:text="@string/events_lowercase"
                     android:id="@+id/text_grocery_fragment_recently_created_2"
                     android:layout_marginBottom="2dp"
                     android:layout_weight="3"/>
@@ -71,7 +71,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Shopping"
+                android:text="@string/shopping"
                 android:id="@+id/text_overview_fragment_shopping_lists"
                 android:layout_marginBottom="2dp"
                 android:layout_marginLeft="5dp"
@@ -126,7 +126,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Finances"
+                        android:text="@string/finances"
                         android:id="@+id/text_overview_fragment_finance_records"
                         android:layout_marginBottom="2dp"
                         android:layout_marginLeft="5dp"

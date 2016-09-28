@@ -1,5 +1,6 @@
 package com.app.bricenangue.timeme;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -11,18 +12,19 @@ import org.json.JSONObject;
  * Created by bricenangue on 01/08/16.
  */
 public class FinanceRecords implements Parcelable {
-    private String recordNAme, recordValueDate,recordNote,recordAmount,recordUniquesId,recordCategorie,recordBookingDate,recordCreator;
+    private  Context context;
+    private String recordNAme, recordValueDate,recordNote,recordAmount,recordUniquesId,recordCategorie,recordBookingDate,recordCreator,recordDataPath;
     private int recordUpdateVersion;
     private Bitmap recordData;
     private boolean isSecured=false, isIncome;
 
 
-    public FinanceRecords(){
-
+    public FinanceRecords(Context context){
+        this.context=context;
     }
 
 
-    public FinanceRecords(String recordNAme,String recordValueDate,String recordNote,String recordAmount,String recordUniquesId,String recordCategorie,
+    public FinanceRecords(Context context,String recordNAme,String recordValueDate,String recordNote,String recordAmount,String recordUniquesId,String recordCategorie,
                           String recordBookingDate,String recordCreator,int recordUpdateVersion,boolean isSecured,boolean isIncome){
 
         this.recordNAme=recordNAme;
@@ -36,6 +38,7 @@ public class FinanceRecords implements Parcelable {
         this.recordUpdateVersion=recordUpdateVersion;
         this.isSecured=isSecured;
         this.isIncome=isIncome;
+        this.context=context;
     }
 
 
@@ -68,9 +71,15 @@ public class FinanceRecords implements Parcelable {
     }
 
     public FinanceRecords getFinanceRecordsFromJSONObject(JSONObject obj) {
-        FinanceRecords item= new FinanceRecords();
+        FinanceRecords item= new FinanceRecords(context);
         try {
-            item.setRecordNAme(obj.getString("recordNAme"));
+
+            if(obj.getString("recordNAme").equals("Grocery list")||
+                    obj.getString("recordNAme").equals("Einkaufsliste") ){
+                item.setRecordNAme(context.getString(R.string.textInitialize_create_account_grocery_note));
+            }else {
+                item.setRecordNAme(obj.getString("recordNAme"));
+            }
             item.setRecordValueDate(obj.getString("recordValueDate"));
             item.setRecordNote(obj.getString("recordNote"));
             item.setRecordUniquesId(obj.getString("recordUniquesId"));
@@ -116,6 +125,14 @@ public class FinanceRecords implements Parcelable {
             return new FinanceRecords[size];
         }
     };
+
+    public String getRecordDataPath() {
+        return recordDataPath;
+    }
+
+    public void setRecordDataPath(String recordDataPath) {
+        this.recordDataPath = recordDataPath;
+    }
 
     public String getRecordNAme() {
         return recordNAme;
@@ -233,4 +250,47 @@ public class FinanceRecords implements Parcelable {
         parcel.writeByte((byte) (isIncome ? 1 : 0));
         parcel.writeString(recordCreator);
     }
+
+
+    public FinanceRecordsForFireBase getRecordsForFirebase(FinanceRecords financeRecords){
+        FinanceRecordsForFireBase financeRecordsForFireBase= new FinanceRecordsForFireBase();
+
+        financeRecordsForFireBase.setRecordNAme(financeRecords.getRecordNAme());
+        financeRecordsForFireBase.setRecordValueDate(financeRecords.getRecordValueDate());
+        financeRecordsForFireBase.setRecordNote(financeRecords.getRecordNote());
+        financeRecordsForFireBase.setRecordAmount(financeRecords.getRecordAmount());
+        financeRecordsForFireBase.setRecordUniquesId(financeRecords.getRecordUniquesId());
+        financeRecordsForFireBase.setRecordCategorie(financeRecords.getRecordCategorie());
+        financeRecordsForFireBase.setRecordUpdateVersion(financeRecords.getRecordUpdateVersion());
+        financeRecordsForFireBase.setRecordDataPath(financeRecords.getRecordDataPath());
+        financeRecordsForFireBase.setIncome(financeRecords.isIncome());
+        financeRecordsForFireBase.setSecured(financeRecords.isSecured());
+        financeRecordsForFireBase.setRecordBookingDate(financeRecords.getRecordBookingDate());
+        financeRecordsForFireBase.setRecordCreator(financeRecords.getRecordCreator());
+
+
+        return financeRecordsForFireBase;
+    }
+
+    public FinanceRecords getRecordsFromFirebase(FinanceRecordsForFireBase financeRecords){
+
+        FinanceRecords financeRecordsForFireBase= new FinanceRecords(context);
+
+        financeRecordsForFireBase.setRecordNAme(financeRecords.getRecordNAme());
+        financeRecordsForFireBase.setRecordValueDate(financeRecords.getRecordValueDate());
+        financeRecordsForFireBase.setRecordNote(financeRecords.getRecordNote());
+        financeRecordsForFireBase.setRecordAmount(financeRecords.getRecordAmount());
+        financeRecordsForFireBase.setRecordUniquesId(financeRecords.getRecordUniquesId());
+        financeRecordsForFireBase.setRecordCategorie(financeRecords.getRecordCategorie());
+        financeRecordsForFireBase.setRecordUpdateVersion(financeRecords.getRecordUpdateVersion());
+        financeRecordsForFireBase.setRecordDataPath(financeRecords.getRecordDataPath());
+        financeRecordsForFireBase.setIncome(financeRecords.isIncome());
+        financeRecordsForFireBase.setSecured(financeRecords.isSecured());
+        financeRecordsForFireBase.setRecordBookingDate(financeRecords.getRecordBookingDate());
+        financeRecordsForFireBase.setRecordCreator(financeRecords.getRecordCreator());
+
+
+        return financeRecordsForFireBase;
+    }
+
 }

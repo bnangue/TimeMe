@@ -55,7 +55,7 @@ public class RecyclerViewAdapterCreateAccount  extends RecyclerView
             accountidtv=(TextView) itemView.findViewById(R.id.textView_AccountID_create_account_finance_card);
 
 
-            Log.i(LOG_TAG, "Adding Listener");
+            //Log.i(LOG_TAG, "Adding Listener");
             itemView.setOnClickListener(this);
             itemView.setOnLongClickListener(this);
 
@@ -123,7 +123,7 @@ public class RecyclerViewAdapterCreateAccount  extends RecyclerView
             holder.accountOwnertv.setText(owner);
         }
 
-        holder.lastCHangetv.setText(financeAccount.getLastchangeToAccount());
+        holder.lastCHangetv.setText(financeAccount.getLastChangeDateToAccount());
        // holder.pendingtv.setVisibility(View.VISIBLE);
        // holder.pendingtv.setText(context.getString(R.string.account_finance_card_pending_expenses)+ "..."+ + " €");
        // holder.pendingtv.setTextColor(context.getResources().getColor(R.color.grey_light));

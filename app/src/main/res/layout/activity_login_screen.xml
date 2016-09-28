@@ -21,7 +21,7 @@
         <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Register"
+            android:text="@string/button_register_login_screen_activity"
             android:id="@+id/buttonregisterReg"
             android:layout_marginLeft="20dp"
             android:layout_marginRight="20dp"
@@ -98,7 +98,7 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Login"
+            android:text="@string/button_Loging_login_screen_activity"
             android:id="@+id/buttonlogin"
             android:textColor="@color/primary"
             android:layout_below="@+id/editTextpasswordlayout"
@@ -112,7 +112,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="Already have an account?"
+            android:text="@string/text_Already_Account_login_screen_activity"
             android:layout_marginBottom="5dp"
             android:id="@+id/textView"
             android:layout_above="@+id/editTextemaillayout"

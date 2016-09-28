@@ -37,7 +37,7 @@ import java.util.ArrayList;
 public class ServerRequests {
 
     private FragmentProgressBarLoading progressDialog;
-    public static final int CONNECTION_TIMEOUT=1000*15;
+    public static final int CONNECTION_TIMEOUT=100000*15;
    // public static final String SERVER_ADDRESS="http://time-tracker.comlu.com/";
     public static final String SERVER_ADDRESS="http://timemebrice.site88.net/";
     AppCompatActivity activity;
@@ -1720,13 +1720,15 @@ public class ServerRequests {
                 String accountrecords = jo_inside.getString("account_records");
 
                 FinanceAccount object=new FinanceAccount(activity);
+
                 object.setAccountName(accountname);
                 object.setAccountOwnersToString(accountowner);
                 object.setAccountBalanceToString(accountbalance);
                 object.setAccountUniqueId(accountuniqueId);
                 object.setLastchangeToAccount(accountlastchange);
                 object.setAccountRecordsString(accountrecords);
-                object.getRecords();
+
+                object.getRecords(activity);
 
 
                 events.add(object);
