@@ -22,6 +22,8 @@ public class GroceryList implements Parcelable {
     private String listcontain;
     private boolean isToListshare=false;
     private String accountid;
+    private boolean accountisshared;
+
 
     public String getAccountid() {
         return accountid;
@@ -32,6 +34,14 @@ public class GroceryList implements Parcelable {
     }
 
     public GroceryList() {
+    }
+
+    public boolean isAccountisshared() {
+        return accountisshared;
+    }
+
+    public void setAccountisshared(boolean accountisshared) {
+        this.accountisshared = accountisshared;
     }
 
     protected GroceryList(Parcel in) {
@@ -274,6 +284,7 @@ public class GroceryList implements Parcelable {
         groceryList.setToListshare(groceryListForFireBase.isToListshare());
         groceryList.setListdone(groceryListForFireBase.isListdone());
         groceryList.setListcontain(groceryListForFireBase.getListcontain());
+        groceryList.setAccountisshared(groceryListForFireBase.isAccountisshared());
         ArrayList<ShoppingItem> arrayList=new ArrayList<>();
         for(int i=0; i<groceryListForFireBase.getItems().size();i++){
             arrayList.add(new ShoppingItem().getitemFromFirebase(groceryListForFireBase.getItems().get(i)));

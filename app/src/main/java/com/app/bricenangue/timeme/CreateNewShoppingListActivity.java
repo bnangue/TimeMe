@@ -2,6 +2,7 @@ package com.app.bricenangue.timeme;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.os.AsyncTask;
@@ -11,11 +12,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 import android.util.Pair;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -70,12 +75,17 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
     private FirebaseRecyclerAdapter<GroceryListForFireBase,GroceryListViewHolder> adapter;
     private ProgressDialog progressBar;
     private ValueEventListener valueEventListener;
+    private android.support.v7.app.AlertDialog alertDialog;
+    private UserLocalStore userLocalStore;
+    private Switch btnswitch;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_new_shopping_list);
         auth=FirebaseAuth.getInstance();
+        userLocalStore=new UserLocalStore(this);
         databaseReference= FirebaseDatabase.getInstance().getReference();
 
         stateActivitiesPreference=new StateActivitiesPreference(this);
@@ -83,10 +93,12 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
         addItemToListbutton=(Button)findViewById(R.id.grocery_create_list_add_item_button);
         textViewlistIsempty=(TextView)findViewById(R.id.textView_create_list_List_empty);
 
+        btnswitch=(Switch)findViewById(R.id.button_switch_grocery_create_list_add_item);
         mRecyclerView = (RecyclerView)findViewById(R.id.shoppingrecycleViewCreateLisactivity);
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
+
 
         addItemToListbutton.setOnClickListener(this);
 
@@ -95,16 +107,133 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
         }
 
 
+        if(btnswitch.isChecked()){
+            btnswitch.setText("My shared grocery lists");
+
+        }else{
+            btnswitch.setText("My private grocery lists");
+
+        }
+        btnswitch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(btnswitch.isChecked()){
+                    btnswitch.setText("My shared grocery lists");
+                    showshared();
+
+                }else{
+                    btnswitch.setText("My private grocery lists");
+                    showprivate();
+
+                }
+            }
+        });
+
 
 
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
+    private void showshared(){
+        progressBar = new ProgressDialog(this);
+        progressBar.setCancelable(false);
+        progressBar.setTitle("Loading");
+        progressBar.setMessage("in progress ...");
+        progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressBar.show();
+        assert auth.getCurrentUser()!=null;
+        final DatabaseReference firebaseRef=databaseReference.child(Config.FIREBASE_APP_URL_GROCERYLISTS)
+                .child(Config.FIREBASE_APP_URL_GROCERYLISTS_SHARED)
+                .child(userLocalStore.getChatRoom());
+
+        firebaseRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                grocerylistSqlDB.clear();
+                for(DataSnapshot child: dataSnapshot.getChildren()){
+                    grocerylistSqlDB.add(new GroceryList().getGrocerylistFromGLFirebase(
+                            child.getValue(GroceryListForFireBase.class)
+                    ));
+                }
+                if(grocerylistSqlDB.size()==0){
+                    mRecyclerView.setVisibility(View.GONE);
+                    textViewlistIsempty.setText(R.string.text_create_list_List_empty);
+                }else{
+                    mRecyclerView.setVisibility(View.VISIBLE);
+                    textViewlistIsempty.setText(R.string.text_create_list_List_not_empty_more_than_one);
+                }
+
+                if(progressBar!=null){
+                    progressBar.dismiss();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+
+        });
+
+
+        adapter=
+                new FirebaseRecyclerAdapter<GroceryListForFireBase, GroceryListViewHolder>(
+                        GroceryListForFireBase.class,
+                        R.layout.create_shopping_list_card,
+                        GroceryListViewHolder.class,
+                        firebaseRef
+                ) {
+                    @Override
+                    protected void populateViewHolder(GroceryListViewHolder viewHolder, GroceryListForFireBase model, final int position) {
+                        final GroceryList groceryList=new GroceryList().getGrocerylistFromGLFirebase(model);
+
+                        CreateNewShoppingListActivity.groceryList=groceryList;
+                        String name=getResources().getString(R.string.grocery_list_item_title_text ).toLowerCase()  +" " + groceryList.getDatum();
+
+                        viewHolder.listname.setText(name);
+                        viewHolder.listcreator.setText(groceryList.getCreatorName());
+                        viewHolder.listStatus.setText(groceryList.isListdone() ? R.string.grocery_list_status_done_text : R.string.grocery_list_status__not_done_text);
+                        if(groceryList.isToListshare()){
+                            viewHolder.share.setVisibility(View.GONE);
+                        }
+
+
+                        viewHolder.share.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                //shared
+
+                            }
+                        });
+                        viewHolder.delete.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+
+                                DialogFragment dialogFragment = DialogDeleteEventFragment.newInstance(getItem(position).getList_unique_id()
+                                        ,getItem(position).getAccountid(),getItem(position).isToListshare());
+                                dialogFragment.setCancelable(false);
+                                dialogFragment.show(getSupportFragmentManager(), "DELETEListFRAGMENT");
+                            }
+                        });
+
+
+                        viewHolder.view.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                startGroceryListOverview(groceryList);
+                            }
+                        });
+                    }
+                };
+
+        mRecyclerView.setAdapter(adapter);
+    }
+
+    private void showprivate(){
 
         progressBar = new ProgressDialog(this);
         progressBar.setCancelable(false);
+        progressBar.setTitle("Loading");
+        progressBar.setMessage("in progress ...");
         progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         progressBar.show();
         assert auth.getCurrentUser()!=null;
@@ -174,7 +303,8 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
                             @Override
                             public void onClick(View v) {
 
-                                DialogFragment dialogFragment = DialogDeleteEventFragment.newInstance(getItem(position).getList_unique_id(),getItem(position).getAccountid());
+                                DialogFragment dialogFragment = DialogDeleteEventFragment.newInstance(getItem(position).getList_unique_id()
+                                        ,getItem(position).getAccountid(),getItem(position).isToListshare());
                                 dialogFragment.setCancelable(false);
                                 dialogFragment.show(getSupportFragmentManager(), "DELETEListFRAGMENT");
                             }
@@ -191,6 +321,19 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
                 };
 
         mRecyclerView.setAdapter(adapter);
+    }
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        if(btnswitch.isChecked()){
+            btnswitch.setText("My shared grocery lists");
+            showshared();
+        }else{
+            btnswitch.setText("My private grocery lists");
+            showprivate();
+        }
+
 
     }
 
@@ -310,6 +453,45 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
 
     }
 
+    void showDialogshareoption(){
+
+        alertDialog = new android.support.v7.app.AlertDialog.Builder(this).create();
+
+        alertDialog.setTitle(getString(R.string.activity_create_new_grocery_shared_option_dialog_title));
+
+
+        alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.alert_dialog_create_new_grocery_shared_option_dialog_title_buttonNO),
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        startActivity(new Intent(CreateNewShoppingListActivity.this,AddItemToListActivity.class)
+                        .putExtra("shareList",false));
+                        alertDialog.dismiss();
+                    }
+                });
+
+        alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, getString(R.string.alert_dialog_create_new_grocery_shared_option_dialog_title_buttonYES)
+                , new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        startActivity(new Intent(CreateNewShoppingListActivity.this,AddItemToListActivity.class)
+                                .putExtra("shareList",true));
+                        alertDialog.dismiss();
+
+
+                    }
+                });
+
+        alertDialog.setButton(DialogInterface.BUTTON_NEUTRAL, getString(R.string.cancel),
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        alertDialog.dismiss();
+                    }
+                });
+        alertDialog.setCancelable(true);
+        alertDialog.show();
+    }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -323,7 +505,7 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
         switch (id){
             case R.id.grocery_create_list_add_item_button:
                 //add item return shopping list to show here
-                    startActivity(new Intent(CreateNewShoppingListActivity.this,AddItemToListActivity.class));
+                    showDialogshareoption();
 
                 break;
         }
@@ -380,7 +562,7 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
     }
 
     @Override
-    public void delete(final String id,final String accid) {
+    public void delete(final String id,final String accid,boolean shareList) {
 
         progressBar = new ProgressDialog(this);
         progressBar.setCancelable(false);
@@ -389,11 +571,31 @@ public class CreateNewShoppingListActivity extends AppCompatActivity implements 
         progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         progressBar.show();
         assert auth.getCurrentUser()!=null;
-        final DatabaseReference finRef=FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS)
-                .child(auth.getCurrentUser().getUid());
+        final DatabaseReference finRef;
 
-        final DatabaseReference grRef=FirebaseDatabase.getInstance()
-                .getReference().child(Config.FIREBASE_APP_URL_GROCERYLISTS).child(auth.getCurrentUser().getUid()).child(id);
+        final DatabaseReference grRef;
+        if(shareList && userLocalStore.getChatRoom().length()>2){
+            grRef=FirebaseDatabase.getInstance()
+                    .getReference().child(Config.FIREBASE_APP_URL_GROCERYLISTS)
+                    .child(Config.FIREBASE_APP_URL_GROCERYLISTS_SHARED)
+                    .child(userLocalStore.getChatRoom()).child(id);
+
+        }else {
+            grRef=FirebaseDatabase.getInstance()
+                    .getReference().child(Config.FIREBASE_APP_URL_GROCERYLISTS).child(auth.getCurrentUser().getUid()).child(id);
+
+        }
+
+        if(groceryList.isAccountisshared()){
+            finRef=FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS)
+                    .child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS_SHARED)
+                    .child(userLocalStore.getChatRoom());
+        }else {
+
+            finRef=FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS)
+                    .child(auth.getCurrentUser().getUid());
+        }
+
         valueEventListener=new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {

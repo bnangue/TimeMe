@@ -36,6 +36,13 @@ public interface Config {
     static final String DISPLAY_MESSAGE_ACTION =
             "com.app.bricenangue.timeme.DISPLAY_MESSAGE";
 
+
+    static final String FIREBASE_APP_URL_USERS_publicProfilInfos="publicProfilInfos";
+    static final String FIREBASE_APP_URL_USERS_privateProfileInfo="privateProfileInfo";
+    static final String FIREBASE_APP_URL_FINANCE_ACCOUNTS_SHARED= "Shared Accounts";
+    static final String FIREBASE_APP_URL_GROCERYLISTS_SHARED = "Shared Grocery";
+    static final String FIREBASE_APP_URL_CHAT_ROOMS= "Chat Rooms";
+
     static final String FIREBASE_APP_URL_USERS = "Users";
     static final String FIREBASE_APP_URL_GROCERYLISTS = "Grocery Lists";
     static final String FIREBASE_APP_URL_FINANCE_ACCOUNTS = "Finance Accounts";
@@ -45,4 +52,6 @@ public interface Config {
     static final String FIREBASE_APP_URL_SHOPPING_ITEMS_XSL_USER_LIST = "MY LIST";
 
     static final String FIREBASE_APP_URL_FINANCE_ACCOUNTS_RECORDS = "accountsRecords";
+    String FIREBASE_APP_URL_USERS_password="password";
+    static final String FIREBASE_APP_URL_USERS_PUBLIC_USER_ROOM = "Public_Users_Room";
 }

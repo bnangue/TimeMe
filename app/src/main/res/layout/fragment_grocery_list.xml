@@ -36,22 +36,26 @@
             android:layout_below="@+id/grocery_fragment_add_recently_button"
             android:layout_marginTop="10dp"
            >
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_alignParentRight="true"
+                android:layout_above="@+id/separator_grocery_fragment">
+
+
+                <Switch
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:id="@+id/text_grocery_fragment_switch_to_shared"/>
+            </LinearLayout>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/grocery_fragment_recently_created"
                 android:id="@+id/text_grocery_fragment_recently_created"
                 android:layout_marginBottom="7dp"/>
-
-            <android.support.v7.widget.RecyclerView
-                android:id="@+id/shoppingrecycleViewfragöment_grocery_list_recentlityl_added"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginRight="12dp"
-                android:layout_marginLeft="12dp"
-                android:scrollbars="vertical"
-                android:layout_below="@+id/separator_grocery_fragment"
-                />
 
 
             <LinearLayout
@@ -62,6 +66,16 @@
                 android:background="@color/primary"
                 android:layout_below="@+id/text_grocery_fragment_recently_created"
 
+                />
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/shoppingrecycleViewfragöment_grocery_list_recentlityl_added"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scrollbars="vertical"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:layout_below="@+id/separator_grocery_fragment"
                 />
 
 

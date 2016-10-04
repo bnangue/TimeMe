@@ -2,6 +2,7 @@ package com.app.bricenangue.timeme;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.ActionBarActivity;
@@ -10,6 +11,12 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -24,12 +31,14 @@ import java.util.ArrayList;
  * Created by bricenangue on 17/02/16.
  */
 public class RequestHandlerActivity extends ActionBarActivity implements View.OnClickListener {
-    private String senderRegId, receiverername,message,sendername,myemail,mypassword,chatRoom;
+    private String senderRegId, receiverername,message,sendername,myemail,mypassword,chatRoom,senderuid;
     Button btnCancleRequest, btnAcceptRequest;
     TextView tvMessage;
     UserLocalStore userLocalStore;
     private MySQLiteHelper mySQLiteHelper;
     private Snackbar snackbar;
+    private FirebaseAuth auth;
+    private DatabaseReference databaseReference;
 
     private CoordinatorLayout coordinatorLayout;
     @Override
@@ -38,6 +47,11 @@ public class RequestHandlerActivity extends ActionBarActivity implements View.On
         setContentView(R.layout.activity_request_handler);
         mySQLiteHelper=new MySQLiteHelper(this);
         userLocalStore=new UserLocalStore(this);
+        auth=FirebaseAuth.getInstance();
+        if (auth.getCurrentUser()==null){
+            auth.signInWithEmailAndPassword(userLocalStore.getLoggedInUser().email,userLocalStore.getLoggedInUser().password);
+        }
+        databaseReference= FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_CHAT_ROOMS);
         Bundle extras=getIntent().getExtras();
         coordinatorLayout=(CoordinatorLayout)findViewById(R.id.coordinateLayout_request_handler_activity);
         btnAcceptRequest =(Button)findViewById(R.id.btnacceptRequest);
@@ -53,6 +67,8 @@ public class RequestHandlerActivity extends ActionBarActivity implements View.On
             receiverername =extras.getString("receiver");
             senderRegId=extras.getString("senderRegId");
             message=extras.getString("messagefromgcm");
+            senderuid=extras.getString("senderuid");
+
 
         }
 
@@ -69,14 +85,37 @@ public class RequestHandlerActivity extends ActionBarActivity implements View.On
             case R.id.btnacceptRequest:
                 userLocalStore.setUserPartnerEmail(sendername);
                 userLocalStore.setUserPartnerRegId(senderRegId);
-                chatRoom=userLocalStore.getLoggedInUser().email.replace(".","-")
-                        +sendername.replace(".","-");
+                assert auth.getCurrentUser()!=null;
+                chatRoom=senderuid+auth.getCurrentUser().getUid();
+
 
                 userLocalStore.setChatRoom(chatRoom);
+                final DatabaseReference refUser=FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_USERS)
+                        .child(auth.getCurrentUser().getUid())
+                       ;
 
-                Toast.makeText(getApplicationContext(),userLocalStore.getChatRoom()+"\n"+
-                        userLocalStore.getUserPartnerEmail(),Toast.LENGTH_SHORT).show();
-                updateFriendLists(userLocalStore.getLoggedInUser(),sendername);
+                refUser .child(Config.FIREBASE_APP_URL_USERS_privateProfileInfo).child("friendlist").setValue(senderuid).addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if(task.isSuccessful()){
+                            refUser.child("chatroom").setValue(chatRoom).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    if(task.isSuccessful()){
+                                        userLocalStore.setUserfriendliststring(senderuid);
+                                        sendFriendrequestAccepted();
+                                        Toast.makeText(getApplicationContext(),userLocalStore.getChatRoom()+"\n"+
+                                                userLocalStore.getUserPartnerEmail(),Toast.LENGTH_SHORT).show();
+                                    }else {
+                                        Toast.makeText(getApplicationContext(),task.getException().getMessage(),Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            });
+                        }else {
+                            Toast.makeText(getApplicationContext(),task.getException().getMessage(),Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
 
                 finish();
                 break;
@@ -87,32 +126,7 @@ public class RequestHandlerActivity extends ActionBarActivity implements View.On
     }
 
 
-    private void updateFriendLists(final User user, final String email){
 
-        ServerRequests serverRequests=new ServerRequests(this);
-        serverRequests.updateFrienListInBackgroung(user, email, new GetUserCallbacks() {
-            @Override
-            public void done(User returneduser) {
-
-            }
-
-            @Override
-            public void serverReponse(String reponse) {
-
-                if(reponse.contains("friendlist updated")){
-                    sendFriendrequestAccepted();
-                }else {
-                    //show snakbar
-                    showSnackBar(user,email);
-                }
-            }
-
-            @Override
-            public void userlist(ArrayList<User> reponse) {
-
-            }
-        });
-    }
     public  void sendFriendrequestAccepted() {
 
         if (!userLocalStore.getUserRegistrationId().isEmpty()) {
@@ -137,7 +151,7 @@ public class RequestHandlerActivity extends ActionBarActivity implements View.On
                         data.add(new Pair<String, String>("registrationSenderIDs", regid));
                         data.add(new Pair<String, String>("title",sendertname +" is now your friend." ));
                         data.add(new Pair<String, String>("chatRoom",chatRoom ));
-
+                        data.add(new Pair<String, String>("senderuid",auth.getCurrentUser().getUid() ));
                         data.add(new Pair<String, String>("apiKey", Config.FIREBASESERVER_KEY));
 
                         byte[] bytes = getData(data).getBytes("UTF-8");
@@ -203,7 +217,7 @@ public class RequestHandlerActivity extends ActionBarActivity implements View.On
                 .setAction("RETRY", new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        updateFriendLists(user,email);
+
                     }
                 });;
         View snackbarView = snackbar.getView();

@@ -19,6 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -69,6 +70,7 @@ public class FragmentCategoryFinance extends Fragment implements View.OnClickLis
     private int count;
     private ValueEventListener valueEventListener;
     private ProgressDialog progressBar;
+    private Switch btnswitch;
 
 
     public FragmentCategoryFinance() {
@@ -90,12 +92,35 @@ public class FragmentCategoryFinance extends Fragment implements View.OnClickLis
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView.setLayoutManager(mLayoutManager);
 
+        btnswitch=(Switch) rootView.findViewById(R.id.button_switch_fragment_finance_add_account);
         textViewBalance=(TextView)rootView.findViewById(R.id.finance_fragment_balance_amount);
         buttonCreateAccount=(Button)rootView.findViewById(R.id.fragment_finance_add_account_button) ;
         buttonCreateAccount.setOnClickListener(this);
         buttonAddFinanceRecords=(Button)rootView.findViewById(R.id.fragment_finance_add_finance_record_button) ;
         buttonAddFinanceRecords.setOnClickListener(this);
 
+
+        if(btnswitch.isChecked()){
+            btnswitch.setText("My shared accounts");
+
+        }else{
+            btnswitch.setText("My private accounts");
+
+        }
+        btnswitch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(btnswitch.isChecked()){
+                    btnswitch.setText("My shared accounts");
+                    fetchshared();
+
+                }else{
+                    btnswitch.setText("My private accounts");
+                    fetchprivate();
+
+                }
+            }
+        });
 
 
         return rootView;
@@ -119,9 +144,17 @@ public class FragmentCategoryFinance extends Fragment implements View.OnClickLis
                         progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
                         progressBar.show();
                         assert auth.getCurrentUser()!=null;
-                        final DatabaseReference firebaseRef=databaseReferenceToAccounts.child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS)
-                                .child(auth.getCurrentUser().getUid());
 
+                        final DatabaseReference firebaseRef;
+
+                        if(btnswitch.isChecked() && userLocalStore.getChatRoom().length()>2){
+                            firebaseRef=databaseReferenceToAccounts.child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS)
+                                    .child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS_SHARED)
+                                    .child(userLocalStore.getChatRoom());
+                        }else {
+                            firebaseRef=databaseReferenceToAccounts.child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS)
+                                    .child(auth.getCurrentUser().getUid());
+                        }
                         valueEventListener=new ValueEventListener() {
                             @Override
                             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -245,10 +278,119 @@ public class FragmentCategoryFinance extends Fragment implements View.OnClickLis
         }
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
+    private void fetchshared(){
+        progressBar = new ProgressDialog(getContext());
+        progressBar.setCancelable(false);
+        progressBar.setTitle("Loading");
+        progressBar.setMessage("in progress ...");
+        progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressBar.show();
+        //on Child event chnage
+        assert auth.getCurrentUser()!=null;
+        final DatabaseReference firebaseRef=databaseReferenceToAccounts.child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS)
+                .child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS_SHARED)
+                .child(userLocalStore.getChatRoom());
 
+        firebaseRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                accounts.clear();
+                for(DataSnapshot child: dataSnapshot.getChildren()){
+                    accounts.add(new FinanceAccount(getActivity()).getFinanceAccountFromFirebase(
+                            child.getValue(FinanceAccountForFireBase.class)
+                    ));
+                }
+
+                count= (int) dataSnapshot.getChildrenCount();
+                if(count==0){
+                    buttonAddFinanceRecords.setVisibility(View.GONE);
+                    buttonCreateAccount.setVisibility(View.VISIBLE);
+                }else if (count>0 && count<4){
+                    buttonCreateAccount.setVisibility(View.VISIBLE);
+                    buttonAddFinanceRecords.setVisibility(View.VISIBLE);
+                }else if(count>=4){
+                    buttonCreateAccount.setVisibility(View.GONE);
+                    buttonAddFinanceRecords.setVisibility(View.VISIBLE);
+                }
+                setBalance(getContext());
+                if (progressBar!=null){
+                    progressBar.dismiss();
+                }
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                if (progressBar!=null){
+                    progressBar.dismiss();
+                }
+            }
+        });
+
+
+        adapter=
+                new FirebaseRecyclerAdapter<FinanceAccountForFireBase, FinanceAccountViewHolder>(
+
+                        FinanceAccountForFireBase.class,
+                        R.layout.create_account_card,
+                        FinanceAccountViewHolder.class,
+                        firebaseRef) {
+                    @Override
+                    protected void populateViewHolder(FinanceAccountViewHolder financeAccountViewHolder
+                            , FinanceAccountForFireBase financeAccountForFireBase, final int i) {
+
+                        FinanceAccount financeAccount= new FinanceAccount(getContext())
+                                .getFinanceAccountFromFirebase(financeAccountForFireBase);
+
+                        String name=getContext().getResources().getString(R.string.Account_list_item_title_text ).toLowerCase()  +" " + financeAccount.getAccountName();
+
+
+                        financeAccountViewHolder.accountnametv.setText(name);
+
+                        financeAccountViewHolder.accountidtv.setText(financeAccount.getAccountUniqueId().replace("-","A"));
+                        String p=financeAccount.getAccountBlanceTostring() +" €";
+                        if(p.contains("-")){
+                            financeAccountViewHolder.balancetv.setText(p);
+                            financeAccountViewHolder.balancetv.setTextColor(getContext().getResources().getColor(R.color.warning_color));
+                        }else {
+                            financeAccountViewHolder.balancetv.setText(p);
+                            financeAccountViewHolder.balancetv.setTextColor(getContext().getResources().getColor(R.color.color_account_balance_positive));
+                        }
+
+                        if(financeAccount.getAccountOwnersFirebase().size()!=0){
+                            String owner=financeAccount.getAccountOwnersFirebase().get(0).getfullname();
+                            financeAccountViewHolder.accountOwnertv.setText(owner);
+                        }
+
+                        financeAccountViewHolder.lastCHangetv.setText(financeAccount.getLastchangeToAccount());
+                        financeAccountViewHolder.view.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+
+                                startActivity(new Intent(getActivity(), DetailsFinanceAccountActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        .putExtra("Accountid",getItem(i).getAccountUniqueId())
+                                        .putExtra("sharedAccount",true));
+
+                            }
+                        });
+                        financeAccountViewHolder.view.setOnLongClickListener(new View.OnLongClickListener() {
+                            @Override
+                            public boolean onLongClick(View view) {
+                                showFilterPopup(view, getItem(i).getAccountUniqueId());
+                                return false;
+                            }
+                        });
+
+
+
+
+                    }
+                };
+
+        mRecyclerView.setAdapter(adapter);
+
+    }
+    private void fetchprivate(){
         progressBar = new ProgressDialog(getContext());
         progressBar.setCancelable(false);
         progressBar.setTitle("Loading");
@@ -308,46 +450,47 @@ public class FragmentCategoryFinance extends Fragment implements View.OnClickLis
                     protected void populateViewHolder(FinanceAccountViewHolder financeAccountViewHolder
                             , FinanceAccountForFireBase financeAccountForFireBase, final int i) {
 
-                            FinanceAccount financeAccount= new FinanceAccount(getContext())
-                                    .getFinanceAccountFromFirebase(financeAccountForFireBase);
+                        FinanceAccount financeAccount= new FinanceAccount(getContext())
+                                .getFinanceAccountFromFirebase(financeAccountForFireBase);
 
-                            String name=getContext().getResources().getString(R.string.Account_list_item_title_text ).toLowerCase()  +" " + financeAccount.getAccountName();
+                        String name=getContext().getResources().getString(R.string.Account_list_item_title_text ).toLowerCase()  +" " + financeAccount.getAccountName();
 
 
-                            financeAccountViewHolder.accountnametv.setText(name);
+                        financeAccountViewHolder.accountnametv.setText(name);
 
-                            financeAccountViewHolder.accountidtv.setText(financeAccount.getAccountUniqueId().replace("-","A"));
-                            String p=financeAccount.getAccountBlanceTostring() +" €";
-                            if(p.contains("-")){
-                                financeAccountViewHolder.balancetv.setText(p);
-                                financeAccountViewHolder.balancetv.setTextColor(getContext().getResources().getColor(R.color.warning_color));
-                            }else {
-                                financeAccountViewHolder.balancetv.setText(p);
-                                financeAccountViewHolder.balancetv.setTextColor(getContext().getResources().getColor(R.color.color_account_balance_positive));
+                        financeAccountViewHolder.accountidtv.setText(financeAccount.getAccountUniqueId().replace("-","A"));
+                        String p=financeAccount.getAccountBlanceTostring() +" €";
+                        if(p.contains("-")){
+                            financeAccountViewHolder.balancetv.setText(p);
+                            financeAccountViewHolder.balancetv.setTextColor(getContext().getResources().getColor(R.color.warning_color));
+                        }else {
+                            financeAccountViewHolder.balancetv.setText(p);
+                            financeAccountViewHolder.balancetv.setTextColor(getContext().getResources().getColor(R.color.color_account_balance_positive));
+                        }
+
+                        if(financeAccount.getAccountOwnersFirebase().size()!=0){
+                            String owner=financeAccount.getAccountOwnersFirebase().get(0).getfullname();
+                            financeAccountViewHolder.accountOwnertv.setText(owner);
+                        }
+
+                        financeAccountViewHolder.lastCHangetv.setText(financeAccount.getLastchangeToAccount());
+                        financeAccountViewHolder.view.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+
+                                startActivity(new Intent(getActivity(), DetailsFinanceAccountActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        .putExtra("Accountid",getItem(i).getAccountUniqueId())
+                                .putExtra("sharedAccount",false));
+
                             }
-
-                            if(financeAccount.getAccountOwnersFirebase().size()!=0){
-                                String owner=financeAccount.getAccountOwnersFirebase().get(0).getfullname();
-                                financeAccountViewHolder.accountOwnertv.setText(owner);
+                        });
+                        financeAccountViewHolder.view.setOnLongClickListener(new View.OnLongClickListener() {
+                            @Override
+                            public boolean onLongClick(View view) {
+                                showFilterPopup(view, getItem(i).getAccountUniqueId());
+                                return false;
                             }
-
-                            financeAccountViewHolder.lastCHangetv.setText(financeAccount.getLastchangeToAccount());
-                            financeAccountViewHolder.view.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view) {
-
-                                    startActivity(new Intent(getActivity(), DetailsFinanceAccountActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                            .putExtra("Accountid",getItem(i).getAccountUniqueId()));
-
-                                }
-                            });
-                            financeAccountViewHolder.view.setOnLongClickListener(new View.OnLongClickListener() {
-                                @Override
-                                public boolean onLongClick(View view) {
-                                    showFilterPopup(view, getItem(i).getAccountUniqueId());
-                                    return false;
-                                }
-                            });
+                        });
 
 
 
@@ -356,6 +499,18 @@ public class FragmentCategoryFinance extends Fragment implements View.OnClickLis
                 };
 
         mRecyclerView.setAdapter(adapter);
+
+    }
+    @Override
+    public void onStart() {
+        super.onStart();
+        if(btnswitch.isChecked()){
+            btnswitch.setText("My shared accounts");
+            fetchshared();
+        }else{
+            btnswitch.setText("My private accounts");
+            fetchprivate();
+        }
 
 
     }
@@ -419,7 +574,9 @@ public class FragmentCategoryFinance extends Fragment implements View.OnClickLis
             if(priceStr.contains("-")){
                 textViewBalance.setText(priceStr+" €");
                 userLocalStore.setUserAccountBalance(priceStr);
-                textViewBalance.setTextColor(getResources().getColor(R.color.warning_color));
+                if(isAdded()){
+                    textViewBalance.setTextColor(getResources().getColor(R.color.warning_color));
+                }
             }else {
                 textViewBalance.setText(priceStr+" €");
                 userLocalStore.setUserAccountBalance(priceStr);

@@ -123,7 +123,8 @@ public class LoginScreenActivity extends AppCompatActivity implements View.OnCli
         userLocalStore.storeUserData(returneduser);
         userLocalStore.setUserPartnerEmail(returneduser.friendlist);
 
-        userLocalStore.setUserPicturePath(userLocalStore.saveToInternalStorage(returneduser.picture));
+       userLocalStore.setChatRoom(returneduser.getChatroom());
+
 
         Intent intent=new Intent(LoginScreenActivity.this,NewCalendarActivty.class);
 
@@ -217,6 +218,7 @@ public class LoginScreenActivity extends AppCompatActivity implements View.OnCli
             }
 
 
+            final UserForFireBase userForFireBase=new UserForFireBase();
             auth.signInWithEmailAndPassword(emailstr,String.valueOf(passHash))
                     .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                         @Override
@@ -225,38 +227,92 @@ public class LoginScreenActivity extends AppCompatActivity implements View.OnCli
                                 firebaseUser=auth.getCurrentUser();
                                 assert firebaseUser != null;
                                 final String uid=firebaseUser.getUid();
-                                valueEventListener=new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(DataSnapshot dataSnapshot) {
-                                        if(dataSnapshot.hasChild(uid)){
-                                            UserForFireBase userForFireBase=dataSnapshot.child(uid).getValue(UserForFireBase.class);
-                                            final User user=new User().getUserFromFireBase(userForFireBase);
-                                            DatabaseReference data= databaseReference.child(uid);
-                                            data.child("status").setValue(1).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                                @Override
-                                                public void onComplete(@NonNull Task<Void> task) {
-                                                    if(task.isSuccessful()){
-                                                        if(valueEventListener!=null){
-                                                            databaseReference.removeEventListener(valueEventListener);
-                                                        }
-                                                        saveloggedInuserPreferences(user);
 
-                                                    }else {
-                                                        Toast.makeText(getApplicationContext(), task.getException().getMessage()
-                                                                ,Toast.LENGTH_SHORT).show();
-                                                    }
-                                                }
-                                            });
-                                        }
-                                    }
+                                final DatabaseReference refPrivate=databaseReference.child(firebaseUser.getUid())
+                                        .child(Config.FIREBASE_APP_URL_USERS_privateProfileInfo);
+                                final DatabaseReference refPublic=databaseReference.child(firebaseUser.getUid())
+                                        .child(Config.FIREBASE_APP_URL_USERS_publicProfilInfos);
+                                final DatabaseReference refPassword=databaseReference.child(firebaseUser.getUid())
+                                        .child(Config.FIREBASE_APP_URL_USERS_password);
+                                final DatabaseReference refchatRoom=databaseReference.child(firebaseUser.getUid())
+                                        .child("chatroom");
+                                 final PrivateInfo privateInfo=new PrivateInfo();
+                                PublicInfos publicInfos=new PublicInfos();
+                                final String password;
+                               refPrivate.addValueEventListener(new ValueEventListener() {
+                                   @Override
+                                   public void onDataChange(DataSnapshot dataSnapshot) {
+                                     PrivateInfo  privateInfo=dataSnapshot.getValue(PrivateInfo.class);
+                                       userForFireBase.setPrivateProfileInfo(privateInfo);
+                                       refPrivate.removeEventListener(this);
+                                       refPublic.addValueEventListener(new ValueEventListener() {
+                                           @Override
+                                           public void onDataChange(DataSnapshot dataSnapshot) {
+                                               PublicInfos  publicInfos=dataSnapshot.getValue(PublicInfos.class);
+                                               userForFireBase.setPublicProfilInfos(publicInfos);
 
-                                    @Override
-                                    public void onCancelled(DatabaseError databaseError) {
-                                        Toast.makeText(getApplicationContext(), databaseError.getMessage()
-                                                ,Toast.LENGTH_SHORT).show();
-                                    }
-                                };
-                                databaseReference.addValueEventListener(valueEventListener);
+                                               refPublic.removeEventListener(this);
+                                               refPassword.addValueEventListener(new ValueEventListener() {
+                                                   @Override
+                                                   public void onDataChange(DataSnapshot dataSnapshot) {
+
+                                                       String  password=dataSnapshot.getValue(String.class);
+                                                       userForFireBase.setPassword(password);
+                                                       refPassword.removeEventListener(this);
+
+                                                       refchatRoom.addValueEventListener(new ValueEventListener() {
+                                                           @Override
+                                                           public void onDataChange(DataSnapshot dataSnapshot) {
+                                                               String chatroom=dataSnapshot.getValue(String.class);
+                                                               userForFireBase.setChatroom(chatroom);
+                                                               refchatRoom.removeEventListener(this);
+
+                                                               final User user=new User().getUserFromFireBase(userForFireBase);
+
+                                                               DatabaseReference data= databaseReference.child(uid).child(Config.FIREBASE_APP_URL_USERS_privateProfileInfo);
+                                                               data.child("status").setValue(1).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                                   @Override
+                                                                   public void onComplete(@NonNull Task<Void> task) {
+                                                                       if(task.isSuccessful()){
+                                                                           saveloggedInuserPreferences(user);
+
+                                                                       }else {
+                                                                           Toast.makeText(getApplicationContext(), task.getException().getMessage()
+                                                                                   ,Toast.LENGTH_SHORT).show();
+                                                                       }
+                                                                   }
+                                                               });
+                                                           }
+
+                                                           @Override
+                                                           public void onCancelled(DatabaseError databaseError) {
+
+                                                           }
+                                                       });
+
+                                                   }
+
+                                                   @Override
+                                                   public void onCancelled(DatabaseError databaseError) {
+
+                                                   }
+                                               });
+                                           }
+
+                                           @Override
+                                           public void onCancelled(DatabaseError databaseError) {
+
+                                           }
+                                       });
+                                   }
+
+                                   @Override
+                                   public void onCancelled(DatabaseError databaseError) {
+
+                                   }
+                               });
+
+
                             }else {
                                 progressDialog.dismiss(getSupportFragmentManager());
                                 Toast.makeText(getApplicationContext(),

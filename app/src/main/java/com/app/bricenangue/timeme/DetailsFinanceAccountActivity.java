@@ -26,7 +26,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 
-public class DetailsFinanceAccountActivity extends AppCompatActivity implements View.OnFocusChangeListener, SearchView.OnQueryTextListener, AdapterView.OnItemClickListener, SearchView.OnCloseListener {
+public class
+DetailsFinanceAccountActivity extends AppCompatActivity implements View.OnFocusChangeListener, SearchView.OnQueryTextListener, AdapterView.OnItemClickListener, SearchView.OnCloseListener {
 
     private Button button;
     private ListView listViewAccountdetails;
@@ -46,6 +47,8 @@ public class DetailsFinanceAccountActivity extends AppCompatActivity implements 
     private DatabaseReference databaseReference;
     private  DetailsFinanceAccountAdapter accountAdapter;
     private FirebaseAuth auth;
+    private UserLocalStore userLocalStore;
+    private boolean sharedAccount;
 
 
     @Override
@@ -54,6 +57,7 @@ public class DetailsFinanceAccountActivity extends AppCompatActivity implements 
         setContentView(R.layout.activity_details_finance_account);
 
         auth=FirebaseAuth.getInstance();
+        userLocalStore=new UserLocalStore(this);
         sqlFinanceAccount=new SQLFinanceAccount(this);
         financeAccount=new FinanceAccount(this);
         databaseReference= FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS);
@@ -65,6 +69,7 @@ public class DetailsFinanceAccountActivity extends AppCompatActivity implements 
         if(extras!=null){
             if(extras.containsKey("Accountid")){
                 financeAccountid=extras.getString("Accountid");
+                sharedAccount=extras.getBoolean("sharedAccount");
             }
         }
 
@@ -72,9 +77,31 @@ public class DetailsFinanceAccountActivity extends AppCompatActivity implements 
 
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
+    private void fetchshared(){
+        assert auth.getCurrentUser()!=null;
+        DatabaseReference ref=databaseReference.child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS_SHARED)
+                .child(userLocalStore.getChatRoom());
+        ref.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.hasChild(financeAccountid)){
+                    FinanceAccountForFireBase financeAccountForFireBase=dataSnapshot.child(financeAccountid)
+                            .getValue(FinanceAccountForFireBase.class);
+                    financeAccount= new FinanceAccount(getApplicationContext())
+                            .getFinanceAccountFromFirebase(financeAccountForFireBase);
+                    financeRecordses=financeAccount.getAccountsRecord();
+                    accountName=financeAccount.getAccountName();
+                    populateListViewFinanceRecords();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+    private void fetchprivate(){
         assert auth.getCurrentUser()!=null;
         DatabaseReference ref=databaseReference.child(auth.getCurrentUser().getUid());
         ref.addValueEventListener(new ValueEventListener() {
@@ -96,6 +123,15 @@ public class DetailsFinanceAccountActivity extends AppCompatActivity implements 
 
             }
         });
+    }
+    @Override
+    protected void onStart() {
+        super.onStart();
+      if(sharedAccount){
+          fetchshared();
+      }else {
+          fetchprivate();
+      }
 
 
     }

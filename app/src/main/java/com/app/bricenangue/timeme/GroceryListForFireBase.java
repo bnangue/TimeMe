@@ -13,11 +13,20 @@ public class GroceryListForFireBase {
     private String listcontain;
     private boolean isToListshare=false;
     private String accountid;
+    private boolean accountisshared;
     private ArrayList<ShoppingItemForFireBase> items=new ArrayList<>();
 
 
     public GroceryListForFireBase() {
 
+    }
+
+    public boolean isAccountisshared() {
+        return accountisshared;
+    }
+
+    public void setAccountisshared(boolean accountisshared) {
+        this.accountisshared = accountisshared;
     }
 
     public String getDatum() {

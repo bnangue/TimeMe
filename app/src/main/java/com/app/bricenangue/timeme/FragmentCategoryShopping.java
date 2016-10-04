@@ -24,6 +24,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -52,6 +53,8 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
     private float mCurrentRotation = 360.0f;
     private android.support.v7.app.AlertDialog alertDialog;
     private ProgressDialog progressBar;
+    private Switch aSwitch;
+
 
 
 
@@ -64,7 +67,7 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
 
     private boolean isShown=false;
     private UserLocalStore userLocalStore;
-    private TextView textshowHide;
+    private TextView textswitch;
     private LinearLayout linearLayout;
     private String sortName;
     private FirebaseRecyclerAdapter<GroceryListForFireBase,GroceryFrangmentViewHolder> adapter;
@@ -96,7 +99,8 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
 
         View v = inflater.inflate(R.layout.fragment_grocery_list, container, false);
         textBalance = (TextView) v.findViewById(R.id.grocery_fragment_balance_amount);
-        textshowHide = (TextView) v.findViewById(R.id.text_grocery_fragment_show);
+        aSwitch=(Switch)v.findViewById(R.id.text_grocery_fragment_switch_to_shared);
+
 
         add_List = (Button) v.findViewById(R.id.grocery_fragment_add_recently_button);
 
@@ -115,16 +119,33 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
             textBalance.setText(userLocalStore.getUserAccountBalance()+" €");
         }
 
+        if(aSwitch.isChecked()){
+            aSwitch.setText("Your Shared Lists");
+        }else{
+            aSwitch.setText("Your Private Lists");
 
+        }
 
-
+        aSwitch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(aSwitch.isChecked()){
+                    aSwitch.setText("Your Shared Lists");
+                    showSharedList();
+                }else{
+                    aSwitch.setText("Your Private Lists");
+                    showprivateList();
+                }
+            }
+        });
         return v;
     }
 
-    private void startGroceryListOverview(GroceryList item) {
+    private void startGroceryListOverview(String id,boolean itemisToListshare ) {
         startActivity(new Intent(getActivity(),DetailsShoppingListActivity.class)
-              .putExtra("GroceryListId",item.getList_unique_id())
-                .putExtra("GroceryListIsShared",item.isToListshare()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+              .putExtra("GroceryListId",id)
+                .putExtra("GroceryListIsShared",itemisToListshare)
+               .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 
     }
 
@@ -179,17 +200,16 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
 
         }
     }
-
-    @Override
-    public void onStart() {
-        super.onStart();
+    private void showprivateList(){
         progressBar = new ProgressDialog(getContext());
         progressBar.setCancelable(false);
+        progressBar.setTitle("Loading");
+        progressBar.setMessage("in progress ...");
         progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         progressBar.show();
         assert auth.getCurrentUser()!=null;
-       final DatabaseReference reference= databaseReference.child(Config.FIREBASE_APP_URL_GROCERYLISTS)
-               .child(auth.getCurrentUser().getUid());
+        final DatabaseReference reference= databaseReference.child(Config.FIREBASE_APP_URL_GROCERYLISTS)
+                .child(auth.getCurrentUser().getUid());
 
         reference.addValueEventListener(new ValueEventListener() {
             @Override
@@ -242,13 +262,97 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
                 viewHolder.view.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        startGroceryListOverview(groceryList);
+                        startGroceryListOverview(model.getList_unique_id(),model.isToListshare());
                     }
                 });
             }
         };
 
         mRecyclerView.setAdapter(adapter);
+    }
+
+    private void showSharedList(){
+        progressBar = new ProgressDialog(getContext());
+        progressBar.setCancelable(false);
+        progressBar.setTitle("Loading");
+        progressBar.setMessage("in progress ...");
+        progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressBar.show();
+        assert auth.getCurrentUser()!=null;
+        final DatabaseReference reference= FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_GROCERYLISTS)
+                .child(Config.FIREBASE_APP_URL_GROCERYLISTS_SHARED)
+                .child(userLocalStore.getChatRoom());
+
+        reference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                shoppingListsrecent.clear();
+
+                for(DataSnapshot child: dataSnapshot.getChildren()){
+                    shoppingListsrecent.add(new GroceryList().getGrocerylistFromGLFirebase(
+                            child.getValue(GroceryListForFireBase.class)
+                    ));
+                }
+
+                if(progressBar!=null){
+                    progressBar.dismiss();
+                }
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                if(progressBar!=null){
+                    progressBar.dismiss();
+                }
+            }
+
+        });
+        adapter=new FirebaseRecyclerAdapter<GroceryListForFireBase, GroceryFrangmentViewHolder>(
+                GroceryListForFireBase.class,
+                R.layout.card_shop_list_small,
+                GroceryFrangmentViewHolder.class,
+                reference) {
+            @Override
+            protected void populateViewHolder(GroceryFrangmentViewHolder viewHolder,
+                                              final GroceryListForFireBase model, int position) {
+
+                final GroceryList groceryList=new GroceryList().getGrocerylistFromGLFirebase(model);
+                String name=getContext().getResources().getString(R.string.grocery_list_item_title_text ).toLowerCase() + " " + groceryList.getDatum();
+                viewHolder.listname.setText(name);
+                viewHolder.listStatus.setText(groceryList.isListdone() ?
+                        groceryList.getGroceryListTotalPriceString() : getContext().getString(R.string.grocery_list_status__not_done_text));
+                viewHolder.listStatus.setTextColor(groceryList.isListdone() ?
+                        getContext().getResources().getColor(R.color.warning_color) : getContext().getResources().getColor(R.color.grey_light));
+
+                viewHolder.delete.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        alertDialogDelete(model.getList_unique_id(), model);
+                    }
+                });
+                viewHolder.view.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        startGroceryListOverview(model.getList_unique_id(),model.isToListshare());
+                    }
+                });
+            }
+        };
+
+        mRecyclerView.setAdapter(adapter);
+    }
+    @Override
+    public void onStart() {
+        super.onStart();
+        if(aSwitch.isChecked()){
+            aSwitch.setText("My shared lists");
+            showSharedList();
+        }else{
+            aSwitch.setText("My private lists");
+            showprivateList();
+        }
+
     }
 
     public void alertDialogDelete(final String id, final GroceryListForFireBase groceryList){
@@ -281,11 +385,30 @@ public class FragmentCategoryShopping extends Fragment implements View.OnClickLi
                 progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
                 progressBar.show();
                 assert auth.getCurrentUser()!=null;
-                final DatabaseReference finRef=FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS)
-                        .child(auth.getCurrentUser().getUid());
+                final DatabaseReference finRef;
 
-                final DatabaseReference grRef=FirebaseDatabase.getInstance()
-                        .getReference().child(Config.FIREBASE_APP_URL_GROCERYLISTS).child(auth.getCurrentUser().getUid()).child(id);
+                final DatabaseReference grRef;
+                if(groceryList.isToListshare() && userLocalStore.getChatRoom().length()>2){
+                    grRef=FirebaseDatabase.getInstance()
+                            .getReference().child(Config.FIREBASE_APP_URL_GROCERYLISTS)
+                            .child(Config.FIREBASE_APP_URL_GROCERYLISTS_SHARED)
+                            .child(userLocalStore.getChatRoom()).child(id);
+
+                }else {
+                    grRef=FirebaseDatabase.getInstance()
+                            .getReference().child(Config.FIREBASE_APP_URL_GROCERYLISTS).child(auth.getCurrentUser().getUid()).child(id);
+
+                }
+                if(groceryList.isAccountisshared()){
+                    finRef=FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS)
+                            .child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS_SHARED)
+                            .child(userLocalStore.getChatRoom());
+                }else {
+
+                    finRef=FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS)
+                            .child(auth.getCurrentUser().getUid());
+                }
+
                 valueEventListener=new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {

@@ -315,4 +315,8 @@
     <string name="retry">RETRY</string>
     <string name="internet_connection_error_message">No internet connection detected.</string>
     <string name="internet_connection_error_message_change_sycn_later">Your changes will be synchronize once the connection is established</string>
+    <string name="activity_create_new_grocery_shared_option_dialog_title">Shared this List ?</string>
+    <string name="alert_dialog_create_new_grocery_shared_option_dialog_title_buttonYES">YES</string>
+    <string name="alert_dialog_create_new_grocery_shared_option_dialog_title_buttonNO">NO</string>
+    <string name="action_logout">Log out</string>
 </resources>

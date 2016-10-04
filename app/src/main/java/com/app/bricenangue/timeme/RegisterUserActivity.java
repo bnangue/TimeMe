@@ -174,48 +174,117 @@ public class RegisterUserActivity extends AppCompatActivity implements TextView.
                                 @Override
                                 public void onComplete(@NonNull Task<AuthResult> task) {
                                     if(task.isSuccessful()){
-                                        UserForFireBase userForFireBase=new UserForFireBase();
-                                        userForFireBase.setEmail(emailstr);
-                                        userForFireBase.setFirstname(firstnamestr);
-                                        userForFireBase.setLastname(lastnamestr);
+                                        final UserForFireBase userForFireBase=new UserForFireBase();
+                                        final PublicInfos publicInfos=new PublicInfos();
+                                        PrivateInfo privateInfo=new PrivateInfo();
+                                        publicInfos.setEmail(emailstr);
+                                        publicInfos.setFirstname(firstnamestr);
+                                        publicInfos.setLastname(lastnamestr);
                                         userForFireBase.setPassword(String.valueOf(passHash));
-                                        userForFireBase.setFriendlist(" ");
-                                        userForFireBase.setRegId(fireBaseuniqueId);
-                                        userForFireBase.setPicturefirebaseUrl(" ");
-                                        userForFireBase.setStatus(0);
-                                        DatabaseReference firebase = FirebaseDatabase.
+                                        privateInfo.setFriendlist("");
+                                        publicInfos.setRegId(fireBaseuniqueId);
+                                        publicInfos.setPicturefirebaseUrl("");
+                                        privateInfo.setStatus(0);
+                                        userForFireBase.setPublicProfilInfos(publicInfos);
+                                        userForFireBase.setPrivateProfileInfo(privateInfo);
+                                        userForFireBase.setChatroom("");
+                                        final DatabaseReference firebase = FirebaseDatabase.
                                                 getInstance().getReference()
                                                 .child(Config.FIREBASE_APP_URL_USERS)
                                                 .child(mAuth.getCurrentUser().getUid())
                                                 ;
-                                        firebase.setValue(userForFireBase).addOnCompleteListener(
-                                                new OnCompleteListener<Void>() {
-                                                    @Override
-                                                    public void onComplete(@NonNull Task<Void> task) {
-                                                        if(task.isSuccessful()){
-                                                            mAuth.signOut();
-                                                            if(progressBar!=null)
-                                                                progressBar.dismiss();
-                                                            userLocalStore.setUserGCMregId(fireBaseuniqueId,0);
-                                                            startActivity(new Intent
-                                                                    (RegisterUserActivity.this,LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+                                        firebase.child(Config.FIREBASE_APP_URL_USERS_privateProfileInfo)
+                                                .setValue(privateInfo).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                            @Override
+                                            public void onComplete(@NonNull Task<Void> task) {
+                                                if(task.isSuccessful()){
+                                                    firebase.child(Config.FIREBASE_APP_URL_USERS_publicProfilInfos).setValue(publicInfos)
+                                                            .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                                @Override
+                                                                public void onComplete(@NonNull Task<Void> task) {
+                                                                    if(task.isSuccessful()){
+                                                                        firebase.child(Config.FIREBASE_APP_URL_USERS_password)
+                                                                                .setValue(userForFireBase.getPassword())
+                                                                                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                                                    @Override
+                                                                                    public void onComplete(@NonNull Task<Void> task) {
+                                                                                        if(task.isSuccessful()){
+                                                                                            firebase.child("chatroom").setValue(userForFireBase.getChatroom())
+                                                                                                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                                                                        @Override
+                                                                                                        public void onComplete(@NonNull Task<Void> task) {
+                                                                                                            if(task.isSuccessful()){
+                                                                                                                DatabaseReference firebase = FirebaseDatabase.
+                                                                                                                        getInstance().getReference()
+                                                                                                                        .child(Config.FIREBASE_APP_URL_USERS)
+                                                                                                                        .child(Config.FIREBASE_APP_URL_USERS_PUBLIC_USER_ROOM)
+                                                                                                                        ;
+                                                                                                                firebase.child(emailstr.replace(".","")).setValue(mAuth.getCurrentUser().getUid())
+                                                                                                                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                                                                                            @Override
+                                                                                                                            public void onComplete(@NonNull Task<Void> task) {
+                                                                                                                                if(task.isSuccessful()){
+                                                                                                                                    mAuth.signOut();
+                                                                                                                                    if(progressBar!=null)
+                                                                                                                                        progressBar.dismiss();
+                                                                                                                                    userLocalStore.setUserGCMregId(fireBaseuniqueId,0);
+                                                                                                                                    startActivity(new Intent
+                                                                                                                                            (RegisterUserActivity.this,LoginScreenActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+                                                                                                                                }else {
+                                                                                                                                    Toast.makeText(getApplicationContext(),
+                                                                                                                                            task.getException().getMessage(),Toast.LENGTH_SHORT).show();
+                                                                                                                                    if(progressBar!=null)
+                                                                                                                                        progressBar.dismiss();
+                                                                                                                                    mAuth.signOut();
+                                                                                                                                }
 
-                                                        }else {
-                                                            Toast.makeText(getApplicationContext(),
-                                                                   task.getException().getMessage(),Toast.LENGTH_SHORT).show();
-                                                            if(progressBar!=null)
-                                                                progressBar.dismiss();
-                                                        }
-                                                    }
+                                                                                                                            }
+                                                                                                                        });
+                                                                                                            }else {
+                                                                                                                Toast.makeText(getApplicationContext(),
+                                                                                                                        task.getException().getMessage(),Toast.LENGTH_SHORT).show();
+                                                                                                                if(progressBar!=null)
+                                                                                                                    progressBar.dismiss();
+                                                                                                                mAuth.signOut();
+                                                                                                            }
+                                                                                                        }
+                                                                                                    });
+
+                                                                                        }else {
+                                                                                            Toast.makeText(getApplicationContext(),
+                                                                                                    task.getException().getMessage(),Toast.LENGTH_SHORT).show();
+                                                                                            if(progressBar!=null)
+                                                                                                progressBar.dismiss();
+                                                                                            mAuth.signOut();
+                                                                                        }
+
+                                                                                    }
+                                                                                });
+                                                                    }else {
+                                                                        Toast.makeText(getApplicationContext(),
+                                                                                task.getException().getMessage(),Toast.LENGTH_SHORT).show();
+                                                                        if(progressBar!=null)
+                                                                            progressBar.dismiss();
+                                                                        mAuth.signOut();
+                                                                    }
+                                                                }
+                                                            });
+                                                }else {
+                                                    Toast.makeText(getApplicationContext(),
+                                                            task.getException().getMessage(),Toast.LENGTH_SHORT).show();
+                                                    if(progressBar!=null)
+                                                        progressBar.dismiss();
+                                                    mAuth.signOut();
                                                 }
-                                        );
-
+                                            }
+                                        });
 
                                     }else{
                                         Toast.makeText(getApplicationContext(),
                                                  task.getException().getMessage(),Toast.LENGTH_SHORT).show();
                                         if(progressBar!=null)
                                             progressBar.dismiss();
+                                        mAuth.signOut();
                                     }
                                 }
                             });

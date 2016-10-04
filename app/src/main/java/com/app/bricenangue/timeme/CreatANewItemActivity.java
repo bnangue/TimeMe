@@ -65,7 +65,7 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
     private FirebaseAuth auth;
     private DatabaseReference databaseReference;
     private ArrayList<ShoppingItem> itemDB=new ArrayList<>();
-
+    private boolean shareList;
 
 
     @Override
@@ -80,6 +80,7 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
         Bundle extras=getIntent().getExtras();
         if(extras!=null){
             itemDB= extras.getParcelableArrayList("itemDB");
+            shareList=extras.getBoolean("shareList");
         }
         String [] catergories={getString(R.string.household),getString(R.string.fruit),getString(R.string.vegetables),
                 getString(R.string.grain_products),getString(R.string.technology),getString(R.string.drinks),
@@ -335,6 +336,7 @@ public class CreatANewItemActivity extends AppCompatActivity implements View.OnC
     @Override
     public void onBackPressed() {
 
-        startActivity(new Intent(this,AddItemToListActivity.class).putExtra("itemstoShoparray",itemDB).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+        startActivity(new Intent(this,AddItemToListActivity.class).putExtra("itemstoShoparray",itemDB).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        .putExtra("shareList",shareList));
     }
 }

@@ -13,6 +13,7 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,6 +41,8 @@ public class CreateFinanceAccountActivity extends AppCompatActivity implements T
     private DatabaseReference databaseReferenceToAccounts;
     private DatabaseReference databaseReferenceToUsers;
     private FirebaseAuth auth;
+    private Switch btnswitch;
+    private boolean shareList;
 
 
     @Override
@@ -52,9 +55,17 @@ public class CreateFinanceAccountActivity extends AppCompatActivity implements T
         sqlFinanceAccount=new SQLFinanceAccount(this);
         userLocalStore=new UserLocalStore(this);
 
+        btnswitch=(Switch)findViewById(R.id.button_switch_Create_Account);
         editTextAccBalnace=(EditText)findViewById(R.id.editText_Create_Account_AccountBalance);
         editTextAccOwner=(EditText)findViewById(R.id.editText_Create_Account_AccountOwner);
         etEditTextAccName=(EditText)findViewById(R.id.editText_Create_Account_AccountName);
+
+        Bundle extras=getIntent().getExtras();
+        if(extras!=null){
+            if(extras.containsKey("shareList")){
+                shareList=extras.getBoolean("shareList");
+            }
+        }
 
         etEditTextAccName.setOnEditorActionListener(this);
         userAccArray[0]= userLocalStore.getUserfullname();
@@ -102,6 +113,30 @@ public class CreateFinanceAccountActivity extends AppCompatActivity implements T
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
 
+            }
+        });
+
+
+
+            btnswitch.setChecked(shareList);
+
+        if(btnswitch.isChecked()){
+            btnswitch.setText("Mode shared");
+
+        }else{
+            btnswitch.setText("Mode private");
+
+        }
+        btnswitch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(btnswitch.isChecked()){
+                    btnswitch.setText("Mode shared");
+
+                }else{
+                    btnswitch.setText("Mode private");
+
+                }
             }
         });
 
@@ -175,7 +210,15 @@ public class CreateFinanceAccountActivity extends AppCompatActivity implements T
             user.pictureurl=userLocalStore.getUserPicturePath();
             UserForFireBase userForFireBase=new User().getUserForFireBase(user);
             assert auth.getCurrentUser()!=null;
-           final DatabaseReference data= databaseReferenceToAccounts.child(auth.getCurrentUser().getUid()).child(financeAccount.getAccountUniqueId());
+           final DatabaseReference data;
+            if(!btnswitch.isChecked() && userLocalStore.getChatRoom().length()>2){
+
+                data= databaseReferenceToAccounts.child(auth.getCurrentUser().getUid()).child(financeAccount.getAccountUniqueId());
+            }else {
+                data= databaseReferenceToAccounts.child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS_SHARED)
+                        .child(userLocalStore.getChatRoom())
+                        .child(financeAccount.getAccountUniqueId());
+            }
             FinanceAccountForFireBase financeAccountForFireBase=new FinanceAccount(this).getFinanceAccountForFirebase(financeAccount);
             ArrayList<UserForFireBase> arrayList=new ArrayList<>();
             arrayList.add(userForFireBase);

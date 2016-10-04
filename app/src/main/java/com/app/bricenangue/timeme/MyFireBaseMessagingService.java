@@ -149,7 +149,8 @@ public class MyFireBaseMessagingService extends FirebaseMessagingService {
         String senderRegId = map.get("registrationSenderIDs");
         String message = map.get("message");
         String receiver = map.get("receiver");// will be user as sender name in current Device getting the notifiction
-        String title = map.get("title");//to automaticly log in an dupdate friend list in mysql in device receiving notification
+        String title = map.get("title");
+        String senderuid = map.get("senderuid");
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(
                 this).setSmallIcon(R.drawable.ic_add_user_notification_icon)
@@ -170,6 +171,7 @@ public class MyFireBaseMessagingService extends FirebaseMessagingService {
         intent.putExtra("receiver", receiver);
         intent.putExtra("senderRegId", senderRegId);
         intent.putExtra("messagefromgcm", message);
+        intent.putExtra("senderuid", senderuid);
         intent.putExtra("request", true);
 
         PendingIntent resultPendingIntent =
@@ -271,7 +273,9 @@ public class MyFireBaseMessagingService extends FirebaseMessagingService {
         String message = map.get("message");
         String receiver = map.get("receiver");// will be user as sender name in current Device getting the notifiction
         String title = map.get("title");
-        String chatRoom = map.get("chatRoom");//to automaticly log in an dupdate friend list in mysql in device receiving notification
+        String chatRoom = map.get("chatRoom");
+        String senderuid=map.get("senderuid");
+        //to automaticly log in an dupdate friend list in mysql in device receiving notification
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(
                 this).setSmallIcon(R.drawable.ic_add_user_notification_icon)
@@ -293,6 +297,7 @@ public class MyFireBaseMessagingService extends FirebaseMessagingService {
         intent.putExtra("senderRegId", senderRegId);
         intent.putExtra("messagefromgcm", message);
         intent.putExtra("chatRoom",chatRoom);
+        intent.putExtra("senderuid",senderuid);
         intent.putExtra("request", true);
 
         userLocalStore.setUserPartnerRegId(senderRegId);

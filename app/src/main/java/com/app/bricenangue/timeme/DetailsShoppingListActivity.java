@@ -21,14 +21,17 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.RadioButton;
 import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.firebase.client.ChildEventListener;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
+import com.firebase.ui.database.FirebaseListAdapter;
 import com.google.android.gms.auth.api.signin.internal.SignInHubActivity;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -51,6 +54,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.Locale;
 
 public class DetailsShoppingListActivity extends AppCompatActivity implements
         ListAdapterCreateShopList.ShoppingItemBoughtListener,
@@ -75,6 +79,13 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
     private FirebaseAuth auth;
     private ValueEventListener valueEventListener;
     private ProgressDialog progressBar;
+    private boolean sharedList;
+    private UserLocalStore userLocalStore;
+    private android.support.v7.app.AlertDialog alertDialog;
+
+    private DatabaseReference databaseReference;
+    private android.app.AlertDialog.Builder alert;
+
 
 
     @Override
@@ -85,6 +96,11 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
         auth=FirebaseAuth.getInstance();
         firebaseReference= FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_GROCERYLISTS);
 
+        databaseReference = FirebaseDatabase.getInstance().getReference();
+        firebaseReference = FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_GROCERYLISTS);
+
+        alert = new android.app.AlertDialog.Builder(this);
+        userLocalStore=new UserLocalStore(this);
         coordinatorLayout=(CoordinatorLayout)findViewById(R.id.coordinateLayout_activity_details_shoppping_list);
         shoppinglistview=(ListView)findViewById(R.id.listView_activity_details_shoppping_list);
         textViewAlreadySpent=(TextView)findViewById(R.id.grocery_fragment_balance_amount_activity_details_shopping_list);
@@ -100,6 +116,7 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
         if(extras!=null){
 
                 shoppingListid=extras.getString("GroceryListId");
+            sharedList=extras.getBoolean("GroceryListIsShared");
 
         }
 
@@ -133,10 +150,17 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
         progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         progressBar.show();
         assert  auth.getCurrentUser()!=null;
-        final DatabaseReference shoopinglistItem=FirebaseDatabase
-                .getInstance().getReference().
-        child(Config.FIREBASE_APP_URL_GROCERYLISTS).child(auth.getCurrentUser().getUid());
+        final DatabaseReference shoopinglistItem;
 
+        if(sharedList &&userLocalStore.getChatRoom().length()>2){
+            shoopinglistItem=FirebaseDatabase
+                    .getInstance().getReference().
+                            child(Config.FIREBASE_APP_URL_GROCERYLISTS).child(Config.FIREBASE_APP_URL_GROCERYLISTS_SHARED).child(userLocalStore.getChatRoom());
+        }else {
+            shoopinglistItem=FirebaseDatabase
+                    .getInstance().getReference().
+                            child(Config.FIREBASE_APP_URL_GROCERYLISTS).child(auth.getCurrentUser().getUid());
+        }
 
 
         shoopinglistItem.addValueEventListener(new ValueEventListener() {
@@ -150,7 +174,7 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
                     String groceryListName= getResources().getString(R.string.grocery_list_item_title_text )+ " " + groceryList.getDatum();
                     textViewgroceryListName.setText(groceryListName);
                     populateListview();
-                    shoopinglistItem.removeEventListener(this);
+                    //shoopinglistItem.removeEventListener(this);
                     if(progressBar!=null){
                         progressBar.dismiss();
                     }
@@ -225,6 +249,7 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
         if (id== R.id.action_items_added_edit){
             //open add item to list an edit
             startActivity(new Intent(this,AddItemToListActivity.class).putExtra("ListToChange",groceryList).putExtra("isFromDetails",true)
+                    .putExtra("shareList",groceryList.isToListshare())
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             return true;
         }
@@ -236,6 +261,7 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putString("shoppingListid",shoppingListid);
+        outState.putBoolean("sharedList",sharedList);
 
     }
 
@@ -258,8 +284,22 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
 
         }
         assert  auth.getCurrentUser()!=null;
-        DatabaseReference shoopinglistItem=firebaseReference.child(auth.getCurrentUser().getUid()).child(shoppingListid)
-                .child(Config.FIREBASE_APP_URL_SHARED_GROCERY_ITEMS_NODE);
+        DatabaseReference shoopinglistItem;
+
+        if(sharedList && userLocalStore.getChatRoom().length()>2){
+            shoopinglistItem=FirebaseDatabase
+                    .getInstance().getReference().
+                            child(Config.FIREBASE_APP_URL_GROCERYLISTS).child(Config.FIREBASE_APP_URL_GROCERYLISTS_SHARED).child(userLocalStore.getChatRoom())
+                    .child(shoppingListid)
+                    .child(Config.FIREBASE_APP_URL_SHARED_GROCERY_ITEMS_NODE);
+        }else {
+            shoopinglistItem=FirebaseDatabase
+                    .getInstance().getReference().
+                            child(Config.FIREBASE_APP_URL_GROCERYLISTS).child(auth.getCurrentUser().getUid())
+                    .child(shoppingListid)
+                    .child(Config.FIREBASE_APP_URL_SHARED_GROCERY_ITEMS_NODE);
+        }
+
         shoopinglistItem.setValue(new GroceryList().getGrocerylistitemForGLFirebase(itemsDB));
         if (!new ServerRequests(this).haveNetworkConnection()) {
             showSnackBarNoInternet();
@@ -453,8 +493,22 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
 
         textViewgroceryListName.setText(groceryListName);
         assert auth.getCurrentUser()!=null;
-        DatabaseReference refdate=firebaseReference.child(auth.getCurrentUser().getUid())
-                .child(shoppingListid).child("datum");
+        DatabaseReference refdate;
+
+        if(sharedList && userLocalStore.getChatRoom().length()>2){
+            refdate=FirebaseDatabase
+                    .getInstance().getReference().
+                            child(Config.FIREBASE_APP_URL_GROCERYLISTS).child(Config.FIREBASE_APP_URL_GROCERYLISTS_SHARED).child(userLocalStore.getChatRoom())
+                    .child(shoppingListid)
+                    .child("datum");
+        }else {
+            refdate=FirebaseDatabase
+                    .getInstance().getReference().
+                            child(Config.FIREBASE_APP_URL_GROCERYLISTS).child(auth.getCurrentUser().getUid())
+                    .child(shoppingListid)
+                    .child("datum");
+        }
+
         refdate.setValue(date);
         if (!new ServerRequests(this).haveNetworkConnection()) {
             showSnackBarNoInternet();
@@ -471,96 +525,377 @@ public class DetailsShoppingListActivity extends AppCompatActivity implements
     }
 
 
+    private void fetchshared(final DatabaseReference ref, final boolean sharedList,ListView listView){
+        valueEventListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (!dataSnapshot.getChildren().iterator().hasNext()) {
+
+
+                    alert.create();
+                    alert.setMessage("Create an account first");
+                    alert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            //start create Account Activity
+                            startActivity(new Intent(DetailsShoppingListActivity.this,
+                                    CreateFinanceAccountActivity.class).putExtra("shareList",sharedList)
+                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                        }
+                    });
+                    alert.setCancelable(true);
+
+                    alert.show();
+
+
+                } else {
+
+                    if (valueEventListener != null) ref.removeEventListener(valueEventListener);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        };
+        ref.addValueEventListener(valueEventListener);
+
+        FirebaseListAdapter<FinanceAccountForFireBase> adapter = new FirebaseListAdapter<FinanceAccountForFireBase>(
+                DetailsShoppingListActivity.this,
+                FinanceAccountForFireBase.class,
+                R.layout.custom_account_to_choose,
+                ref
+
+        ) {
+            @Override
+            protected void populateView(View v, final FinanceAccountForFireBase model, final int position) {
+                final FinanceAccount financeAccount = new FinanceAccount(getApplicationContext())
+                        .getFinanceAccountFromFirebase(model);
+
+
+                TextView sortName = (TextView) v.findViewById(R.id.textView_sort_options_items);
+                TextView balance = (TextView) v.findViewById(R.id.textView_sort_options_items_amount);
+
+                final RadioButton buttonisChecked = (RadioButton) v.findViewById(R.id.radioButton_sort_options_items);
+
+                sortName.setText(model.getAccountName());
+
+                financeAccount.getAccountrecordsAmountUpdateBalance(getApplicationContext());
+                String balancestr = financeAccount.getAccountBlanceTostring() + " €";
+                if (balancestr.contains("-")) {
+                    balance.setText(balancestr);
+                    balance.setTextColor(getResources().getColor(R.color.warning_color));
+                } else {
+                    balance.setText(balancestr);
+                    balance.setTextColor(getResources().getColor(R.color.color_account_balance_positive));
+                }
+
+
+                buttonisChecked.setChecked(false);
+
+                buttonisChecked.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+
+                        buttonisChecked.setChecked(true);
+
+                        createAndSaveGrocerylist(sharedList
+                                ,new FinanceAccount(getApplicationContext()).getFinanceAccountFromFirebase(getItem(position)));
+                    }
+                });
+
+            }
+        };
+
+        listView.setAdapter(adapter);
+
+        // listView.setAdapter(chooseAccountAdapter);
+
+        listView.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+
+                alertDialog.dismiss();
+                FinanceAccount financeAccount = new FinanceAccount(getApplicationContext())
+                        .getFinanceAccountFromFirebase((FinanceAccountForFireBase) adapterView.getAdapter().getItem(i));
+
+                createAndSaveGrocerylist(sharedList,financeAccount);
+
+
+            }
+        });
+
+    }
+    private void fetchprivate(final DatabaseReference ref, final boolean sharedList,ListView listView){
+        valueEventListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (!dataSnapshot.getChildren().iterator().hasNext()) {
+
+
+                    alert.create();
+                    alert.setMessage("Create an account first");
+                    alert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            //start create Account Activity
+                            startActivity(new Intent(DetailsShoppingListActivity.this,
+                                    CreateFinanceAccountActivity.class).putExtra("shareList",sharedList)
+                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                        }
+                    });
+                    alert.setCancelable(true);
+                    alert.show();
+
+
+                } else {
+
+                    if (valueEventListener != null) ref.removeEventListener(valueEventListener);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        };
+        ref.addValueEventListener(valueEventListener);
+
+        FirebaseListAdapter<FinanceAccountForFireBase> adapter = new FirebaseListAdapter<FinanceAccountForFireBase>(
+                DetailsShoppingListActivity.this,
+                FinanceAccountForFireBase.class,
+                R.layout.custom_account_to_choose,
+                ref
+
+        ) {
+            @Override
+            protected void populateView(View v, final FinanceAccountForFireBase model, final int position) {
+                final FinanceAccount financeAccount = new FinanceAccount(getApplicationContext())
+                        .getFinanceAccountFromFirebase(model);
+
+
+                TextView sortName = (TextView) v.findViewById(R.id.textView_sort_options_items);
+                TextView balance = (TextView) v.findViewById(R.id.textView_sort_options_items_amount);
+
+                final RadioButton buttonisChecked = (RadioButton) v.findViewById(R.id.radioButton_sort_options_items);
+
+                sortName.setText(model.getAccountName());
+
+                financeAccount.getAccountrecordsAmountUpdateBalance(getApplicationContext());
+                String balancestr = financeAccount.getAccountBlanceTostring() + " €";
+                if (balancestr.contains("-")) {
+                    balance.setText(balancestr);
+                    balance.setTextColor(getResources().getColor(R.color.warning_color));
+                } else {
+                    balance.setText(balancestr);
+                    balance.setTextColor(getResources().getColor(R.color.color_account_balance_positive));
+                }
+
+
+                buttonisChecked.setChecked(false);
+
+                buttonisChecked.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+
+                        buttonisChecked.setChecked(true);
+
+                        alertDialog.dismiss();
+                        createAndSaveGrocerylist(sharedList
+                                ,new FinanceAccount(getApplicationContext()).getFinanceAccountFromFirebase(getItem(position)));
+                    }
+                });
+
+            }
+        };
+
+        listView.setAdapter(adapter);
+
+        // listView.setAdapter(chooseAccountAdapter);
+
+        listView.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+
+                alertDialog.dismiss();
+                FinanceAccount financeAccount = new FinanceAccount(getApplicationContext())
+                        .getFinanceAccountFromFirebase((FinanceAccountForFireBase) adapterView.getAdapter().getItem(i));
+
+                createAndSaveGrocerylist(sharedList,financeAccount);
+
+
+            }
+        });
+
+    }
+    private void showDialogChoosingAccount() {
+
+
+        alertDialog = new android.support.v7.app.AlertDialog.Builder(this).create();
+        LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View convertView = (View) inflater.inflate(R.layout.custom_sort_options_choose_account, null);
+        alertDialog.setView(convertView);
+        alertDialog.setTitle(getString(R.string.activity_choose_account_for_grocery_list));
+        final ListView listView = (ListView) convertView.findViewById(R.id.listView_addItmeListActivity_sort_options_account);
+        final Switch btnswitch=(Switch)convertView.findViewById(R.id.button_switch_layout_custom_sort);
+
+        assert auth.getCurrentUser() != null;
+        DatabaseReference ref;
+        if(btnswitch.isChecked()){
+            ref=databaseReference.child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS)
+                    .child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS_SHARED)
+                    .child(userLocalStore.getChatRoom());
+            btnswitch.setText("My shared accounts");
+            fetchshared(ref,btnswitch.isChecked(),listView);
+
+        }else{
+            ref = databaseReference
+                    .child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS).child(auth.getCurrentUser().getUid());
+            btnswitch.setText("My private accounts");
+            fetchprivate(ref,btnswitch.isChecked(),listView);
+
+        }
+        btnswitch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(btnswitch.isChecked()){
+                    btnswitch.setText("My shared accounts");
+                    DatabaseReference ref=databaseReference.child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS)
+                            .child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS_SHARED)
+                            .child(userLocalStore.getChatRoom());
+                    fetchshared(ref,btnswitch.isChecked(),listView);
+
+                }else{
+                    btnswitch.setText("My private accounts");
+                   DatabaseReference ref = databaseReference
+                            .child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS).child(auth.getCurrentUser().getUid());
+                    fetchprivate(ref,btnswitch.isChecked(),listView);
+
+                }
+            }
+        });
+
+
+        alertDialog.setCancelable(true);
+        alertDialog.show();
+    }
+
+
+    private void createAndSaveGrocerylist(final boolean sharedList, final FinanceAccount account){
+
+        progressBar = new ProgressDialog(this);
+        progressBar.setCancelable(false);
+        progressBar.setTitle("Saving...");
+        progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressBar.show();
+        assert auth.getCurrentUser()!=null;
+        final DatabaseReference finRef;
+        final DatabaseReference grRef;
+
+
+
+        if(sharedList &&userLocalStore.getChatRoom().length()>2 ){
+            finRef=FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS)
+                    .child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS_SHARED)
+                    .child(userLocalStore.getChatRoom())
+            ;
+
+        }else {
+            finRef=FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS)
+                    .child(auth.getCurrentUser().getUid());
+
+        }
+
+        if(groceryList.isToListshare()){
+            grRef=firebaseReference
+                    .child(Config.FIREBASE_APP_URL_GROCERYLISTS_SHARED).child(userLocalStore.getChatRoom());
+        }else {
+            grRef=firebaseReference.child(auth.getCurrentUser().getUid()).child(shoppingListid);
+
+        }
+
+
+        Calendar c = new GregorianCalendar();
+        Date dat = c.getTime();
+        //String day= String.valueOf(dat.getDay());
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.GERMAN);
+        SimpleDateFormat formatterr = new SimpleDateFormat("dd-MM-yyy HH:mm:ss");
+
+        Date currentDate = new Date();
+        String currentTimer = formatterr.format(currentDate);
+
+
+        int hashid = (userLocalStore.getUserfullname() + format.format(dat)).hashCode();
+        groceryList.setList_unique_id(String.valueOf(hashid));
+        FinanceRecords financeRecords = new FinanceRecords(getApplicationContext(),
+                getString(R.string.textInitialize_create_account_grocery_note), currentTimer.split(" ")[0],
+                getString(R.string.textInitialize_create_account_grocery_note), groceryList.getGroceryListTotalPriceToPayString().replace(",", ".")
+                , String.valueOf(hashid),
+                getString(R.string.textInitialize_create_account_grocery_category), groceryList.getDatum()
+                , userLocalStore.getUserfullname(), 0, true, false);
+
+
+        account.setContext(getApplicationContext());
+        account.addRecordToAccount(financeRecords);
+        account.setLastchangeToAccount();
+        groceryList.setAccountid(account.getAccountUniqueId());
+        groceryList.setAccountisshared(sharedList);
+
+        account.setLastchangeToAccount();
+        account.getAccountrecordsAmountUpdateBalance(getApplicationContext());
+        final DatabaseReference newRef=finRef.child(account.getAccountUniqueId());
+        newRef.setValue(new FinanceAccount(getApplicationContext()).getFinanceAccountForFirebase(account))
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if(task.isSuccessful()){
+                            grRef.removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    if(task.isSuccessful()){
+                                        if (progressBar != null) {
+                                            progressBar.dismiss();
+                                        }
+                                        finish();
+                                    }else {
+                                        if (progressBar != null) {
+                                            progressBar.dismiss();
+                                        }
+                                        Toast.makeText(getApplicationContext(),task.getException().getMessage(),Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            });
+                        }else {
+                            if (progressBar != null) {
+                                progressBar.dismiss();
+                            }
+                            Toast.makeText(getApplicationContext(),task.getException().getMessage(),Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+
+
+        if (!new ServerRequests(this).haveNetworkConnection()) {
+            showSnackBarNoInternet();
+            if (progressBar != null) {
+                progressBar.dismiss();
+            }
+        }
+        //onBackPressed();
+    }
 
     @Override
     public void changescanceled(boolean canceled) {
         if(!canceled){
 
         }else {
-            progressBar = new ProgressDialog(this);
-            progressBar.setCancelable(false);
-            progressBar.setTitle("Saving...");
-            progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            progressBar.show();
-            assert auth.getCurrentUser()!=null;
-            final DatabaseReference finRef=FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS)
-                    .child(auth.getCurrentUser().getUid());
-            final DatabaseReference grRef=firebaseReference.child(auth.getCurrentUser().getUid()).child(shoppingListid);
-          valueEventListener=new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    if(dataSnapshot.hasChild(groceryList.getAccountid())){
-                        FinanceAccountForFireBase child=dataSnapshot.child(groceryList.getAccountid()).getValue(FinanceAccountForFireBase.class);
-                        FinanceAccount financeAccount=new FinanceAccount(getApplicationContext()).getFinanceAccountFromFirebase(child);
-                        ArrayList<FinanceRecords> list=financeAccount.getAccountsRecord();
-                        for(int i=0;i<list.size();i++){
-                            if(list.get(i).getRecordUniquesId()
-                                    .equals(groceryList.getList_unique_id())){
-                                FinanceRecords fr=list.get(i);
-                                fr.setSecured(true);
-
-                                list.set(i,fr);
-                            }
-                        }
-                        financeAccount.setAccountsRecords(list);
-                        financeAccount.setAccountsRecord(list);
-                        financeAccount.setLastchangeToAccount();
-                        financeAccount.getAccountrecordsAmountUpdateBalance(getApplicationContext());
-                        final DatabaseReference newRef=finRef.child(financeAccount.getAccountUniqueId());
-                        newRef.setValue(new FinanceAccount(getApplicationContext()).getFinanceAccountForFirebase(financeAccount))
-                                .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<Void> task) {
-                                        if(task.isSuccessful()){
-                                            grRef.removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
-                                                @Override
-                                                public void onComplete(@NonNull Task<Void> task) {
-                                                    if(task.isSuccessful()){
-                                                        if(valueEventListener!=null){
-                                                            finRef.removeEventListener(valueEventListener);
-
-                                                        }
-                                                        if (progressBar != null) {
-                                                            progressBar.dismiss();
-                                                        }
-                                                        finish();
-                                                    }else {
-                                                        if (progressBar != null) {
-                                                            progressBar.dismiss();
-                                                        }
-                                                        Toast.makeText(getApplicationContext(),task.getException().getMessage(),Toast.LENGTH_SHORT).show();
-                                                    }
-                                                }
-                                            });
-                                        }else {
-                                            if (progressBar != null) {
-                                                progressBar.dismiss();
-                                            }
-                                            Toast.makeText(getApplicationContext(),task.getException().getMessage(),Toast.LENGTH_SHORT).show();
-                                        }
-                                    }
-                                });
-                    }
-
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-                    if (progressBar != null) {
-                        progressBar.dismiss();
-                    }
-                }
-            };
-            finRef.addValueEventListener(valueEventListener);
-
-            if (!new ServerRequests(this).haveNetworkConnection()) {
-                showSnackBarNoInternet();
-                if (progressBar != null) {
-                    progressBar.dismiss();
-                }
-            }
-            //onBackPressed();
+            showDialogChoosingAccount();
         }
+
+
     }
 
 

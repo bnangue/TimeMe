@@ -17,8 +17,17 @@ public class User implements Parcelable {
     Bitmap picture;
     int status;
      String pictureurl;
+    private String chatroom;
 
-    public User( String email, String password){
+    public String getChatroom() {
+        return chatroom;
+    }
+
+    public void setChatroom(String chatroom) {
+        this.chatroom = chatroom;
+    }
+
+    public User(String email, String password){
         this.email=email;
         this.password=password;
     }
@@ -97,6 +106,7 @@ public class User implements Parcelable {
         friendlist=in.readString();
         picture=in.readParcelable(getClass().getClassLoader());
         pictureurl=in.readString();
+        chatroom=in.readString();
 
 
     }
@@ -117,6 +127,7 @@ public class User implements Parcelable {
         dest.writeString(friendlist);
         dest.writeParcelable(picture,flags);
         dest.writeString(pictureurl);
+        dest.writeString(chatroom);
 
     }
     public static final Creator<User> CREATOR = new Creator<User>() {
@@ -132,28 +143,39 @@ public class User implements Parcelable {
 
     public User getUserFromFireBase(UserForFireBase userForFireBase){
         User user=new User();
-        user.email=userForFireBase.getEmail();
+        PrivateInfo privateInfo=userForFireBase.getPrivateProfileInfo();
+        PublicInfos publicInfos=userForFireBase.getPublicProfilInfos();
+
+        user.email=publicInfos.getEmail();
         user.password=userForFireBase.getPassword();
-        user.firstname=userForFireBase.getFirstname();
-        user.lastname=userForFireBase.getLastname();
-        user.friendlist=userForFireBase.getFriendlist();
-        user.regId=userForFireBase.getRegId();
-        user.status=userForFireBase.getStatus();
-        user.pictureurl=userForFireBase.getPicturefirebaseUrl();
+        user.firstname=publicInfos.getFirstname();
+        user.lastname=publicInfos.getLastname();
+        user.friendlist=privateInfo.getFriendlist();
+        user.regId=publicInfos.getRegId();
+        user.status=privateInfo.getStatus();
+        user.pictureurl=publicInfos.getPicturefirebaseUrl();
+        user.setChatroom(userForFireBase.getChatroom());
 
         return user;
 
     }
     public UserForFireBase getUserForFireBase(User user){
+
+        PrivateInfo privateInfo=new PrivateInfo();
+        PublicInfos publicInfos=new PublicInfos();
+
         UserForFireBase userForFireBase=new UserForFireBase();
-        userForFireBase.setEmail(user.email);
+        publicInfos.setEmail(user.email);
         userForFireBase.setPassword(user.password);
-        userForFireBase.setFirstname(user.firstname);
-        userForFireBase.setLastname(user.lastname);
-        userForFireBase.setFriendlist(user.friendlist);
-        userForFireBase.setRegId(user.regId);
-        userForFireBase.setStatus(user.status);
-        userForFireBase.setPicturefirebaseUrl(user.pictureurl);
+        publicInfos.setFirstname(user.firstname);
+        publicInfos.setLastname(user.lastname);
+        privateInfo.setFriendlist(user.friendlist);
+        publicInfos.setRegId(user.regId);
+        privateInfo.setStatus(user.status);
+        publicInfos.setPicturefirebaseUrl(user.pictureurl);
+        userForFireBase.setPrivateProfileInfo(privateInfo);
+        userForFireBase.setPublicProfilInfos(publicInfos);
+        userForFireBase.setChatroom(user.getChatroom());
 
         return userForFireBase;
 

@@ -47,7 +47,7 @@
                     android:layout_height="wrap_content"
                     android:textStyle="bold"
                     android:text="@string/title"
-                    android:layout_above="@+id/buttonsharecardview_create_shopping_list_card"
+                    android:layout_centerVertical="true"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentStart="true" />
 
@@ -55,7 +55,7 @@
                     android:id="@+id/textView_Listcreator_create_shopping_list_card"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/eventDescription"
+                    android:text="eventDescription hdlafafsh"
                     android:layout_alignParentBottom="true"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentStart="true" />

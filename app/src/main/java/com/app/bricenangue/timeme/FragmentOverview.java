@@ -78,6 +78,12 @@ public class FragmentOverview extends Fragment{
     }
 
     @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
@@ -111,6 +117,7 @@ public class FragmentOverview extends Fragment{
         return rootView;
 
     }
+    //handel frgament attach isAdded()
     private void populateSpinner(){
         if(nameAccArray!=null){
             SpinnerAdapter adapter = new ArrayAdapter<>(getContext(), R.layout.spinnerlayout, nameAccArray);
@@ -152,12 +159,18 @@ public class FragmentOverview extends Fragment{
                     nameAccArray=new String[financeAccountsArrayList.size()];
                     idAccArray=new String[financeAccountsArrayList.size()];
                     for(int i=0;i<financeAccountsArrayList.size();i++){
-                        nameAccArray[i]= getActivity().getString(R.string.View_account_accountName)+"  "+financeAccountsArrayList.get(i).getAccountName();
-                        idAccArray[i]=financeAccountsArrayList.get(i).getAccountUniqueId();
+                        if(isAdded()){
+                            nameAccArray[i]= getString(R.string.View_account_accountName)+"  "+financeAccountsArrayList.get(i).getAccountName();
+                            idAccArray[i]=financeAccountsArrayList.get(i).getAccountUniqueId();
+                        }
+
                     }
                 }
 
-                populateSpinner();
+                if(isAdded()){
+                    populateSpinner();
+                }
+
             }
 
             @Override
@@ -194,6 +207,7 @@ public class FragmentOverview extends Fragment{
                     public void onClick(View view) {
                         startActivity(new Intent(getActivity(),DetailsShoppingListActivity.class)
                                 .putExtra("GroceryListId",getItem(position).getList_unique_id())
+                                .putExtra("GroceryListIsShared",getItem(position).isToListshare())
                                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
                     }
                 });

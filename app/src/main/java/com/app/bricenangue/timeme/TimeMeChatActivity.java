@@ -5,13 +5,20 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Pair;
+import android.view.Gravity;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.firebase.client.ChildEventListener;
 import com.firebase.client.Firebase;
+import com.firebase.ui.database.FirebaseListAdapter;
+import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -35,9 +42,8 @@ import java.util.Objects;
 public class TimeMeChatActivity extends AppCompatActivity {
 
     public static boolean messageshowed= true;
-    private RecyclerView mChatRecyclerView;
     private TextView mUserMessageChatText;
-    private MessageChatAdapter mMessageChatAdapter;
+    private ListView listView_chat;
 
     /* Sender and Recipient status*/
     private static final int SENDER_STATUS=0;
@@ -47,9 +53,8 @@ public class TimeMeChatActivity extends AppCompatActivity {
     private String mRecipientUid;
 
     /* Sender uid */
-    private String mSenderUid,chatRoom,chatmessage,chatSenderName;
+    private String mSenderUid,chatRoom,chatmessage,chatPartneruid,chatPartnerName,chatPartnerPicURL;
 
-    private User chatPartner;
     /* unique Firebase ref for this chat */
     private Firebase mFirebaseMessagesChat;
 
@@ -58,6 +63,7 @@ public class TimeMeChatActivity extends AppCompatActivity {
     private EditText editText;
     private Button buttonSend;
     private DatabaseReference root;
+    private FirebaseAuth auth;
     private String temp_key,chatPartnerId,chatpartnerName;
     private UserLocalStore userLocalStore;
 
@@ -70,6 +76,7 @@ public class TimeMeChatActivity extends AppCompatActivity {
         setContentView(R.layout.activity_time_me_chat);
 
         messageshowed=false;
+        auth=FirebaseAuth.getInstance();
         MyFireBaseMessagingService.notificationId=0;
         Bundle extras=getIntent().getExtras();
         userLocalStore=new UserLocalStore(this);
@@ -81,15 +88,41 @@ public class TimeMeChatActivity extends AppCompatActivity {
                 chatPartnerId=extras.getString("registrationSenderIDs");
                 chatpartnerName=extras.getString("chattingToName");
             }
-            if(extras.containsKey("chatPartner")){
-                chatPartner=extras.getParcelable("chatPartner");
+            if(extras.containsKey("chatPartnerName")){
+                chatPartnerName=extras.getString("chatPartnerName");
+                chatPartnerPicURL=extras.getString("chatPartnerPicURL");
             }
         }
-        mSenderUid=userLocalStore.getUserRegistrationId();
-        root= FirebaseDatabase.getInstance().getReference().child(chatRoom);
-        root.push();
+        assert auth.getCurrentUser()!=null;
+        mSenderUid=auth.getCurrentUser().getUid();
+        chatPartneruid=userLocalStore.getUserfriendliststring().trim();
+
+        if(chatPartneruid.isEmpty()){
+            final DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_USERS)
+                    .child(auth.getCurrentUser().getUid()).child(Config.FIREBASE_APP_URL_USERS_privateProfileInfo)
+                    .child("friendlist");
+            ref.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if(dataSnapshot.exists()&& !dataSnapshot.getValue(String.class).isEmpty()){
+                        userLocalStore.setUserfriendliststring(dataSnapshot.getValue(String.class));
+                        ref.removeEventListener(this);
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
+
+        }
+        chatPartneruid=userLocalStore.getUserfriendliststring().trim();
+
+        root= FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_CHAT_ROOMS);
+
         // Reference to recyclerView and text view
-        mChatRecyclerView=(RecyclerView)findViewById(R.id.chat_recycler_view);
+        listView_chat=(ListView) findViewById(R.id.chat_listview);
         mUserMessageChatText=(TextView)findViewById(R.id.chat_user_message);
         buttonSend=(Button)findViewById(R.id.sendUserMessage);
         editText=(EditText) findViewById(R.id.chat_user_message);
@@ -99,16 +132,16 @@ public class TimeMeChatActivity extends AppCompatActivity {
                 Map<String,Object> map=new HashMap<String, Object>();
                 temp_key=root.push().getKey();
                 root.updateChildren(map);
-                DatabaseReference message_root=root.child(temp_key);
+                DatabaseReference message_root=root.child(chatRoom).child(temp_key);
                 if(!editText.getText().toString().isEmpty()){
 
                     sendNotification(userLocalStore.getUserPartnerRegId(),userLocalStore.getUserPartnerEmail());
                     Map<String,Object> map1=new HashMap<String, Object>();
                     map1.put("sender",mSenderUid);
-                    if(chatPartner!=null){
-                        map1.put("recipient",chatPartner.regId);
+                    if(chatPartneruid!=null){
+                        map1.put("recipient",chatPartneruid);
                     }else {
-                        map1.put("recipient",chatPartnerId);
+                        map1.put("recipient",chatPartneruid);
                     }
 
                     map1.put("message",editText.getText().toString());
@@ -121,17 +154,11 @@ public class TimeMeChatActivity extends AppCompatActivity {
             }
         });
 
-        // Set recyclerView and adapter
-        mChatRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        mChatRecyclerView.setHasFixedSize(true);
 
-        // Initialize adapter
-       initAdapter();
-
-        if(chatPartner!=null){
-            setTitle(chatPartner.getfullname());
+        if(chatPartnerName!=null &&!chatPartnerName.isEmpty()){
+            setTitle(chatPartnerName);
         }else {
-            setTitle(chatpartnerName);
+            setTitle("unkowned user");
         }
 
 
@@ -139,75 +166,46 @@ public class TimeMeChatActivity extends AppCompatActivity {
 
     }
 
-    private void initAdapter(){
-        List<MessageChatModel> emptyMessageChat=new ArrayList<MessageChatModel>();
-        mMessageChatAdapter=new MessageChatAdapter(emptyMessageChat);
-        mMessageChatAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
-            @Override
-            public void onChanged() {
-                super.onChanged();
-                mChatRecyclerView.setScrollY(mChatRecyclerView.getChildCount()-1);
-            }
-        });
-
-        // Set adapter to recyclerView
-        mChatRecyclerView.setAdapter(mMessageChatAdapter);
-        if(mMessageChatAdapter.getItemCount()!=0){
-            mMessageChatAdapter.cleanUp();
-        }
-    }
 
     @Override
     protected void onStart() {
         super.onStart();
         messageshowed=false;
-        initAdapter();
-     //   root= FirebaseDatabase.getInstance().getReference().child(chatRoom);
-
-
-       root.addChildEventListener(new com.google.firebase.database.ChildEventListener() {
+      DatabaseReference ref=root.child(chatRoom);
+        FirebaseListAdapter<MessageChatModel> adapter=new FirebaseListAdapter<MessageChatModel>(
+                TimeMeChatActivity.this,
+                MessageChatModel.class,
+                R.layout.chat,
+                ref
+        ) {
             @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                if(dataSnapshot.exists()){
-                    // Log.e(TAG, "A new chat was inserted");
-
-
-                    MessageChatModel newMessage=dataSnapshot.getValue(MessageChatModel.class);
-                    if(newMessage.getSender().equals(mSenderUid)){
-                        newMessage.setRecipientOrSenderStatus(SENDER_STATUS);
-                    }else{
-                        newMessage.setRecipientOrSenderStatus(RECIPIENT_STATUS);
-                    }
-
-                    newMessages.add(newMessage);
-
-
+            protected void populateView(View v, MessageChatModel model, int position) {
+                boolean left;
+                if(model.getSender().equals(mSenderUid)){
+                    model.setRecipientOrSenderStatus(SENDER_STATUS);
+                }else{
+                    model.setRecipientOrSenderStatus(RECIPIENT_STATUS);
                 }
-                mMessageChatAdapter.refillFirsTimeAdapter(newMessages);
-                mChatRecyclerView.scrollToPosition(mMessageChatAdapter.getItemCount()-1);
 
+                LinearLayout layout=(LinearLayout)v.findViewById(R.id.message1);
+
+                if(model.getRecipientOrSenderStatus()==RECIPIENT_STATUS){
+                    left=true;
+                }else{
+                    left=false;
+                }
+                TextView chattext=(TextView)v.findViewById(R.id.singlemessage);
+                chattext.setText(model.getMessage());
+                chattext.setBackgroundResource(left ? R.drawable.out_message_bg : R.drawable.in_message_bg);
+                layout.setGravity(left ? Gravity.LEFT : Gravity.RIGHT);
             }
+        };
+        listView_chat.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
+        listView_chat.setStackFromBottom(true);
+        listView_chat.setAdapter(adapter);
+        listView_chat.setScrollY(adapter.getCount()-1);
 
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
 
-            }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
     }
 
     @Override
@@ -227,7 +225,7 @@ public class TimeMeChatActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         messageshowed=false;
-        initAdapter();
+
     }
 
     public  void sendNotification(final String regId, final String email) {
@@ -256,7 +254,7 @@ public class TimeMeChatActivity extends AppCompatActivity {
                         data.add(new Pair<String, String>("registrationSenderIDs", regid));
                         data.add(new Pair<String, String>("title",title ));
                         data.add(new Pair<String, String>("chatRoom",chatRoom));
-
+                        data.add(new Pair<String, String>("senderuid",auth.getCurrentUser().getUid() ));
                         data.add(new Pair<String, String>("apiKey", Config.FIREBASESERVER_KEY));
 
                         byte[] bytes = getData(data).getBytes("UTF-8");

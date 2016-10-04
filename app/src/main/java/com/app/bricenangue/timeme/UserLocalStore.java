@@ -92,7 +92,7 @@ public class UserLocalStore {
     }
 
 
-    public void setUserUserfriendliststring(String friendsname){
+    public void setUserfriendliststring(String friendsname){
         SharedPreferences.Editor editor=userLocalDataBase.edit();
         editor.putString("friendsname", friendsname);
 
@@ -173,6 +173,8 @@ public class UserLocalStore {
         }
         return chatRoom;
     }
+
+
 
 
 

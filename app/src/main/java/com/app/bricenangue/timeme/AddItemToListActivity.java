@@ -33,6 +33,7 @@ import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -148,6 +149,8 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
     private AlertDialog.Builder alert;
     private ArrayList<ShoppingItem> listofchoosenItem=new ArrayList<>();
     private DatabaseReference listofChossenReference;
+    private Switch btnswitch;
+    private boolean shareList =false;
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -169,8 +172,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                 .child(auth.getCurrentUser().getUid()).child(Config.FIREBASE_APP_URL_SHOPPING_ITEMS_XSL_USER_LIST);
 
         alert = new AlertDialog.Builder(this);
-
-
+        btnswitch=(Switch)findViewById(R.id.button_switch_activity_add_item_to_list);
         coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinateLayout__creatList_add_item_to_list);
         setDateButtuon = (Button) findViewById(R.id.dateaddeventstart_creatList_add_item_to_list);
         createnewitem = (Button) findViewById(R.id.grocery_activity_add_itemtoList_button);
@@ -182,6 +184,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         buttonSort = (Button) findViewById(R.id.button_sort_activity_add_item_to_list);
 
 
+
         Bundle extras = getIntent().getExtras();
 
         if (extras != null) {
@@ -189,13 +192,14 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                 itemsDB = extras.getParcelableArrayList("itemDB");
                 assert itemsDB != null;
                 itemstoShoparray = new ShoppingItem[itemsDB.size()];
+
                 initArray();
 
             } else if (extras.containsKey("ListToChange")) {
                 isFromDetails = extras.getBoolean("isFromDetails");
                 groceryListFromDetails = extras.getParcelable("ListToChange");
             }
-
+            shareList=extras.getBoolean("shareList");
         }
 
         search = (SearchView) findViewById(R.id.actionbarsearch_add_item_to_list);
@@ -246,6 +250,34 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
             sort(sortName);
         }
 
+       if(groceryListFromDetails!=null){
+           btnswitch.setChecked(groceryListFromDetails.isToListshare());
+       }else {
+           btnswitch.setChecked(shareList);
+       }
+        if(btnswitch.isChecked()){
+            btnswitch.setText("Shared");
+
+        }else{
+            btnswitch.setText("Private");
+
+        }
+        btnswitch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(btnswitch.isChecked()){
+                    btnswitch.setText("Shared");
+
+                }else{
+                    btnswitch.setText("Private");
+
+                }
+            }
+        });
+
+
+        //readExcelXLSXFile(this);
+        //createitemList(getItemFromDB(itemNamee,itemPrice,itemUsageFrequency,itemCategory,itemMarket));
     }
 
     private void initArray() {
@@ -634,6 +666,115 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         item.setVisible(true);
     }
 
+    private void creategroceryListStep1(ArrayList<ShoppingItem> list){
+        Calendar c = new GregorianCalendar();
+        Date dat = c.getTime();
+        //String day= String.valueOf(dat.getDay());
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.GERMAN);
+
+        String date = (String) DateFormat.format("dd-MM-yyyy", dat);
+        GroceryList groceryList = new GroceryList();
+        groceryList.setItemsOftheList(list);
+        groceryList.getListcontain();
+        int hashid = (userLocalStore.getUserfullname() + format.format(dat)).hashCode();
+        groceryList.setList_unique_id(String.valueOf(hashid));
+        groceryList.setCreatorName(userLocalStore.getUserfullname());
+
+        listName = setDateButtuon.getText().toString();
+        if (!listName.isEmpty()) {
+            groceryList.setDatum(listName);
+        }
+
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd, HH:mm");
+        formatter.setLenient(false);
+
+        Date currentDate = new Date();
+
+
+        String currentTime = formatter.format(currentDate);
+        CalendarCollection calendarCollection = new CalendarCollection(listName, groceryList.getListcontain(),
+                groceryList.getCreatorName(), listName, listName + " 17:00",
+                listName + " 20:00", String.valueOf(hashid), getString(R.string.Event_Category_Category_Shopping), "0", "0", currentTime);
+
+        SimpleDateFormat formatterr = new SimpleDateFormat("dd-MM-yyy HH:mm:ss");
+        String currentTimer = formatterr.format(currentDate);
+        FinanceRecords financeRecords = new FinanceRecords(this, getString(R.string.textInitialize_create_account_grocery_note), currentTimer.split(" ")[0],
+                getString(R.string.textInitialize_create_account_grocery_note), groceryList.getGroceryListTotalPriceToPayString().replace(",", ".")
+                , String.valueOf(hashid),
+                getString(R.string.textInitialize_create_account_grocery_category), groceryList.getDatum(), userLocalStore.getUserfullname(), 0, false, false);
+
+
+
+        groceryList.setAccountid("");
+        groceryList.setToListshare(btnswitch.isChecked());
+
+
+        createGroceryStep2(groceryList);
+    }
+
+    private void createGroceryStep2(final GroceryList groceryList) {
+        progressBar = new ProgressDialog(this);
+        progressBar.setCancelable(false);
+        progressBar.setTitle("Creating grocery list");
+        progressBar.setMessage("in progress ...");
+        progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressBar.show();
+
+        DatabaseReference groceryRef;
+        assert auth.getCurrentUser() != null;
+        if(groceryList.isToListshare() && userLocalStore.getChatRoom().length()>2){
+            groceryRef = databaseReference.child(Config.FIREBASE_APP_URL_GROCERYLISTS).child(Config.FIREBASE_APP_URL_GROCERYLISTS_SHARED)
+                    .child(userLocalStore.getChatRoom());
+        }else {
+            groceryRef = databaseReference.child(Config.FIREBASE_APP_URL_GROCERYLISTS)
+                    .child(auth.getCurrentUser().getUid());
+        }
+
+        GroceryListForFireBase groceryListForFirebase = new GroceryListForFireBase();
+        groceryListForFirebase.setAccountid(groceryList.getAccountid());
+        groceryListForFirebase.setCreatorName(groceryList.getCreatorName());
+        groceryListForFirebase.setDatum(groceryList.getDatum());
+        groceryListForFirebase.setList_unique_id(groceryList.getList_unique_id());
+        groceryListForFirebase.setListcontain(groceryList.getListcontain());
+        for (int i = 0; i < groceryList.getItemsOftheList().size(); i++) {
+            groceryListForFirebase.getItems().add(new ShoppingItem().getitemForFirebase(groceryList.getItemsOftheList().get(i)));
+        }
+        groceryListForFirebase.setListdone(groceryList.isListdone());
+        groceryListForFirebase.setToListshare(groceryList.isToListshare());
+
+        groceryRef.child(groceryList.getList_unique_id()).setValue(groceryListForFirebase).addOnCompleteListener(
+                new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            updateExcelFile(groceryList.getItemsOftheList());
+                            listofChossenReference.removeValue();
+                            if (progressBar != null) {
+                                progressBar.dismiss();
+                            }
+
+                            startActivity(new Intent(AddItemToListActivity.this,NewCalendarActivty.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+
+                            Toast.makeText(getApplicationContext(), "Grocery list on " + groceryList.getDatum() + " created", Toast.LENGTH_SHORT).show();
+
+                        } else {
+                            if (progressBar != null) {
+                                progressBar.dismiss();
+                            }
+                            Toast.makeText(getApplicationContext(), task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+        );
+        if (!new ServerRequests(this).haveNetworkConnection()) {
+            if (progressBar != null) {
+                progressBar.dismiss();
+                finish();
+            }
+        }
+
+    }
+
     private void createGrocerylistAndSave(FinanceAccount financeAccount, ArrayList<ShoppingItem> list) {
 
         Calendar c = new GregorianCalendar();
@@ -677,6 +818,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         financeAccount.addRecordToAccount(financeRecords);
         financeAccount.setLastchangeToAccount();
         groceryList.setAccountid(financeAccount.getAccountUniqueId());
+        groceryList.setToListshare(btnswitch.isChecked());
 
 
         createGroceryAndUpdateFinance(financeAccount, groceryList, calendarCollection);
@@ -712,14 +854,31 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                     groceryListFromDetails.setItemsOftheList(list);
                     groceryListFromDetails.getListcontain();
 
+                    DatabaseReference shoopinglistItem;
+                    DatabaseReference refdate;
                     assert  auth.getCurrentUser()!=null;
-                    DatabaseReference shoopinglistItem=firebaseReference
-                            .child(auth.getCurrentUser().getUid())
-                            .child(groceryListFromDetails.getList_unique_id())
-                            .child(Config.FIREBASE_APP_URL_SHARED_GROCERY_ITEMS_NODE);
+                    if(groceryListFromDetails.isToListshare() && userLocalStore.getChatRoom().length()>2){
+                        refdate=firebaseReference.child(Config.FIREBASE_APP_URL_GROCERYLISTS_SHARED)
+                                .child(userLocalStore.getChatRoom())
+                                .child(groceryListFromDetails.getList_unique_id()).child("datum");
+                        shoopinglistItem=firebaseReference
+                                .child(Config.FIREBASE_APP_URL_GROCERYLISTS_SHARED)
+                                .child(userLocalStore.getChatRoom())
+                                .child(groceryListFromDetails.getList_unique_id())
+                                .child(Config.FIREBASE_APP_URL_SHARED_GROCERY_ITEMS_NODE);
+                    }else {
+                        refdate=firebaseReference.child(auth.getCurrentUser().getUid())
+                                .child(groceryListFromDetails.getList_unique_id()).child("datum");
+                        shoopinglistItem=firebaseReference
+                                .child(auth.getCurrentUser().getUid())
+                                .child(groceryListFromDetails.getList_unique_id())
+                                .child(Config.FIREBASE_APP_URL_SHARED_GROCERY_ITEMS_NODE);
+                    }
+
+
                     shoopinglistItem.setValue(new GroceryList().getGrocerylistitemForGLFirebase(list));
-                    DatabaseReference refdate=firebaseReference.child(auth.getCurrentUser().getUid())
-                            .child(groceryListFromDetails.getList_unique_id()).child("datum");
+
+
                     refdate.setValue(shdate).addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
@@ -727,6 +886,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                                 startActivity(new Intent(AddItemToListActivity.this,
                                         DetailsShoppingListActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                                         .putExtra("isFromDetails", true)
+                                        .putExtra("GroceryListIsShared",groceryListFromDetails.isToListshare())
                                         .putExtra("GroceryListId", groceryListFromDetails.getList_unique_id()));
 
                                 listofChossenReference.removeValue();
@@ -808,7 +968,7 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
 
                 }
                 if (list.size() != 0) {
-                    showDialogChoosingAccount(list);
+                    creategroceryListStep1(list);
                 } else {
 
                     listofChossenReference.removeValue();
@@ -927,9 +1087,16 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         progressBar.show();
 
+        DatabaseReference groceryRef;
         assert auth.getCurrentUser() != null;
-        DatabaseReference groceryRef = databaseReference.child(Config.FIREBASE_APP_URL_GROCERYLISTS)
-                .child(auth.getCurrentUser().getUid());
+        if(groceryList.isToListshare() && userLocalStore.getChatRoom().length()>2){
+            groceryRef = databaseReference.child(Config.FIREBASE_APP_URL_GROCERYLISTS).child(Config.FIREBASE_APP_URL_GROCERYLISTS_SHARED)
+                    .child(userLocalStore.getChatRoom());
+        }else {
+            groceryRef = databaseReference.child(Config.FIREBASE_APP_URL_GROCERYLISTS)
+                    .child(auth.getCurrentUser().getUid());
+        }
+
         GroceryListForFireBase groceryListForFirebase = new GroceryListForFireBase();
         groceryListForFirebase.setAccountid(groceryList.getAccountid());
         groceryListForFirebase.setCreatorName(groceryList.getCreatorName());
@@ -947,8 +1114,17 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         if (task.isSuccessful()) {
-                            DatabaseReference financeref = databaseReference
-                                    .child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS).child(auth.getCurrentUser().getUid());
+                            DatabaseReference financeref ;
+                            if(btnswitch.isChecked() && userLocalStore.getChatRoom().length()>2){
+
+                                financeref = databaseReference
+                                        .child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS)
+                                        .child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS_SHARED).child(userLocalStore.getChatRoom());
+                            }else {
+                                financeref = databaseReference
+                                        .child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS).child(auth.getCurrentUser().getUid());
+                            }
+
                             financeref.child(financeAccount.getAccountUniqueId()).setValue(
                                     new FinanceAccount(getApplicationContext()).getFinanceAccountForFirebase(financeAccount)
                             ).addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -962,13 +1138,13 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                                             progressBar.dismiss();
                                         }
                                         listofChossenReference.removeValue();
-                                        finish();
+                                       startActivity(new Intent(AddItemToListActivity.this,NewCalendarActivty.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
                                     } else {
                                         if (progressBar != null) {
                                             progressBar.dismiss();
                                         }
                                         if (task.getException().getMessage().equals(FirebaseError.NETWORK_ERROR)) {
-                                            finish();
+                                            startActivity(new Intent(AddItemToListActivity.this,NewCalendarActivty.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
                                         }
                                         Toast.makeText(getApplicationContext(), task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                                     }
@@ -1176,7 +1352,8 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         int id = v.getId();
         switch (id) {
             case R.id.grocery_activity_add_itemtoList_button:
-                startActivity(new Intent(this, CreatANewItemActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra("itemDB",itemsDB));
+                startActivity(new Intent(this, CreatANewItemActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra("itemDB",itemsDB)
+                .putExtra("shareList",btnswitch.isChecked()));
                 break;
             case R.id.dateaddeventstart_creatList_add_item_to_list:
                 onDatePickercliced(true);
@@ -1513,7 +1690,9 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
-
+                        if (progressBar != null) {
+                            progressBar.dismiss();
+                        }
                     }
                 });
 
@@ -1568,125 +1747,6 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
     }
 
 
-    void showDialogChoosingAccount(final ArrayList<ShoppingItem> list) {
-
-
-        alertDialog = new android.support.v7.app.AlertDialog.Builder(this).create();
-        LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View convertView = (View) inflater.inflate(R.layout.custom_sort_options, null);
-        alertDialog.setView(convertView);
-        alertDialog.setTitle(getString(R.string.activity_choose_account_for_grocery_list));
-        ListView listView = (ListView) convertView.findViewById(R.id.listView_addItmeListActivity_sort_options);
-
-        assert auth.getCurrentUser() != null;
-        final DatabaseReference ref = databaseReference
-                .child(Config.FIREBASE_APP_URL_FINANCE_ACCOUNTS).child(auth.getCurrentUser().getUid());
-        valueEventListener = new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (!dataSnapshot.getChildren().iterator().hasNext()) {
-
-
-                    alert.create();
-                    alert.setMessage("Create an account first");
-                    alert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            //start create Account Activity
-                            startActivity(new Intent(AddItemToListActivity.this,
-                                    CreateFinanceAccountActivity.class)
-                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                        }
-                    });
-                    alert.show();
-
-
-                } else {
-
-                    if (valueEventListener != null) ref.removeEventListener(valueEventListener);
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        };
-        ref.addValueEventListener(valueEventListener);
-
-        FirebaseListAdapter<FinanceAccountForFireBase> adapter = new FirebaseListAdapter<FinanceAccountForFireBase>(
-                AddItemToListActivity.this,
-                FinanceAccountForFireBase.class,
-                R.layout.custom_account_to_choose,
-                ref
-
-        ) {
-            @Override
-            protected void populateView(View v, final FinanceAccountForFireBase model, final int position) {
-                final FinanceAccount financeAccount = new FinanceAccount(getApplicationContext())
-                        .getFinanceAccountFromFirebase(model);
-
-
-                TextView sortName = (TextView) v.findViewById(R.id.textView_sort_options_items);
-                TextView balance = (TextView) v.findViewById(R.id.textView_sort_options_items_amount);
-
-                final RadioButton buttonisChecked = (RadioButton) v.findViewById(R.id.radioButton_sort_options_items);
-
-                sortName.setText(model.getAccountName());
-
-                financeAccount.getAccountrecordsAmountUpdateBalance(getApplicationContext());
-                String balancestr = financeAccount.getAccountBlanceTostring() + " €";
-                if (balancestr.contains("-")) {
-                    balance.setText(balancestr);
-                    balance.setTextColor(getResources().getColor(R.color.warning_color));
-                } else {
-                    balance.setText(balancestr);
-                    balance.setTextColor(getResources().getColor(R.color.color_account_balance_positive));
-                }
-
-
-                buttonisChecked.setChecked(false);
-
-                buttonisChecked.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-
-                        buttonisChecked.setChecked(true);
-
-
-                        createGrocerylistAndSave(
-                                new FinanceAccount(getApplicationContext()).getFinanceAccountFromFirebase(getItem(position))
-                                , list);
-                    }
-                });
-
-            }
-        };
-
-        listView.setAdapter(adapter);
-
-        // listView.setAdapter(chooseAccountAdapter);
-
-        listView.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-
-                alertDialog.dismiss();
-                FinanceAccount financeAccount = new FinanceAccount(getApplicationContext())
-                        .getFinanceAccountFromFirebase((FinanceAccountForFireBase) adapterView.getAdapter().getItem(i));
-                sortName = financeAccount.getAccountName();
-
-                createGrocerylistAndSave(financeAccount
-                        , list);
-
-
-            }
-        });
-
-        alertDialog.setCancelable(true);
-        alertDialog.show();
-    }
 
 
     public void showSnackBar(final GroceryList groceryList, final CalendarCollection collection, final FinanceAccount financeAccount) {
@@ -1695,7 +1755,6 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
                 .setAction(getString(R.string.retry), new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        createGroceryAndUpdateFinance(financeAccount, groceryList, collection);
 
                     }
                 });
@@ -1718,5 +1777,68 @@ public class AddItemToListActivity extends AppCompatActivity implements View.OnF
         snackbar.show();
     }
 
+    private void readExcelXLSXFile(Context context) {
+
+        FileHelper fileHelper=new FileHelper(context);
+
+        File file=null;
+        try{
+            // Creating Input Stream
+            file = new File(fileHelper.getExcelfile("shopping_list_items"));
+
+
+            FileInputStream myInput = new FileInputStream(file);
+
+
+            XSSFWorkbook wb = new  XSSFWorkbook(myInput);
+            XSSFSheet sheet = wb.getSheetAt(0);
+            XSSFRow row;
+            XSSFCell cell;
+
+            Iterator rows = sheet.rowIterator();
+
+            while (rows.hasNext())
+            {
+                row=(XSSFRow) rows.next();
+
+                cell=row.getCell(0);
+
+                if (cell.getCellType() == XSSFCell.CELL_TYPE_STRING)
+                {
+                    System.out.print(cell.getStringCellValue()+" ");
+                    itemNamee.add(cell.getStringCellValue());
+                }
+                cell=row.getCell(1);
+                if(cell.getCellType() == XSSFCell.CELL_TYPE_NUMERIC)
+                {
+                    System.out.print(cell.getNumericCellValue()+" ");
+                    itemPrice.add(String.valueOf(cell.getNumericCellValue()));
+                }
+                cell=row.getCell(2);
+                if(cell.getCellType() == XSSFCell.CELL_TYPE_NUMERIC)
+                {
+                    System.out.print(cell.getNumericCellValue()+" ");
+                    itemUsageFrequency.add(String.valueOf(cell.getNumericCellValue()));
+                }
+                cell=row.getCell(3);
+                if(cell.getCellType() == XSSFCell.CELL_TYPE_STRING)
+                {
+                    System.out.print(cell.getStringCellValue()+" ");
+                    itemMarket.add(String.valueOf(cell.getStringCellValue()));
+                }
+                cell=row.getCell(4);
+                if(cell.getCellType() == XSSFCell.CELL_TYPE_STRING)
+                {
+                    System.out.print(cell.getStringCellValue()+" ");
+                    itemCategory.add(String.valueOf(cell.getStringCellValue()));
+                }
+
+                System.out.println();
+            }
+
+        }catch (Exception e){e.printStackTrace(); }
+
+
+    }
 
 }

@@ -419,12 +419,7 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
                 startActivity(new Intent(NewCalendarActivty.this, BaseActivity.class));
                 break;
             case 2:
-                if(userLocalStore.getUserPartnerEmail().isEmpty() && userLocalStore.getUserPartnerRegId().isEmpty()){
-                    startActivity(new Intent(NewCalendarActivty.this,InviteFriendActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                }else {
-                    //start chat activity
-                    fetchUserforFCMNotification(userLocalStore.getUserPartnerEmail());
-                }
+                checkifHasFriend();
                 break;
             case 3:
                 startActivity(new Intent(NewCalendarActivty.this, PreferenceAppActivity.class));
@@ -438,6 +433,52 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
     }
 
 
+    private void checkifHasFriend(){
+        final DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_USERS)
+                .child(auth.getCurrentUser().getUid()).child(Config.FIREBASE_APP_URL_USERS_privateProfileInfo);
+        ref.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.hasChild("friendlist") &&
+                        !dataSnapshot.child("friendlist").getValue(String.class).isEmpty()){
+                    final DatabaseReference friendRef=FirebaseDatabase.getInstance().getReference().child(Config.FIREBASE_APP_URL_USERS)
+                            .child(dataSnapshot.child("friendlist").getValue(String.class))
+                            .child(Config.FIREBASE_APP_URL_USERS_publicProfilInfos);
+                    friendRef.addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            PublicInfos publicInfos=dataSnapshot.getValue(PublicInfos.class);
+                            Intent intent =new Intent(NewCalendarActivty.this,TimeMeChatActivity.class);
+
+                            intent.putExtra("Chatroom",chatRoomName);
+                            intent.putExtra("chatPartnerName",publicInfos.getFirstname()+" "+publicInfos.getLastname());
+                            intent.putExtra("chatPartnerPicURL",publicInfos.getPicturefirebaseUrl());
+
+
+                            startActivity(intent);
+                            friendRef.removeEventListener(this);
+
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
+
+                   ref.removeEventListener(this);
+                }else {
+                  //no friends
+                    startActivity(new Intent(NewCalendarActivty.this,InviteFriendActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
     public void fetchUserforFCMNotification(String email){
         ServerRequests serverRequests =new ServerRequests(this);
         serverRequests.fetchUserForFCMNotificationinBackground(email, new GetUserCallbacks() {
@@ -811,6 +852,12 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
         if (id == R.id.action_settings) {
             return true;
         }
+        if (id == R.id.action_logout) {
+            DialogFragment dialogFragment=new DialogLogoutFragment();
+            dialogFragment.setCancelable(false);
+            dialogFragment.show(getSupportFragmentManager(), "LOGOUTNewCalendarActivityFRAGMENTSettings");
+            return true;
+        }
 
         return super.onOptionsItemSelected(item);
     }
@@ -861,7 +908,8 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
         progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         progressBar.show();
         if(auth.getCurrentUser()!=null){ //user log in
-          DatabaseReference  data=databaseReference.child(auth.getCurrentUser().getUid());
+          DatabaseReference  data=databaseReference.child(auth.getCurrentUser().getUid())
+                  .child(Config.FIREBASE_APP_URL_USERS_privateProfileInfo);
             data.child("status").setValue(0).addOnCompleteListener(NewCalendarActivty.this
             ,new OnCompleteListener<Void>() {
                 @Override
@@ -878,6 +926,10 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
                                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                                     startActivity(intent);
                                     progressBar.dismiss();
+                                }else {
+                                    if(progressBar!=null){
+                                        progressBar.dismiss();
+                                    }
                                 }
                             }
                         };
@@ -886,6 +938,9 @@ public class NewCalendarActivty extends AppCompatActivity implements NavigationD
                     }else {
                         Toast.makeText(getApplicationContext(), "here"+task.getException().getMessage()
                                 ,Toast.LENGTH_SHORT).show();
+                        if(progressBar!=null){
+                            progressBar.dismiss();
+                        }
                     }
                 }
             });

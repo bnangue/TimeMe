@@ -2,6 +2,7 @@ package com.app.bricenangue.timeme;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -9,15 +10,26 @@ import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Pair;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -29,16 +41,18 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 
 
-public class InviteFriendActivity extends AppCompatActivity implements View.OnClickListener, TextView.OnEditorActionListener, UserFriendForRequestListAdapter.UserCheckedForRequest {
+public class InviteFriendActivity extends AppCompatActivity implements View.OnClickListener, TextView.OnEditorActionListener, UserForRequestListAdapter.UserCheckedForRequest {
     private Button buttonaddFriend, buttonSearchForRequest,buttonSendRequest;
     private EditText editTextEmail;
     private TextInputLayout textInputLayout;
     private ListView listViewFriends;
     private UserLocalStore userLocalStore;
-    private ArrayList<User> userArrayList=new ArrayList<>();
-    private UserFriendForRequestListAdapter userFriendForRequestListAdapter;
+    private ArrayList<PublicInfos> userArrayList=new ArrayList<>();
+    private UserForRequestListAdapter userFriendForRequestListAdapter;
     private boolean[] isChecked;
     private User user;
+    private FirebaseAuth auth;
+    private DatabaseReference root;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,9 +67,10 @@ public class InviteFriendActivity extends AppCompatActivity implements View.OnCl
         textInputLayout=(TextInputLayout) findViewById(R.id.editText_enter_friend_email_address_layout);
         listViewFriends=(ListView)findViewById(R.id.activity_invite_friend_listView);
 
+        auth=FirebaseAuth.getInstance();
+        root= FirebaseDatabase.getInstance().getReference();
 
         if(savedInstanceState!=null){
-            userArrayList=savedInstanceState.getParcelableArrayList("userArrayList");
             isChecked=savedInstanceState.getBooleanArray("isChecked");
             user=savedInstanceState.getParcelable("user");
 
@@ -88,7 +103,7 @@ public class InviteFriendActivity extends AppCompatActivity implements View.OnCl
    private void populateListview(){
 
        listViewFriends.setVisibility(View.VISIBLE);
-       userFriendForRequestListAdapter=new UserFriendForRequestListAdapter(this,userArrayList,this);
+       userFriendForRequestListAdapter=new UserForRequestListAdapter(this,userArrayList,this);
        if(isChecked==null){
            isChecked=new boolean[userArrayList.size()];
 
@@ -135,32 +150,53 @@ public class InviteFriendActivity extends AppCompatActivity implements View.OnCl
                     editTextEmail.setError("Please enter a different email address");
                     editTextEmail.requestFocus();
                 }else {
-                    ServerRequests serverRequests=new ServerRequests(this);
-                    serverRequests.fetchUserForRequestinBackground(emailstr, new GetUserCallbacks() {
+                    final DatabaseReference reference=root.child(Config.FIREBASE_APP_URL_USERS)
+                            .child(Config.FIREBASE_APP_URL_USERS_PUBLIC_USER_ROOM).child(emailstr.replace(".",""));
+                    reference.addValueEventListener(new ValueEventListener() {
                         @Override
-                        public void done(User returneduser) {
-                            if(returneduser!=null && !returneduser.regId.isEmpty()){
-                                userArrayList.add(returneduser);
-                                populateListview();
-                                buttonSendRequest.setVisibility(View.VISIBLE);
-                                hideTheKeyboard(InviteFriendActivity.this,editTextEmail);
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if(dataSnapshot.exists()){
+                                String uidpartner=dataSnapshot.getValue(String.class);
+                                DatabaseReference refPartner=root.child(Config.FIREBASE_APP_URL_USERS)
+                                        .child(uidpartner).child(Config.FIREBASE_APP_URL_USERS_publicProfilInfos);
+                                refPartner.addValueEventListener(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(DataSnapshot dataSnapshot) {
+                                        if(dataSnapshot.hasChild("regId")){
+                                            userArrayList.add(dataSnapshot.getValue(PublicInfos.class));
+                                            populateListview();
+                                            buttonSendRequest.setVisibility(View.VISIBLE);
+                                            hideTheKeyboard(InviteFriendActivity.this,editTextEmail);
+
+                                        }else {
+                                            // no request possible
+                                            //no corresponding user
+                                            showErrordialog("You cannot send a friend request to this user");
+                                            editTextEmail.requestFocus();
+                                            editTextEmail.setInputType(InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+                                            buttonSendRequest.setVisibility(View.GONE);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onCancelled(DatabaseError databaseError) {
+
+                                    }
+                                });
 
                             }else {
+                               // no user found
                                 //no corresponding user
                                 showErrordialog("No corresponding user found. Please verify the email address");
                                 editTextEmail.requestFocus();
                                 editTextEmail.setInputType(InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
                                 buttonSendRequest.setVisibility(View.GONE);
                             }
+                            reference.removeEventListener(this);
                         }
 
                         @Override
-                        public void serverReponse(String reponse) {
-
-                        }
-
-                        @Override
-                        public void userlist(ArrayList<User> reponse) {
+                        public void onCancelled(DatabaseError databaseError) {
 
                         }
                     });
@@ -181,7 +217,8 @@ public class InviteFriendActivity extends AppCompatActivity implements View.OnCl
                     for (int i=0;i<isChecked.length;i++){
                         if(isChecked[i]){
                             sendFriendrequest(userArrayList.get(i));
-                            Toast.makeText(getApplicationContext(),"Friend request sent to "+userArrayList.get(i).getfullname(),Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getApplicationContext(),"Friend request sent to "+userArrayList.get(i).getFirstname()
+                                    +" " + userArrayList.get(i).getLastname(),Toast.LENGTH_SHORT).show();
                             finish();
                         }
                     }
@@ -246,12 +283,11 @@ public class InviteFriendActivity extends AppCompatActivity implements View.OnCl
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putParcelableArrayList("userArrayList",userArrayList);
         outState.putBooleanArray("isChecked",isChecked);
         outState.putParcelable("user",user);
     }
 
-    public  void sendFriendrequest(final User user) {
+    public  void sendFriendrequest(final PublicInfos user) {
 
         if (!userLocalStore.getUserRegistrationId().isEmpty()) {
 
@@ -268,13 +304,14 @@ public class InviteFriendActivity extends AppCompatActivity implements View.OnCl
 
 
                         data.add(new Pair<String, String>("message", "Do you want to be friend with " +sendertname ));
-                        data.add(new Pair<String, String>("registrationReceiverIDs", user.regId));
-                        data.add(new Pair<String, String>("receiver", user.email));
+                        data.add(new Pair<String, String>("registrationReceiverIDs", user.getRegId()));
+                        data.add(new Pair<String, String>("receiver", user.getEmail()));
                         data.add(new Pair<String, String>("sender", userLocalStore.getLoggedInUser().email));
 
                         data.add(new Pair<String, String>("registrationSenderIDs", regid));
                         data.add(new Pair<String, String>("title","You have a new friend request." ));
                         data.add(new Pair<String, String>("chatRoom","" ));
+                        data.add(new Pair<String, String>("senderuid",auth.getCurrentUser().getUid() ));
                         data.add(new Pair<String, String>("apiKey", Config.FIREBASESERVER_KEY));
 
                         byte[] bytes = getData(data).getBytes("UTF-8");
@@ -352,3 +389,107 @@ public class InviteFriendActivity extends AppCompatActivity implements View.OnCl
         }
     }
 }
+ class UserForRequestListAdapter extends BaseAdapter
+{
+    private ArrayList<PublicInfos> userlist;
+    private Context context;
+    private boolean[] checked;
+    String senderName,mesg,status,currentusername;
+
+    public interface UserCheckedForRequest{
+        void onUserisChecked(boolean[] position);
+    }
+
+    private UserCheckedForRequest userCheckedForRequest;
+    public UserForRequestListAdapter(Context context, ArrayList<PublicInfos> userlist, UserCheckedForRequest userCheckedForRequest){
+        this.context=context;
+        this.userlist=userlist;
+        checked=new boolean[userlist.size()];
+        this.userCheckedForRequest=userCheckedForRequest;
+
+    }
+
+    public void setUserStatus(boolean[] status){
+
+        this.checked=status;
+        notifyDataSetChanged();
+    }
+
+    @Override
+    public int getCount() {
+        return userlist.size();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return userlist.get(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return 0;
+    }
+
+    @Override
+    public View getView(final int position, View convertView, ViewGroup parent) {
+        final Holder holder;
+        if(convertView==null){
+            LayoutInflater inflater=(LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            convertView=inflater.inflate(R.layout.user_friend_item,null);
+            holder=new Holder();
+
+            holder.email=(TextView)convertView.findViewById(R.id.usernamefriend_user_friend_item);
+            holder.userPicture=(ImageView)convertView.findViewById(R.id.avatarfriend_user_friend_item);
+            holder.checker=(ImageView)convertView.findViewById(R.id.checkerImageView_user_friend_item);
+
+
+            convertView.setTag(holder);
+        }else{
+
+            holder=(Holder)convertView.getTag();
+        }
+
+        String usernam=userlist.get(position).getEmail();
+        Bitmap picture=null;
+
+        if(picture!=null){
+            holder.userPicture.setImageBitmap(picture);
+        }
+
+        holder.email.setText(usernam);
+
+
+
+        holder.checker.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(checked[position]){
+                    checked[position]=false;
+                    holder.checker.setImageResource(R.drawable.unchecked);
+                }else {
+                    checked[position]=true;
+                    holder.checker.setImageResource(R.drawable.checked);
+                }
+                if(userCheckedForRequest!=null){
+                    userCheckedForRequest.onUserisChecked(checked);
+                }
+            }
+        });
+
+
+        if(!checked[position]){
+            holder.checker.setImageResource(R.drawable.unchecked);
+        }else {
+            holder.checker.setImageResource(R.drawable.checked);
+        }
+        return convertView;
+    }
+
+    static class Holder {
+        public TextView email;
+        public ImageView userPicture;
+        public ImageView checker;
+
+    }
+}
+
